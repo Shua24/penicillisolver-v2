@@ -1,0 +1,187 @@
+@page "/Account/Register"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Domain.Enums
+@using penicillisolver_v2.Services
+@using penicillisolver_v2.Components.Account.Shared
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Register> Logger
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+
+<div class="row">
+    <div class="col-lg-6">
+        <StatusMessage Message="@Message" />
+        <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+            <DataAnnotationsValidator />
+            <h2>Create a new account.</h2>
+            <hr />
+            <p class="text-muted">
+                New accounts are created as <strong>pending</strong>. A clinical
+                pathologist must activate your account before you can use the
+                application.
+            </p>
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.DisplayName" id="Input.DisplayName" class="form-control" autocomplete="name" aria-required="true" placeholder="Your name" />
+                <label for="Input.DisplayName">Display name</label>
+                <ValidationMessage For="() => Input.DisplayName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <label for="Input.Email">Email</label>
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputSelect @bind-Value="Input.RequestedRole" id="Input.RequestedRole" class="form-select" aria-required="true">
+                    @foreach (string roleName in SelectableRoleNames)
+                    {
+                        <option value="@roleName">@roleName</option>
+                    }
+                </InputSelect>
+                <label for="Input.RequestedRole">Requested role</label>
+                <ValidationMessage For="() => Input.RequestedRole" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label for="Input.Password">Password</label>
+                <ValidationMessage For="() => Input.Password" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label for="Input.ConfirmPassword">Confirm password</label>
+                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The roles a registrant may ask for. The clinical pathologist role is
+    /// deliberately absent: it can only be granted by an existing pathologist.
+    /// </summary>
+    private static readonly string[] SelectableRoleNames =
+    [
+        ApplicationRoleNames.OtherDoctor,
+        ApplicationRoleNames.InfectiousDiseaseControlTeam,
+    ];
+
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? Message =>
+        identityErrors is null
+            ? null
+            : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
+
+    public async Task RegisterUser(EditContext editContext)
+    {
+        ArgumentNullException.ThrowIfNull(editContext);
+
+        ApplicationUser user = CreateUser();
+        user.DisplayName = Input.DisplayName;
+        user.RequestedRole = Input.RequestedRole;
+        user.AccountStatus = AccountStatus.Pending;
+
+        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+
+        IUserEmailStore<ApplicationUser> emailStore = GetEmailStore();
+        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+        IdentityResult creationResult = await UserManager.CreateAsync(user, Input.Password);
+
+        if (!creationResult.Succeeded)
+        {
+            identityErrors = creationResult.Errors;
+            return;
+        }
+
+        Logger.LogInformation(
+            "A new pending account was created requesting the {RequestedRole} role.",
+            Input.RequestedRole);
+
+        // The account is pending, so signing in would only lead to AccessDenied.
+        // Send the registrant to the login page with a clear status message instead.
+        RedirectManager.RedirectToWithStatus(
+            "Account/Login",
+            "Your account has been created and is awaiting activation by a clinical pathologist.",
+            HttpContext);
+    }
+
+    private static ApplicationUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<ApplicationUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException(
+                $"Can't create an instance of '{nameof(ApplicationUser)}'. " +
+                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
+        }
+    }
+
+    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    {
+        if (!UserManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException(
+                "The default UI requires a user store with email support.");
+        }
+
+        return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(200, ErrorMessage = "The {0} must be at most {1} characters long.")]
+        [Display(Name = "Display name")]
+        public string DisplayName { get; set; } = "";
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Requested role")]
+        public string RequestedRole { get; set; } = ApplicationRoleNames.OtherDoctor;
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

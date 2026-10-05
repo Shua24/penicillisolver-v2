@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/penicillisolver-v2.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PenicilliSolver.IntegrationTests/PenicilliSolver.IntegrationTests.csproj" />
+    <Project Path="tests/PenicilliSolver.UnitTests/PenicilliSolver.UnitTests.csproj" />
+  </Folder>
+</Solution>

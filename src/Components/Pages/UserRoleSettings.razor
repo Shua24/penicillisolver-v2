@@ -1,0 +1,252 @@
+@page "/settings/user-roles"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using penicillisolver_v2.Components.Account.Shared
+@using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Enums
+@using penicillisolver_v2.Services
+@attribute [Authorize(Policy = AuthorizationPolicyNames.CanManageUserRoles)]
+@rendermode InteractiveServer
+
+@inject UserAdministrationService AdministrationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>User and team settings</PageTitle>
+
+<h1>User and team settings</h1>
+
+<StatusMessage Message="@statusMessage" />
+
+@if (isLoading)
+{
+    <p><em>Loading accounts…</em></p>
+}
+else
+{
+    <section class="mb-5">
+        <h2>Accounts</h2>
+        <p>
+            Activating an account is what moves it out of the pending state. A
+            role or status change applies on that account's next sign-in; a
+            session already open keeps its old claims until it is revalidated
+            (at most thirty minutes).
+        </p>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Set role</th>
+                    <th scope="col">Set status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (UserAccountSummary account in accounts)
+                {
+                    <tr>
+                        <td>@account.DisplayName</td>
+                        <td>@account.Email</td>
+                        <td>
+                            @(string.IsNullOrEmpty(account.RoleName) ? "—" : account.RoleName)
+                        </td>
+                        <td>@account.AccountStatus</td>
+                        <td>
+                            <select class="form-select"
+                                    @onchange="eventArgs => ChangeRoleAsync(account, eventArgs)">
+                                <option value="">Choose…</option>
+                                @foreach (string roleName in AssignableRoleNames)
+                                {
+                                    <option value="@roleName"
+                                            selected="@(account.RoleName == roleName)">
+                                        @roleName
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button type="button"
+                                        class="btn btn-sm btn-success"
+                                        @onclick="() => ChangeStatusAsync(account, AccountStatus.Active)">
+                                    Activate
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => ChangeStatusAsync(account, AccountStatus.Disabled)">
+                                    Disable
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Team permissions</h2>
+        <p>
+            These apply to the infectious disease control team as a whole, not
+            to a single account. A clinical pathologist always holds both.
+        </p>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input"
+                   type="checkbox"
+                   id="team-can-update"
+                   checked="@teamPermissions.CanUpdateSpreadsheet"
+                   @onchange="eventArgs => ToggleTeamPermissionAsync(eventArgs, PermissionToggle.Update)" />
+            <label class="form-check-label" for="team-can-update">
+                The team may replace the current spreadsheet
+            </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input"
+                   type="checkbox"
+                   id="team-can-delete"
+                   checked="@teamPermissions.CanDeleteSpreadsheet"
+                   @onchange="eventArgs => ToggleTeamPermissionAsync(eventArgs, PermissionToggle.Delete)" />
+            <label class="form-check-label" for="team-can-delete">
+                The team may remove the current spreadsheet
+            </label>
+        </div>
+    </section>
+}
+
+@code {
+    private static readonly string[] AssignableRoleNames =
+    [
+        ApplicationRoleNames.ClinicalPathologist,
+        ApplicationRoleNames.OtherDoctor,
+        ApplicationRoleNames.InfectiousDiseaseControlTeam,
+    ];
+
+    private IReadOnlyList<UserAccountSummary> accounts = [];
+    private TeamPermissionSummary teamPermissions = new(
+        ApplicationRoleNames.InfectiousDiseaseControlTeam,
+        CanUpdateSpreadsheet: false,
+        CanDeleteSpreadsheet: false);
+    private string? statusMessage;
+    private string? actingUserId;
+    private bool isLoading = true;
+
+    /// <summary>Which team permission a toggle controls.</summary>
+    private enum PermissionToggle
+    {
+        /// <summary>The team may replace the current spreadsheet.</summary>
+        Update,
+
+        /// <summary>The team may remove the current spreadsheet.</summary>
+        Delete,
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        actingUserId = await ResolveCurrentUserIdAsync();
+
+        await ReloadAsync();
+
+        isLoading = false;
+    }
+
+    private async Task ReloadAsync()
+    {
+        accounts = await AdministrationService.GetAccountsAsync();
+        teamPermissions = await AdministrationService.GetTeamPermissionsAsync();
+    }
+
+    private async Task ChangeRoleAsync(UserAccountSummary account, ChangeEventArgs eventArgs)
+    {
+        if (actingUserId is null)
+        {
+            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            return;
+        }
+
+        string? newRoleName = eventArgs.Value?.ToString();
+
+        if (string.IsNullOrWhiteSpace(newRoleName))
+        {
+            return;
+        }
+
+        AdministrationResult result = await AdministrationService.SetRoleAsync(
+            actingUserId,
+            account.UserId,
+            newRoleName);
+
+        await ApplyResultAsync(result);
+    }
+
+    private async Task ChangeStatusAsync(UserAccountSummary account, AccountStatus newState)
+    {
+        if (actingUserId is null)
+        {
+            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            return;
+        }
+
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
+            actingUserId,
+            account.UserId,
+            newState);
+
+        await ApplyResultAsync(result);
+    }
+
+    private async Task ToggleTeamPermissionAsync(ChangeEventArgs eventArgs, PermissionToggle toggle)
+    {
+        if (actingUserId is null)
+        {
+            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            return;
+        }
+
+        bool isChecked = eventArgs.Value is true;
+
+        bool canUpdate = teamPermissions.CanUpdateSpreadsheet;
+        bool canDelete = teamPermissions.CanDeleteSpreadsheet;
+
+        if (toggle == PermissionToggle.Update)
+        {
+            canUpdate = isChecked;
+        }
+        else
+        {
+            canDelete = isChecked;
+        }
+
+        AdministrationResult result = await AdministrationService.SetTeamPermissionsAsync(
+            actingUserId,
+            canUpdate,
+            canDelete);
+
+        await ApplyResultAsync(result);
+    }
+
+    private async Task ApplyResultAsync(AdministrationResult result)
+    {
+        statusMessage = result.IsSuccess
+            ? result.Message
+            : $"Error: {result.Message}";
+
+        await ReloadAsync();
+    }
+
+    private async Task<string?> ResolveCurrentUserIdAsync()
+    {
+        AuthenticationState authenticationState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        Claim? nameIdentifierClaim =
+            authenticationState.User.FindFirst(ClaimTypes.NameIdentifier);
+
+        string? userId = nameIdentifierClaim?.Value;
+
+        return userId;
+    }
+}

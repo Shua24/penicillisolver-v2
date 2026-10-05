@@ -1,0 +1,53 @@
+@using penicillisolver_v2.Services
+@inject AntibioticAbbreviationService AbbreviationService
+
+@*
+    Renders one antibiotic abbreviation together with the full name the
+    pathologists mapped it to, for a SPECIFIC upload.
+
+    Usage:
+        <AntibioticNameDisplay SpreadsheetUploadId="upload.Id" Abbreviation="@antibiotic" />
+
+    The component is self-contained: it injects only the abbreviation service and
+    takes the upload identity as a parameter, so it can be dropped into the
+    viewer and upload pages without either page knowing how mappings are stored.
+    When no mapping exists for that (upload, abbreviation) pair the abbreviation
+    is shown alone with a muted "unmapped" marker.
+*@
+
+@if (resolvedFullName is null)
+{
+    <span class="antibiotic-name antibiotic-name--unmapped">
+        <span class="antibiotic-name__abbreviation">@Abbreviation</span>
+        <span class="antibiotic-name__marker" title="No meaning has been mapped for this abbreviation yet">
+            (unmapped)
+        </span>
+    </span>
+}
+else
+{
+    <span class="antibiotic-name">
+        <span class="antibiotic-name__abbreviation">@Abbreviation</span>
+        <span class="antibiotic-name__full-name">(@resolvedFullName)</span>
+    </span>
+}
+
+@code {
+    /// <summary>The upload the abbreviation belongs to. Required: a mapping is upload-scoped.</summary>
+    [Parameter, EditorRequired]
+    public int SpreadsheetUploadId { get; set; }
+
+    /// <summary>The abbreviation string exactly as it appears in the spreadsheet header.</summary>
+    [Parameter, EditorRequired]
+    public string Abbreviation { get; set; } = string.Empty;
+
+    private string? resolvedFullName;
+
+    /// <inheritdoc />
+    protected override async Task OnParametersSetAsync()
+    {
+        resolvedFullName = await AbbreviationService.ResolveDisplayNameAsync(
+            SpreadsheetUploadId,
+            Abbreviation);
+    }
+}

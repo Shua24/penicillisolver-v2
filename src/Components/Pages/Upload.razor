@@ -1,0 +1,225 @@
+@page "/upload"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Domain.Enums
+@using penicillisolver_v2.Services
+@using penicillisolver_v2.Components.Account.Shared
+@attribute [Authorize(Policy = AuthorizationPolicyNames.CanManageSpreadsheet)]
+@rendermode InteractiveServer
+
+@inject SpreadsheetUploadService UploadService
+@inject SpreadsheetQueryService QueryService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@* The accept attribute is a convenience for the file picker only. The server
+   re-validates the extension through SpreadsheetFormatResolver, because a
+   browser-supplied hint is not a security boundary. *@
+
+<PageTitle>Upload spreadsheet</PageTitle>
+
+<h1>Upload spreadsheet</h1>
+
+<p>
+    There is a single reference spreadsheet. Uploading a new file replaces it
+    for everyone, so you are asked to confirm before an existing file is
+    replaced.
+</p>
+
+<StatusMessage Message="@statusMessage" />
+
+@if (currentUpload is not null)
+{
+    <section class="mb-4">
+        <h2>Current spreadsheet</h2>
+        <dl class="row">
+            <dt class="col-sm-3">File name</dt>
+            <dd class="col-sm-9">@currentUpload.OriginalFileName</dd>
+
+            <dt class="col-sm-3">Uploaded</dt>
+            <dd class="col-sm-9">@currentUpload.UploadedAtUtc.ToLocalTime().ToString("f")</dd>
+
+            <dt class="col-sm-3">Format</dt>
+            <dd class="col-sm-9">@currentUpload.FileFormat</dd>
+
+            <dt class="col-sm-3">Organisms</dt>
+            <dd class="col-sm-9">@currentUpload.OrganismCount</dd>
+
+            <dt class="col-sm-3">Antibiotics</dt>
+            <dd class="col-sm-9">@currentUpload.AntibioticCount</dd>
+        </dl>
+    </section>
+}
+else
+{
+    <p>No spreadsheet has been uploaded yet.</p>
+}
+
+<section>
+    <h2>@(currentUpload is null ? "Choose a file" : "Replace the file")</h2>
+
+    <div class="mb-3">
+        <InputFile OnChange="OnFileSelectedAsync" accept=".csv,.xlsx" class="form-control" />
+        <div class="form-text">Accepted formats: .csv and .xlsx, up to 10 MB.</div>
+    </div>
+
+    @if (selectedFileName is not null && !isAwaitingConfirmation)
+    {
+        <p>
+            Selected: <strong>@selectedFileName</strong>
+            <button type="button" class="btn btn-link" @onclick="ClearSelection">Clear</button>
+        </p>
+    }
+
+    @if (isAwaitingConfirmation)
+    {
+        <div class="alert alert-warning" role="alert">
+            <p>
+                A spreadsheet is already uploaded. Uploading
+                <strong>@selectedFileName</strong> will replace the current
+                reference file for everyone.
+            </p>
+            <button type="button" class="btn btn-danger" @onclick="ConfirmAndUploadAsync">
+                Replace the current spreadsheet
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="ClearSelection">
+                Cancel
+            </button>
+        </div>
+    }
+
+    @if (isUploading)
+    {
+        <p><em>Uploading and checking the file…</em></p>
+    }
+</section>
+
+@code {
+    private SpreadsheetUpload? currentUpload;
+    private IBrowserFile? selectedFile;
+    private string? selectedFileName;
+    private string? statusMessage;
+    private bool isAwaitingConfirmation;
+    private bool isUploading;
+    private string? uploadingUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUpload = await QueryService.GetCurrentUploadAsync();
+    }
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs eventArgs)
+    {
+        statusMessage = null;
+
+        IBrowserFile file = eventArgs.File;
+
+        // A single reference file, so an ambiguity is resolved by refusing.
+        if (eventArgs.FileCount != 1)
+        {
+            statusMessage =
+                "Error: choose exactly one file. Multiple files are not supported.";
+
+            return;
+        }
+
+        selectedFile = file;
+        selectedFileName = file.Name;
+
+        // Never overwrite the working spreadsheet on a single click: if one
+        // exists, make the user confirm the replacement first.
+        if (currentUpload is null)
+        {
+            isAwaitingConfirmation = false;
+            await PerformUploadAsync();
+        }
+        else
+        {
+            isAwaitingConfirmation = true;
+        }
+    }
+
+    private async Task ConfirmAndUploadAsync()
+    {
+        isAwaitingConfirmation = false;
+        await PerformUploadAsync();
+    }
+
+    private async Task PerformUploadAsync()
+    {
+        if (selectedFile is null)
+        {
+            return;
+        }
+
+        isUploading = true;
+        statusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            uploadingUserId = await ResolveCurrentUserIdAsync();
+
+            if (uploadingUserId is null)
+            {
+                statusMessage = "Error: your session has expired. Sign in again and retry.";
+                return;
+            }
+
+            // The browser file is read through a bounded stream so a hostile or
+            // mistaken large file cannot exhaust memory before the size check.
+            await using Stream fileStream = selectedFile.OpenReadStream(
+                SpreadsheetUploadService.DefaultMaximumFileSizeBytes);
+
+            SpreadsheetUploadResult uploadResult = await UploadService.AcceptUploadAsync(
+                fileStream,
+                selectedFile.Name,
+                uploadingUserId);
+
+            statusMessage = uploadResult.IsSuccess
+                ? uploadResult.Message
+                : $"Error: {uploadResult.Message}";
+
+            if (uploadResult.IsSuccess)
+            {
+                currentUpload = await QueryService.GetCurrentUploadAsync();
+                selectedFile = null;
+                selectedFileName = null;
+            }
+        }
+        catch (InvalidOperationException exception)
+        {
+            // InputFile raises this when the file exceeds the permitted size.
+            // Reflect the configured limit rather than the browser's message.
+            statusMessage =
+                $"Error: the file is larger than the permitted 10 MB limit. ({exception.Message})";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private void ClearSelection()
+    {
+        selectedFile = null;
+        selectedFileName = null;
+        isAwaitingConfirmation = false;
+    }
+
+    private async Task<string?> ResolveCurrentUserIdAsync()
+    {
+        AuthenticationState authenticationState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        Claim? nameIdentifierClaim =
+            authenticationState.User.FindFirst(ClaimTypes.NameIdentifier);
+
+        string? userId = nameIdentifierClaim?.Value;
+
+        return userId;
+    }
+}

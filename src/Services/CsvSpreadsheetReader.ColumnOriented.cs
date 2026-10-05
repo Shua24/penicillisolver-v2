@@ -1,0 +1,198 @@
+namespace penicillisolver_v2.Services;
+
+using System.Globalization;
+using penicillisolver_v2.Domain.Enums;
+using penicillisolver_v2.Domain.ValueObjects;
+
+/// <summary>
+/// The antibiotics-as-columns half of the csv reader, plus the shared cell
+/// parsing rules used by both orientations.
+/// </summary>
+public static partial class CsvSpreadsheetReader
+{
+    /// <summary>The label marking the isolate count row in a row oriented file.</summary>
+    private const string IsolateCountRowLabel = "Number of isolates";
+
+    /// <summary>The lowest susceptibility percentage a valid measurement may carry.</summary>
+    private const double MinimumPercentSusceptible = 0.0;
+
+    /// <summary>The highest susceptibility percentage a valid measurement may carry.</summary>
+    private const double MaximumPercentSusceptible = 100.0;
+
+    /// <summary>
+    /// Parses the antibiotics-as-columns layout: antibiotics across the header,
+    /// organisms down the first column.
+    /// </summary>
+    private static SpreadsheetImportResult ParseColumnOriented(
+        string originalFileName,
+        List<string[]> dataRows,
+        SpreadsheetOrientation orientation)
+    {
+        string[] headerRow = dataRows[0];
+
+        List<string> antibioticNames = new List<string>();
+
+        for (int columnIndex = 1; columnIndex < headerRow.Length; columnIndex++)
+        {
+            string antibioticName = headerRow[columnIndex].Trim();
+
+            if (antibioticName.Length > 0)
+            {
+                antibioticNames.Add(antibioticName);
+            }
+        }
+
+        List<string> organismNames = new List<string>();
+        List<SusceptibilityMeasurement> measurements = new List<SusceptibilityMeasurement>();
+
+        for (int rowIndex = 1; rowIndex < dataRows.Count; rowIndex++)
+        {
+            string[] dataRow = dataRows[rowIndex];
+
+            if (dataRow.Length == 0)
+            {
+                continue;
+            }
+
+            string organismName = dataRow[0].Trim();
+
+            if (organismName.Length == 0)
+            {
+                continue;
+            }
+
+            organismNames.Add(organismName);
+
+            SpreadsheetImportResult? rowFailure = CollectColumnOrientedMeasurements(
+                dataRow,
+                rowIndex,
+                organismName,
+                antibioticNames,
+                measurements);
+
+            if (rowFailure is not null)
+            {
+                return rowFailure;
+            }
+        }
+
+        SpreadsheetDocument document = new SpreadsheetDocument(
+            originalFileName,
+            SpreadsheetFileFormat.Csv,
+            orientation,
+            organismNames,
+            antibioticNames,
+            measurements);
+
+        return SpreadsheetImportResult.Success(document);
+    }
+
+    /// <summary>
+    /// Reads one organism row into measurements in the column oriented layout.
+    /// </summary>
+    private static SpreadsheetImportResult? CollectColumnOrientedMeasurements(
+        string[] dataRow,
+        int rowIndex,
+        string organismName,
+        List<string> antibioticNames,
+        List<SusceptibilityMeasurement> measurements)
+    {
+        for (int columnIndex = 1; columnIndex < dataRow.Length; columnIndex++)
+        {
+            string cellText = dataRow[columnIndex].Trim();
+
+            if (cellText.Length == 0)
+            {
+                continue;
+            }
+
+            int antibioticIndex = columnIndex - 1;
+
+            bool antibioticIndexIsKnown = antibioticIndex >= 0
+                && antibioticIndex < antibioticNames.Count;
+
+            if (!antibioticIndexIsKnown)
+            {
+                continue;
+            }
+
+            string antibioticName = antibioticNames[antibioticIndex];
+
+            string cellReference = BuildCellReference(rowIndex, columnIndex);
+
+            SpreadsheetImportResult? cellFailure = ParseSusceptibilityValue(
+                cellText,
+                antibioticName,
+                organismName,
+                cellReference,
+                measurements);
+
+            if (cellFailure is not null)
+            {
+                return cellFailure;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Parses one cell value, appending a measurement when the value is valid.
+    /// </summary>
+    /// <remarks>
+    /// A blank cell is never passed here, because blank means untested rather
+    /// than zero. A value that is present but not a number, or that falls
+    /// outside 0 to 100, is an error rather than a silently dropped measurement.
+    /// </remarks>
+    private static SpreadsheetImportResult? ParseSusceptibilityValue(
+        string cellText,
+        string antibioticName,
+        string organismName,
+        string cellReference,
+        List<SusceptibilityMeasurement> measurements)
+    {
+        bool parsed = double.TryParse(
+            cellText,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out double parsedValue);
+
+        if (!parsed)
+        {
+            return SpreadsheetImportResult.Failure(
+                $"The value '{cellText}' at {cellReference} is not a number.");
+        }
+
+        bool isInRange = parsedValue >= MinimumPercentSusceptible
+            && parsedValue <= MaximumPercentSusceptible;
+
+        if (!isInRange)
+        {
+            return SpreadsheetImportResult.Failure(
+                $"The value '{cellText}' at {cellReference} is outside the permitted range of 0 to 100.");
+        }
+
+        SusceptibilityMeasurement measurement = new SusceptibilityMeasurement(
+            antibioticName,
+            organismName,
+            parsedValue);
+
+        measurements.Add(measurement);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Builds a human readable reference for a cell, using spreadsheet style
+    /// one-based row and column numbers.
+    /// </summary>
+    private static string BuildCellReference(int rowIndex, int columnIndex)
+    {
+        int displayRow = rowIndex + 1;
+        int displayColumn = columnIndex + 1;
+
+        string reference = $"row {displayRow}, column {displayColumn}";
+
+        return reference;
+    }
+}

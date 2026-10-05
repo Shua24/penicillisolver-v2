@@ -1,0 +1,225 @@
+@page "/spreadsheet-viewer"
+@page "/spreadsheet"
+@using Microsoft.AspNetCore.Authorization
+@using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Domain.ValueObjects
+@using penicillisolver_v2.Services
+@attribute [Authorize(Policy = AuthorizationPolicyNames.CanReadSpreadsheet)]
+@rendermode InteractiveServer
+
+@inject SpreadsheetQueryService QueryService
+
+@* /spreadsheet remains a valid route as well as /spreadsheet-viewer, because
+   an existing integration test and any bookmark to the older path must keep
+   reaching the spreadsheet page. *@
+
+<PageTitle>Resistance ranking</PageTitle>
+
+<h1>Resistance ranking</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading the current spreadsheet…</em></p>
+}
+else if (currentUpload is null)
+{
+    <p>
+        No spreadsheet has been uploaded yet. A clinical pathologist can upload
+        one from the <a href="upload">upload page</a>.
+    </p>
+}
+else
+{
+    <section class="mb-4">
+        <dl class="row">
+            <dt class="col-sm-3">File name</dt>
+            <dd class="col-sm-9">@currentUpload.OriginalFileName</dd>
+
+            <dt class="col-sm-3">Uploaded</dt>
+            <dd class="col-sm-9">@currentUpload.UploadedAtUtc.ToLocalTime().ToString("f")</dd>
+
+            <dt class="col-sm-3">Organisms</dt>
+            <dd class="col-sm-9">@currentUpload.OrganismCount</dd>
+
+            <dt class="col-sm-3">Antibiotics</dt>
+            <dd class="col-sm-9">@currentUpload.AntibioticCount</dd>
+        </dl>
+    </section>
+
+    <section class="mb-4">
+        <label class="form-label" for="top-count">
+            How many of the most resistant antibiotics to show
+        </label>
+        <input id="top-count"
+               type="number"
+               class="form-control"
+               style="max-width: 12rem;"
+               min="1"
+               max="@maximumTopCount"
+               value="@topCount"
+               @onchange="OnTopCountChangedAsync" />
+        <div class="form-text">
+            Between 1 and @maximumTopCount. Defaults to 3.
+        </div>
+        @if (topCountError is not null)
+        {
+            <div class="text-danger" role="alert">@topCountError</div>
+        }
+    </section>
+
+    <section class="mb-4">
+        <h2>Top @effectiveTopCount most resistant</h2>
+        @if (topResistant.Count == 0)
+        {
+            <p>No antibiotic in this file carries a measurement.</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Rank</th>
+                        @* An abbreviation "meaning" column will slot in here,
+                           beside the name, once the mapping feature lands. *@
+                        <th scope="col">Antibiotic</th>
+                        <th scope="col">Mean % susceptible</th>
+                        <th scope="col">Measurements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int index = 0; index < topResistant.Count; index++)
+                    {
+                        int rank = index + 1;
+                        AntibioticResistance row = topResistant[index];
+                        <tr>
+                            <td>@rank</td>
+                            <td>@row.AntibioticName</td>
+                            <td>@FormatSusceptibility(row.MeanPercentSusceptible)</td>
+                            <td>@row.MeasurementCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section>
+        <h2>Antibiotics with no data</h2>
+        @if (antibioticsWithoutMeasurements.Count == 0)
+        {
+            <p>Every antibiotic in this file has at least one measurement.</p>
+        }
+        else
+        {
+            <p>
+                These antibiotics carry no measurement at all, so no resistance
+                can be computed for them.
+            </p>
+            <ul>
+                @foreach (string antibioticName in antibioticsWithoutMeasurements)
+                {
+                    <li>@antibioticName</li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@code {
+    private const int DefaultTopCount = 3;
+
+    private SpreadsheetUpload? currentUpload;
+    private IReadOnlyList<AntibioticResistance> topResistant = [];
+    private IReadOnlyList<string> antibioticsWithoutMeasurements = [];
+    private int topCount = DefaultTopCount;
+    private int effectiveTopCount = DefaultTopCount;
+    private int maximumTopCount = 1;
+    private string? topCountError;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentSpreadsheetAsync();
+    }
+
+    private async Task LoadCurrentSpreadsheetAsync()
+    {
+        isLoading = true;
+
+        currentUpload = await QueryService.GetCurrentUploadAsync();
+
+        if (currentUpload is null)
+        {
+            maximumTopCount = 1;
+            topResistant = [];
+            antibioticsWithoutMeasurements = [];
+            isLoading = false;
+            return;
+        }
+
+        maximumTopCount = Math.Max(currentUpload.AntibioticCount, 1);
+
+        effectiveTopCount = ClampTopCount(topCount);
+
+        topResistant = await QueryService.GetTopResistantAsync(effectiveTopCount);
+
+        antibioticsWithoutMeasurements =
+            await QueryService.GetAntibioticsWithoutMeasurementsAsync();
+
+        isLoading = false;
+    }
+
+    private async Task OnTopCountChangedAsync(ChangeEventArgs eventArgs)
+    {
+        topCountError = null;
+
+        string? rawValue = eventArgs.Value?.ToString();
+
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            topCountError = "Enter a whole number.";
+            return;
+        }
+
+        bool isNumber = int.TryParse(
+            rawValue,
+            System.Globalization.NumberStyles.Integer,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out int requestedCount);
+
+        if (!isNumber)
+        {
+            topCountError = "Enter a whole number, for example 3.";
+            return;
+        }
+
+        topCount = ClampTopCount(requestedCount);
+
+        await LoadCurrentSpreadsheetAsync();
+    }
+
+    private int ClampTopCount(int requestedCount)
+    {
+        if (requestedCount < 1)
+        {
+            return 1;
+        }
+
+        if (requestedCount > maximumTopCount)
+        {
+            return maximumTopCount;
+        }
+
+        return requestedCount;
+    }
+
+    private static string FormatSusceptibility(double meanPercentSusceptible)
+    {
+        string formattedValue = meanPercentSusceptible.ToString(
+            "F2",
+            System.Globalization.CultureInfo.InvariantCulture);
+
+        return formattedValue;
+    }
+}

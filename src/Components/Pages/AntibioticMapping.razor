@@ -1,0 +1,200 @@
+@page "/antibiotic-mappings"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Domain.ValueObjects
+@using penicillisolver_v2.Services
+@attribute [Authorize(Policy = AuthorizationPolicyNames.CanReadSpreadsheet)]
+@rendermode InteractiveServer
+@inject AntibioticAbbreviationService AbbreviationService
+@inject SpreadsheetQueryService QueryService
+@inject IAuthorizationService AuthorizationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Antibiotic abbreviations</PageTitle>
+
+<h1>Antibiotic abbreviations</h1>
+
+<p>
+    Decide what each antibiotic abbreviation in the current spreadsheet stands
+    for. Nothing is pre-filled: the meanings are recorded by the pathologists,
+    and they belong to this file alone. The same abbreviation can mean a
+    different drug in a different file.
+</p>
+
+@if (isLoading)
+{
+    <p><em>Loading the current spreadsheet &hellip;</em></p>
+}
+else if (currentDocument is null)
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>No spreadsheet has been uploaded yet.</strong>
+        Mappings attach to an uploaded file, so there is nothing to map until one
+        exists. Upload a spreadsheet first, then return to this page.
+    </div>
+}
+else
+{
+    @if (statusMessage is not null)
+    {
+        <div class="alert @(statusSucceeded ? "alert-success" : "alert-danger")" role="alert">
+            @statusMessage
+        </div>
+    }
+
+    <p>
+        Current file: <strong>@currentUpload!.OriginalFileName</strong>
+        &mdash; @currentDocument.AntibioticNames.Count antibiotic names,
+        with @mappings.Count mapped.
+    </p>
+
+    @if (canManageMappings)
+    {
+        <section aria-label="Add a mapping">
+            <h2>Add a mapping</h2>
+
+            <EditForm Model="createInput" OnValidSubmit="CreateMappingAsync" FormName="create-mapping">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" for="create-abbreviation">Abbreviation</label>
+                    <InputText id="create-abbreviation"
+                               class="form-control"
+                               list="unmapped-abbreviations"
+                               @bind-Value="createInput.Abbreviation"
+                               placeholder="For example: GAT %S" />
+                    <datalist id="unmapped-abbreviations">
+                        @foreach (string unmappedAbbreviation in unmappedAbbreviations)
+                        {
+                            <option value="@unmappedAbbreviation"></option>
+                        }
+                    </datalist>
+                    <div class="form-text">
+                        Choose one of this file's unmapped names, or type an
+                        abbreviation that appears in the file.
+                    </div>
+                    <ValidationMessage For="() => createInput.Abbreviation" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="create-full-name">Full name</label>
+                    <InputText id="create-full-name"
+                               class="form-control"
+                               @bind-Value="createInput.FullName"
+                               placeholder="For example: Gatifloxacin" />
+                    <ValidationMessage For="() => createInput.FullName" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add mapping</button>
+            </EditForm>
+        </section>
+    }
+    else
+    {
+        <p class="text-muted">
+            You can view the mappings, but only a clinical pathologist may add,
+            edit, or remove them.
+        </p>
+    }
+
+    <section aria-label="Current mappings">
+        <h2>Current mappings</h2>
+
+        @if (mappings.Count == 0)
+        {
+            <p><em>No abbreviations have been mapped for this file yet.</em></p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Abbreviation</th>
+                        <th scope="col">Full name</th>
+                        <th scope="col">Last modified</th>
+                        @if (canManageMappings)
+                        {
+                            <th scope="col">Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (AntibioticAbbreviation mapping in mappings)
+                    {
+                        <tr>
+                            <td><code>@mapping.Abbreviation</code></td>
+                            <td>
+                                @if (editingMappingId == mapping.Id)
+                                {
+                                    <InputText class="form-control"
+                                               @bind-Value="editingFullName" />
+                                }
+                                else
+                                {
+                                    @mapping.FullName
+                                }
+                            </td>
+                            <td>@mapping.LastModifiedAtUtc.ToLocalTime().ToString("g")</td>
+                            @if (canManageMappings)
+                            {
+                                <td>
+                                    @if (editingMappingId == mapping.Id)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary"
+                                                @onclick="() => SaveEditAsync(mapping.Id)">
+                                            Save
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary"
+                                                @onclick="CancelEdit">
+                                            Cancel
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                @onclick="() => BeginEdit(mapping)">
+                                            Edit
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => RequestDelete(mapping)">
+                                            Delete
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    @if (pendingDelete is not null)
+    {
+        <div class="card border-danger mb-3">
+            <div class="card-body">
+                <h3 class="card-title">Remove mapping</h3>
+                <p>
+                    Remove the mapping for <code>@pendingDelete.Abbreviation</code>
+                    (currently <em>@pendingDelete.FullName</em>)? The
+                    abbreviation will show as unmapped.
+                </p>
+                <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAsync">
+                    Yes, remove it
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="() => pendingDelete = null">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    }
+}
+
+

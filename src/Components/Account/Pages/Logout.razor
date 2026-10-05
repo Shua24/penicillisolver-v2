@@ -1,0 +1,27 @@
+@page "/Account/Logout"
+
+@using Microsoft.AspNetCore.Identity
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Services
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Logout> Logger
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Log out</PageTitle>
+
+<h1>Log out</h1>
+<div class="row">
+    <div class="col-lg-6">
+        <p>You have successfully logged out of the application.</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // The logout POST endpoint performs the actual sign out and lands here.
+        Logger.LogInformation("User logged out of the application.");
+        await Task.CompletedTask;
+    }
+}
