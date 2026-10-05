@@ -1,0 +1,39 @@
+/*
+    The searchable organism picker.
+
+    A plain <input> plus a list we render ourselves, rather than a native
+    <datalist>. The datalist is styled differently by every browser and matches
+    by prefix only, which is useless for this file's qualified names: nobody
+    searching for a Staphylococcus aureus outbreak starts with "Staphylococcus".
+    The list below is anchored to the input and scrolls once it is taller than a
+    comfortable menu.
+*/
+
+.organism-picker {
+    position: relative;
+}
+
+.organism-picker__list {
+    position: absolute;
+    z-index: 1050;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    /* A menu, not a page region: cap the height and let it scroll. */
+    max-height: 18rem;
+    overflow-y: auto;
+
+    margin-top: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.organism-picker__option {
+    border: 0;
+    border-radius: 0;
+    text-align: left;
+
+    /* The names are long; wrap them rather than letting the menu scroll
+       sideways, which would hide the part of the name that distinguishes it. */
+    white-space: normal;
+}

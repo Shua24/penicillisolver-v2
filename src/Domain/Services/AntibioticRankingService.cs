@@ -3,55 +3,100 @@ using penicillisolver_v2.Domain.ValueObjects;
 namespace penicillisolver_v2.Domain.Services;
 
 /// <summary>
-/// Ranks antibiotics by how resistant the tested organisms are to them.
-/// Resistance is measured inversely through susceptibility: the lower the mean
-/// percentage of susceptible isolates, the more resistant the antibiotic.
+/// Ranks antibiotics by how resistant ONE organism is to them.
 /// </summary>
+/// <remarks>
+/// Resistance is measured inversely through susceptibility: the lower the
+/// percentage of susceptible isolates, the more resistant the antibiotic, so
+/// the most resistant antibiotics sort first.
+/// <para>
+/// The ranking is always scoped to a single organism. An earlier version
+/// averaged each antibiotic across every organism in the file, which made the
+/// result depend on how many organisms happened to be tested: an antibiotic
+/// measured against five organisms could outrank one measured against fifty on
+/// the strength of far less evidence. Ranking within one organism removes that
+/// artefact and answers the question actually being asked, which is what a
+/// single species is still susceptible to.
+/// </para>
+/// <para>
+/// ONLY ACTUAL MEASUREMENTS ARE SCORED. A drug the file never reported against
+/// this organism carries no value and sorts after every measured drug, because
+/// "not tested" is not evidence of resistance (Q14 revision). Treating a blank
+/// cell as a zero scored it as maximally resistant, which put every untested
+/// antigen at the top of the leaderboard in alphabetical order. This mirrors
+/// the reference implementation, whose sort drops missing values and whose
+/// top-N is a descending sort of the reported percentages.
+/// </para>
+/// <para>
+/// An untested drug is still LISTED, after the measured ones, so a reader who
+/// asks for more rows than the report has tested drugs sees which drugs were
+/// not reported instead of a table that quietly stops short. Those rows carry
+/// <see cref="SusceptibilityValue.Untested"/> and render as a dash.
+/// </para>
+/// </remarks>
 public static class AntibioticRankingService
 {
     /// <summary>
-    /// Ranks every antibiotic that has at least one measurement, most resistant first.
+    /// Ranks every antibiotic in the document for one organism, most resistant first.
     /// </summary>
     /// <remarks>
-    /// Ordering is by ascending mean susceptibility, then by antibiotic name using
-    /// ordinal comparison. The name tie-break is a correctness requirement rather
-    /// than a nicety: the supplied sample data contains several exact ties on the
-    /// mean (four antibiotics at 0 and four at 4.942857...), and an ordering
-    /// without a secondary key would return them in an unstable, run dependent
-    /// order. Antibiotics with no measurements at all are excluded entirely.
+    /// Measured drugs come first, ordered by ascending susceptibility (most
+    /// resistant first) and then by antibiotic name using ordinal comparison.
+    /// The name tie-break is a correctness requirement rather than a nicety:
+    /// drugs sharing a percentage would otherwise come back in an unstable, run
+    /// dependent order.
     /// </remarks>
     /// <param name="document">The parsed spreadsheet to rank.</param>
-    /// <returns>Every measured antibiotic, most resistant first.</returns>
-    public static IReadOnlyList<AntibioticResistance> RankByResistance(SpreadsheetDocument document)
+    /// <param name="organismName">The organism to rank against.</param>
+    /// <returns>
+    /// Every antibiotic in the document, most resistant for that organism first.
+    /// Empty when the organism is not present in the document.
+    /// </returns>
+    public static IReadOnlyList<AntibioticResistance> RankWithinOrganism(
+        SpreadsheetDocument document,
+        string organismName)
     {
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(organismName);
 
-        List<AntibioticResistance> rankedAntibiotics = ComputeResistance(document.Measurements);
+        string trimmedOrganismName = organismName.Trim();
 
-        IEnumerable<AntibioticResistance> sortedAntibiotics = rankedAntibiotics
-            .OrderBy(resistance => resistance.MeanPercentSusceptible)
-            .ThenBy(resistance => resistance.AntibioticName, StringComparer.Ordinal);
+        bool organismIsPresent = document.OrganismNames.Any(name =>
+            string.Equals(name, trimmedOrganismName, StringComparison.OrdinalIgnoreCase));
 
-        List<AntibioticResistance> orderedResult = sortedAntibiotics.ToList();
+        if (!organismIsPresent)
+        {
+            return [];
+        }
+
+        List<AntibioticResistance> resistancePerAntibiotic =
+            ComputeResistanceWithinOrganism(document, trimmedOrganismName);
+
+        IReadOnlyList<AntibioticResistance> orderedResult =
+            SortMostResistantFirst(resistancePerAntibiotic);
 
         return orderedResult;
     }
 
     /// <summary>
-    /// Ranks the antibiotics and returns only the requested number of leaders.
+    /// Ranks the antibiotics for one organism and returns only the required leaders.
     /// </summary>
     /// <param name="document">The parsed spreadsheet to rank.</param>
-    /// <param name="requestedCount">How many antibiotics to return. Values below one are clamped to one.</param>
+    /// <param name="organismName">The organism to rank against.</param>
+    /// <param name="requestedCount">How many to return. Values below one are clamped to one.</param>
     /// <returns>The most resistant antibiotics, at most <paramref name="requestedCount"/> of them.</returns>
-    public static IReadOnlyList<AntibioticResistance> GetMostResistant(
+    public static IReadOnlyList<AntibioticResistance> GetMostResistantWithinOrganism(
         SpreadsheetDocument document,
+        string organismName,
         int requestedCount)
     {
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(organismName);
 
         int effectiveCount = Math.Max(requestedCount, 1);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics = RankByResistance(document);
+        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+            RankWithinOrganism(document, organismName);
 
         IEnumerable<AntibioticResistance> leadingAntibiotics = rankedAntibiotics.Take(effectiveCount);
 
@@ -61,56 +106,101 @@ public static class AntibioticRankingService
     }
 
     /// <summary>
-    /// Returns the antibiotics that carry no measurement at all.
+    /// Orders the rows with the most resistant measured drug first, followed by
+    /// the drugs that carry no measurement.
     /// </summary>
     /// <remarks>
-    /// These are reported separately rather than ranked. An antibiotic with no
-    /// data has an unknown resistance profile; treating it as fully resistant
-    /// would place it at the top of the list on no evidence whatsoever.
+    /// A drug with no measurement is placed after every measured drug rather
+    /// than given a score of zero. Zero is the most resistant score possible,
+    /// so scoring an absent reading as zero let drugs nobody had tested lead
+    /// the leaderboard.
     /// </remarks>
-    /// <param name="document">The parsed spreadsheet to inspect.</param>
-    /// <returns>Antibiotic names that never appear in a measurement, in source order.</returns>
-    public static IReadOnlyList<string> GetAntibioticsWithoutMeasurements(SpreadsheetDocument document)
+    private static IReadOnlyList<AntibioticResistance> SortMostResistantFirst(
+        List<AntibioticResistance> resistancePerAntibiotic)
     {
-        ArgumentNullException.ThrowIfNull(document);
+        IEnumerable<AntibioticResistance> measuredFirst = resistancePerAntibiotic
+            .OrderBy(resistance => resistance.Value.IsMeasured ? 0 : 1)
+            .ThenBy(RankOrderKey)
+            .ThenBy(resistance => resistance.AntibioticName, StringComparer.Ordinal);
 
-        HashSet<string> measuredAntibioticNames = document.Measurements
-            .Select(measurement => measurement.AntibioticName)
-            .ToHashSet(StringComparer.Ordinal);
+        List<AntibioticResistance> orderedResult = measuredFirst.ToList();
 
-        List<string> unmeasuredAntibioticNames = document.AntibioticNames
-            .Where(antibioticName => !measuredAntibioticNames.Contains(antibioticName))
-            .ToList();
-
-        return unmeasuredAntibioticNames;
+        return orderedResult;
     }
 
     /// <summary>
-    /// Groups measurements by antibiotic and reduces each group to a mean.
+    /// The percentage a row sorts on: the measured value, or a stand-in for a
+    /// row that was never measured.
     /// </summary>
-    private static List<AntibioticResistance> ComputeResistance(
-        IReadOnlyList<SusceptibilityMeasurement> measurements)
+    /// <remarks>
+    /// An untested row is given the highest possible key so it can never sort
+    /// above a measured drug, including one measured at 100 percent
+    /// susceptible. The primary ordering already separates the two groups, so
+    /// this key only ever orders rows within their own group.
+    /// </remarks>
+    private static double RankOrderKey(AntibioticResistance resistance)
     {
-        IEnumerable<IGrouping<string, SusceptibilityMeasurement>> measurementsByAntibiotic =
-            measurements.GroupBy(measurement => measurement.AntibioticName, StringComparer.Ordinal);
+        double? percentSusceptible = resistance.Value.Percent;
+
+        if (percentSusceptible is null)
+        {
+            return double.MaxValue;
+        }
+
+        return percentSusceptible.Value;
+    }
+
+    /// <summary>
+    /// Projects every antibiotic in the document to its reading for one organism.
+    /// </summary>
+    /// <remarks>
+    /// Every antibiotic the file names gets exactly one row, so the ranking
+    /// covers the whole matrix. An antibiotic the file never reported against
+    /// this organism produces an untested row, which is listed after the
+    /// measured ones rather than scored as resistant.
+    /// </remarks>
+    private static List<AntibioticResistance> ComputeResistanceWithinOrganism(
+        SpreadsheetDocument document,
+        string organismName)
+    {
+        HashSet<string> rankedAntibioticNames = new HashSet<string>(StringComparer.Ordinal);
 
         List<AntibioticResistance> resistancePerAntibiotic = new List<AntibioticResistance>();
 
-        foreach (IGrouping<string, SusceptibilityMeasurement> antibioticGroup in measurementsByAntibiotic)
+        foreach (SusceptibilityMeasurement measurement in document.Measurements)
         {
-            int measurementCount = antibioticGroup.Count();
+            bool organismMatches = string.Equals(
+                measurement.OrganismName,
+                organismName,
+                StringComparison.OrdinalIgnoreCase);
 
-            double susceptibilityTotal = antibioticGroup.Sum(
-                measurement => measurement.PercentSusceptible);
-
-            double meanSusceptibility = susceptibilityTotal / measurementCount;
+            if (!organismMatches)
+            {
+                continue;
+            }
 
             AntibioticResistance resistance = new AntibioticResistance(
-                antibioticGroup.Key,
-                meanSusceptibility,
-                measurementCount);
+                measurement.AntibioticName,
+                measurement.Value);
 
             resistancePerAntibiotic.Add(resistance);
+            rankedAntibioticNames.Add(measurement.AntibioticName);
+        }
+
+        foreach (string antibioticName in document.AntibioticNames)
+        {
+            bool alreadyRanked = rankedAntibioticNames.Contains(antibioticName);
+
+            if (alreadyRanked)
+            {
+                continue;
+            }
+
+            AntibioticResistance missingResistance = new AntibioticResistance(
+                antibioticName,
+                SusceptibilityValue.Untested);
+
+            resistancePerAntibiotic.Add(missingResistance);
         }
 
         return resistancePerAntibiotic;

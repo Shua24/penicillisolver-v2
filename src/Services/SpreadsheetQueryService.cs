@@ -94,31 +94,15 @@ public sealed class SpreadsheetQueryService(
     }
 
     /// <summary>
-    /// Returns the most resistant antibiotics from the current spreadsheet.
-    /// </summary>
-    /// <param name="requestedCount">How many antibiotics to return.</param>
-    /// <returns>The ranking, or an empty list when nothing has been uploaded.</returns>
-    public async Task<IReadOnlyList<AntibioticResistance>> GetTopResistantAsync(int requestedCount)
-    {
-        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
-
-        if (document is null)
-        {
-            return [];
-        }
-
-        IReadOnlyList<AntibioticResistance> ranking =
-            AntibioticRankingService.GetMostResistant(document, requestedCount);
-
-        return ranking;
-    }
-
-    /// <summary>
-    /// Returns the full ranking of every measured antibiotic from the current
+    /// Returns the most resistant antibiotics for ONE organism in the current
     /// spreadsheet.
     /// </summary>
-    /// <returns>The ranking, or an empty list when nothing has been uploaded.</returns>
-    public async Task<IReadOnlyList<AntibioticResistance>> GetFullRankingAsync()
+    /// <param name="organismName">The organism to rank against.</param>
+    /// <param name="requestedCount">How many antibiotics to return.</param>
+    /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
+    public async Task<IReadOnlyList<AntibioticResistance>> GetTopResistantWithinOrganismAsync(
+        string organismName,
+        int requestedCount)
     {
         SpreadsheetDocument? document = await GetCurrentDocumentAsync();
 
@@ -128,16 +112,22 @@ public sealed class SpreadsheetQueryService(
         }
 
         IReadOnlyList<AntibioticResistance> ranking =
-            AntibioticRankingService.RankByResistance(document);
+            AntibioticRankingService.GetMostResistantWithinOrganism(
+                document,
+                organismName,
+                requestedCount);
 
         return ranking;
     }
 
     /// <summary>
-    /// Returns the antibiotics that carry no measurement at all.
+    /// Returns the full ranking of every antibiotic for ONE organism in the
+    /// current spreadsheet.
     /// </summary>
-    /// <returns>The unmeasured antibiotic names, or an empty list when nothing has been uploaded.</returns>
-    public async Task<IReadOnlyList<string>> GetAntibioticsWithoutMeasurementsAsync()
+    /// <param name="organismName">The organism to rank against.</param>
+    /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
+    public async Task<IReadOnlyList<AntibioticResistance>> GetFullRankingWithinOrganismAsync(
+        string organismName)
     {
         SpreadsheetDocument? document = await GetCurrentDocumentAsync();
 
@@ -146,10 +136,50 @@ public sealed class SpreadsheetQueryService(
             return [];
         }
 
-        IReadOnlyList<string> unmeasuredNames =
-            AntibioticRankingService.GetAntibioticsWithoutMeasurements(document);
+        IReadOnlyList<AntibioticResistance> ranking =
+            AntibioticRankingService.RankWithinOrganism(document, organismName);
 
-        return unmeasuredNames;
+        return ranking;
+    }
+
+    /// <summary>
+    /// Resolves a typed organism name against the current spreadsheet.
+    /// </summary>
+    /// <param name="typedName">What the user typed or selected.</param>
+    /// <returns>
+    /// The resolution outcome. A not-found result is returned when nothing has
+    /// been uploaded, so a page can always render a single not-found path.
+    /// </returns>
+    public async Task<OrganismLookupResult> ResolveOrganismAsync(string? typedName)
+    {
+        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+
+        if (document is null)
+        {
+            return OrganismLookupResult.NotFound([]);
+        }
+
+        OrganismLookupResult lookupResult = OrganismResolver.Resolve(
+            document.OrganismNames,
+            typedName);
+
+        return lookupResult;
+    }
+
+    /// <summary>
+    /// Returns every organism in the current spreadsheet, for a picker.
+    /// </summary>
+    /// <returns>The organism names, or an empty list when nothing has been uploaded.</returns>
+    public async Task<IReadOnlyList<string>> GetOrganismNamesAsync()
+    {
+        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+
+        if (document is null)
+        {
+            return [];
+        }
+
+        return document.OrganismNames;
     }
 
     /// <summary>

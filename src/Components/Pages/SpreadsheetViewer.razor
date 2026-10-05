@@ -48,41 +48,138 @@ else
     </section>
 
     <section class="mb-4">
-        <label class="form-label" for="top-count">
-            How many of the most resistant antibiotics to show
+        <label class="form-label" for="organism-name">
+            Which organism are you treating?
         </label>
-        <input id="top-count"
-               type="number"
-               class="form-control"
-               style="max-width: 12rem;"
-               min="1"
-               max="@maximumTopCount"
-               value="@topCount"
-               @onchange="OnTopCountChangedAsync" />
-        <div class="form-text">
-            Between 1 and @maximumTopCount. Defaults to 3.
+        <p class="form-text">
+            The ranking is per organism: it lists what that one species is least
+            susceptible to, most resistant first. Drugs this report never tested
+            against the organism carry no percentage and are listed after the
+            measured ones. Type any part of the name — "aureus" finds every
+            Staphylococcus aureus — then choose it from the list.
+        </p>
+
+        <div class="organism-picker" style="max-width: 32rem;">
+            <div class="input-group">
+                <input id="organism-name"
+                       type="text"
+                       class="form-control"
+                       autocomplete="off"
+                       role="combobox"
+                       aria-expanded="@PickerIsOpen"
+                       aria-controls="organism-options"
+                       aria-autocomplete="list"
+                       placeholder="Start typing an organism name"
+                       value="@typedOrganismName"
+                       @oninput="OnTypedOrganismChanged"
+                       @onfocus="OnPickerFocused"
+                       @onkeydown="OnPickerKeyDown" />
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        title="Show the whole list"
+                        @onclick="OnTogglePickerAsync">
+                    ▾
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="OnShowRankingClickedAsync">
+                    Show ranking
+                </button>
+            </div>
+
+            @if (PickerIsOpen && suggestions.Count > 0)
+            {
+                <ul id="organism-options"
+                    class="organism-picker__list list-group"
+                    role="listbox">
+                    @foreach (string organismName in suggestions)
+                    {
+                        <li role="none">
+                            <button type="button"
+                                    role="option"
+                                    aria-selected="@IsHighlightedSuggestion(organismName)"
+                                    class="organism-picker__option list-group-item list-group-item-action @HighlightClass(organismName)"
+                                    @onmousedown:preventDefault
+                                    @onclick="() => OnSuggestionChosenAsync(organismName)">
+                                @organismName
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            else if (PickerIsOpen)
+            {
+                <ul id="organism-options" class="organism-picker__list list-group" role="listbox">
+                    <li class="list-group-item text-muted">
+                        No organism in this file matches "@typedOrganismName".
+                    </li>
+                </ul>
+            }
         </div>
-        @if (topCountError is not null)
+
+        <div class="form-text">
+            @suggestions.Count of @organismNames.Count organisms available.
+        </div>
+
+        @if (lookupMessage is not null)
         {
-            <div class="text-danger" role="alert">@topCountError</div>
+            <div class="alert alert-warning mt-3" role="alert">
+                @lookupMessage
+            </div>
+        }
+
+        @if (ambiguousCandidates.Count > 0)
+        {
+            <p>Several organisms match. Choose the one you meant:</p>
+            <ul>
+                @foreach (string candidate in ambiguousCandidates)
+                {
+                    <li>
+                        <button type="button"
+                                class="btn btn-link p-0"
+                                @onclick="() => OnCandidateChosenAsync(candidate)">
+                            @candidate
+                        </button>
+                    </li>
+                }
+            </ul>
         }
     </section>
 
-    <section class="mb-4">
-        <h2>Top @effectiveTopCount most resistant</h2>
-        @if (topResistant.Count == 0)
-        {
-            <p>No antibiotic in this file carries a measurement.</p>
-        }
-        else
-        {
+    @if (hasResolvedOrganism)
+    {
+        <section class="mb-4">
+            <label class="form-label" for="top-count">
+                How many of the most resistant antibiotics to show
+            </label>
+            <input id="top-count"
+                   type="number"
+                   class="form-control"
+                   style="max-width: 12rem;"
+                   min="1"
+                   max="@maximumTopCount"
+                   value="@topCount"
+                   @onchange="OnTopCountChangedAsync" />
+            <div class="form-text">
+                Between 1 and @maximumTopCount. Defaults to 3.
+            </div>
+            @if (topCountError is not null)
+            {
+                <div class="text-danger" role="alert">@topCountError</div>
+            }
+        </section>
+
+        <section class="mb-4">
+            <h2>
+                Top @effectiveTopCount most resistant for
+                <em>@resolvedOrganismName</em>
+            </h2>
             <table class="table">
                 <thead>
                     <tr>
                         <th scope="col">Rank</th>
                         <th scope="col">Antibiotic</th>
-                        <th scope="col">Mean % susceptible</th>
-                        <th scope="col">Measurements</th>
+                        <th scope="col">% susceptible</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,135 +197,12 @@ else
                                     SpreadsheetUploadId="currentUpload.Id"
                                     Abbreviation="@row.AntibioticName" />
                             </td>
-                            <td>@FormatSusceptibility(row.MeanPercentSusceptible)</td>
-                            <td>@row.MeasurementCount</td>
+                            <td>@row.Value.Format()</td>
                         </tr>
                     }
                 </tbody>
             </table>
-        }
-    </section>
-
-    <section>
-        <h2>Antibiotics with no data</h2>
-        @if (antibioticsWithoutMeasurements.Count == 0)
-        {
-            <p>Every antibiotic in this file has at least one measurement.</p>
-        }
-        else
-        {
-            <p>
-                These antibiotics carry no measurement at all, so no resistance
-                can be computed for them.
-            </p>
-            <ul>
-                @foreach (string antibioticName in antibioticsWithoutMeasurements)
-                {
-                    <li>
-                        <AntibioticNameDisplay
-                            SpreadsheetUploadId="currentUpload.Id"
-                            Abbreviation="@antibioticName" />
-                    </li>
-                }
-            </ul>
-        }
-    </section>
-}
-
-@code {
-    private const int DefaultTopCount = 3;
-
-    private SpreadsheetUpload? currentUpload;
-    private IReadOnlyList<AntibioticResistance> topResistant = [];
-    private IReadOnlyList<string> antibioticsWithoutMeasurements = [];
-    private int topCount = DefaultTopCount;
-    private int effectiveTopCount = DefaultTopCount;
-    private int maximumTopCount = 1;
-    private string? topCountError;
-    private bool isLoading = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadCurrentSpreadsheetAsync();
-    }
-
-    private async Task LoadCurrentSpreadsheetAsync()
-    {
-        isLoading = true;
-
-        currentUpload = await QueryService.GetCurrentUploadAsync();
-
-        if (currentUpload is null)
-        {
-            maximumTopCount = 1;
-            topResistant = [];
-            antibioticsWithoutMeasurements = [];
-            isLoading = false;
-            return;
-        }
-
-        maximumTopCount = Math.Max(currentUpload.AntibioticCount, 1);
-
-        effectiveTopCount = ClampTopCount(topCount);
-
-        topResistant = await QueryService.GetTopResistantAsync(effectiveTopCount);
-
-        antibioticsWithoutMeasurements =
-            await QueryService.GetAntibioticsWithoutMeasurementsAsync();
-
-        isLoading = false;
-    }
-
-    private async Task OnTopCountChangedAsync(ChangeEventArgs eventArgs)
-    {
-        topCountError = null;
-
-        string? rawValue = eventArgs.Value?.ToString();
-
-        if (string.IsNullOrWhiteSpace(rawValue))
-        {
-            topCountError = "Enter a whole number.";
-            return;
-        }
-
-        bool isNumber = int.TryParse(
-            rawValue,
-            System.Globalization.NumberStyles.Integer,
-            System.Globalization.CultureInfo.InvariantCulture,
-            out int requestedCount);
-
-        if (!isNumber)
-        {
-            topCountError = "Enter a whole number, for example 3.";
-            return;
-        }
-
-        topCount = ClampTopCount(requestedCount);
-
-        await LoadCurrentSpreadsheetAsync();
-    }
-
-    private int ClampTopCount(int requestedCount)
-    {
-        if (requestedCount < 1)
-        {
-            return 1;
-        }
-
-        if (requestedCount > maximumTopCount)
-        {
-            return maximumTopCount;
-        }
-
-        return requestedCount;
-    }
-
-    private static string FormatSusceptibility(double meanPercentSusceptible)
-    {
-        string formattedValue = meanPercentSusceptible.ToString(
-            "F2",
-            System.Globalization.CultureInfo.InvariantCulture);
-
-        return formattedValue;
+        </section>
     }
 }
+

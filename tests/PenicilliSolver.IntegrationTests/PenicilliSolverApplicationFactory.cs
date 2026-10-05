@@ -26,6 +26,22 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
     private readonly string databaseFilePath =
         Path.Combine(Path.GetTempPath(), $"penicillisolver-tests-{Guid.NewGuid():N}.db");
 
+    /// <summary>
+    /// A private storage directory for this test run.
+    /// </summary>
+    /// <remarks>
+    /// This MUST be redirected away from the application's own
+    /// <c>App_Data/spreadsheets</c>. The storage service resolves its directory
+    /// against the content root, and the test host's content root is the project
+    /// directory, so without this override every integration run writes
+    /// <c>current-spreadsheet.csv</c> over whatever the developer had actually
+    /// uploaded. That is not a test artifact, it is data loss: the rows in the
+    /// database keep describing the old file, and the app then serves the test
+    /// seed's placeholder organisms.
+    /// </remarks>
+    private readonly string storageDirectoryPath =
+        Path.Combine(Path.GetTempPath(), $"penicillisolver-tests-storage-{Guid.NewGuid():N}");
+
     private SqliteConnection? heldConnection;
 
     /// <inheritdoc />
@@ -34,6 +50,11 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.UseEnvironment(Environments.Development);
+
+        // Redirect spreadsheet storage before any service reads it.
+        builder.UseSetting(
+            "SpreadsheetStorage:Directory",
+            storageDirectoryPath);
 
         builder.ConfigureServices(services =>
         {
@@ -85,6 +106,7 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
         }
 
         TryDeleteDatabaseFiles();
+        TryDeleteStorageDirectory();
     }
 
     /// <inheritdoc />
@@ -92,6 +114,15 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         TryDeleteDatabaseFiles();
+        TryDeleteStorageDirectory();
+    }
+
+    private void TryDeleteStorageDirectory()
+    {
+        if (Directory.Exists(storageDirectoryPath))
+        {
+            Directory.Delete(storageDirectoryPath, recursive: true);
+        }
     }
 
     private void TryDeleteDatabaseFiles()

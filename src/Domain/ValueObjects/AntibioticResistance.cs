@@ -1,15 +1,25 @@
 namespace penicillisolver_v2.Domain.ValueObjects;
 
 /// <summary>
-/// One row of the resistance leaderboard: an antibiotic together with the mean
-/// susceptibility computed from every non-blank measurement recorded for it.
-/// The lower the mean, the more resistant the organisms are to the antibiotic,
-/// so the most resistant antibiotics sort first.
+/// One row of the resistance leaderboard: an antibiotic together with the
+/// susceptibility reading the file reported for ONE organism.
+/// <para>
+/// The lower the percentage, the more resistant that organism is to the
+/// antibiotic, so the most resistant antibiotics sort first. The reading is the
+/// single value reported for that organism, not a mean across organisms: the
+/// ranking is always scoped to one species.
+/// </para>
+/// <para>
+/// The reading may be <see cref="SusceptibilityValue.Untested"/>, which is what
+/// a file that never reported the drug against this organism yields. An
+/// untested row carries no percentage at all and therefore cannot be compared
+/// with a measured one; it can still be LISTED, so a reader who asks for more
+/// rows than the file has tested drugs gets the remaining drugs named rather
+/// than a table that silently stops short.
+/// </para>
 /// </summary>
 /// <param name="AntibioticName">The full display name of the antibiotic.</param>
-/// <param name="MeanPercentSusceptible">The arithmetic mean of all non-blank measurements for this antibiotic.</param>
-/// <param name="MeasurementCount">How many non-blank measurements the mean was computed from. Always at least one.</param>
+/// <param name="Value">The susceptibility reading for the selected organism, measured or untested.</param>
 public sealed record AntibioticResistance(
     string AntibioticName,
-    double MeanPercentSusceptible,
-    int MeasurementCount);
+    SusceptibilityValue Value);

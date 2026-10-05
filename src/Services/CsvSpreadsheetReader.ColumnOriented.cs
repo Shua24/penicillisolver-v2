@@ -101,10 +101,11 @@ public static partial class CsvSpreadsheetReader
         {
             string cellText = dataRow[columnIndex].Trim();
 
-            if (cellText.Length == 0)
-            {
-                continue;
-            }
+            // A blank cell is NOT skipped: every matrix cell becomes a
+            // measurement and a blank becomes an untested measurement (Q14
+            // revision). See the remarks on ParseSusceptibilityValue for why a
+            // missing value is now distinct from a measured zero, and why
+            // malformed text is still an error.
 
             int antibioticIndex = columnIndex - 1;
 
@@ -140,9 +141,20 @@ public static partial class CsvSpreadsheetReader
     /// Parses one cell value, appending a measurement when the value is valid.
     /// </summary>
     /// <remarks>
-    /// A blank cell is never passed here, because blank means untested rather
-    /// than zero. A value that is present but not a number, or that falls
-    /// outside 0 to 100, is an error rather than a silently dropped measurement.
+    /// A BLANK cell does produce a measurement, so every cell of the organism x
+    /// antibiotic matrix is represented (Q14), but that measurement is UNTESTED
+    /// rather than zero. The distinction matters clinically: a drug the file
+    /// never reported and a drug measured at zero percent susceptible are not
+    /// the same finding, and collapsing them made the leaderboard lead with
+    /// drugs nobody had tested. See <see cref="SusceptibilityValue"/> for how the
+    /// two cases are kept apart.
+    /// <para>
+    /// A value that is present but NOT a number, or that falls outside 0 to
+    /// 100, remains an error rather than being coerced to a missing value.
+    /// Silently turning malformed text into "not tested" would hide a corrupt
+    /// file behind a plausible-looking panel, which is the one outcome worse
+    /// than refusing the file.
+    /// </para>
     /// </remarks>
     private static SpreadsheetImportResult? ParseSusceptibilityValue(
         string cellText,
@@ -151,6 +163,18 @@ public static partial class CsvSpreadsheetReader
         string cellReference,
         List<SusceptibilityMeasurement> measurements)
     {
+        if (cellText.Length == 0)
+        {
+            SusceptibilityMeasurement untestedMeasurement = new SusceptibilityMeasurement(
+                antibioticName,
+                organismName,
+                SusceptibilityValue.Untested);
+
+            measurements.Add(untestedMeasurement);
+
+            return null;
+        }
+
         bool parsed = double.TryParse(
             cellText,
             NumberStyles.Float,
@@ -175,7 +199,7 @@ public static partial class CsvSpreadsheetReader
         SusceptibilityMeasurement measurement = new SusceptibilityMeasurement(
             antibioticName,
             organismName,
-            parsedValue);
+            SusceptibilityValue.Measured(parsedValue));
 
         measurements.Add(measurement);
 

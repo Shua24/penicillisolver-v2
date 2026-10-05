@@ -70,12 +70,15 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetTopResistantAsync_HonoursTheRequestedCount()
+    public async Task GetTopResistantWithinOrganismAsync_HonoursTheRequestedCount()
     {
         await StoreRealSampleAsync();
 
-        IReadOnlyList<AntibioticResistance> five = await queryService.GetTopResistantAsync(5);
-        IReadOnlyList<AntibioticResistance> two = await queryService.GetTopResistantAsync(2);
+        IReadOnlyList<AntibioticResistance> five =
+            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 5);
+
+        IReadOnlyList<AntibioticResistance> two =
+            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 2);
 
         Assert.Equal(5, five.Count);
         Assert.Equal(2, two.Count);
@@ -89,19 +92,74 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetTopResistantAsync_DefaultsToThreeWhenThePageAsksForThree()
+    public async Task GetTopResistantWithinOrganismAsync_LeadsWithTheMostResistantTestedAntibiotics()
     {
         await StoreRealSampleAsync();
 
-        // The viewer page's default is three, so asking for three must yield
-        // exactly three rows from the real sample.
-        IReadOnlyList<AntibioticResistance> three = await queryService.GetTopResistantAsync(3);
+        IReadOnlyList<AntibioticResistance> three =
+            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 3);
 
         Assert.Equal(3, three.Count);
 
         List<string> names = three.Select(resistance => resistance.AntibioticName).ToList();
 
-        Assert.Equal(["Cefetamet", "Cefixime", "Ceftibuten"], names);
+        // A blank cell is an UNTESTED reading, not a zero (Q14 revision), so the
+        // drugs nobody tested no longer lead. The real sample's most resistant
+        // tested drugs for this species are the ones measured at zero percent
+        // susceptible, ordered by name.
+        Assert.Equal(["Amoxicillin/Clavulanic acid", "Ampicillin", "Aztreonam"], names);
+
+        bool everyRowWasMeasured = three.All(resistance => resistance.Value.IsMeasured);
+
+        Assert.True(everyRowWasMeasured);
+    }
+
+    [Fact]
+    public async Task GetTopResistantWithinOrganismAsync_ReturnsNothingForAnUnknownOrganism()
+    {
+        await StoreRealSampleAsync();
+
+        IReadOnlyList<AntibioticResistance> ranking =
+            await queryService.GetTopResistantWithinOrganismAsync("Nothing like this", 3);
+
+        int rankedCount = ranking.Count;
+
+        Assert.Equal(0, rankedCount);
+    }
+
+    [Fact]
+    public async Task ResolveOrganismAsync_ResolvesAKnownName()
+    {
+        await StoreRealSampleAsync();
+
+        OrganismLookupResult lookupResult =
+            await queryService.ResolveOrganismAsync("Candida albicans");
+
+        Assert.Equal(OrganismLookupOutcome.Resolved, lookupResult.Outcome);
+        Assert.Equal("Candida albicans", lookupResult.OrganismName);
+    }
+
+    [Fact]
+    public async Task ResolveOrganismAsync_ReportsNotFoundForAMisspelling()
+    {
+        await StoreRealSampleAsync();
+
+        OrganismLookupResult lookupResult =
+            await queryService.ResolveOrganismAsync("Kandidia albikans");
+
+        Assert.Equal(OrganismLookupOutcome.NotFound, lookupResult.Outcome);
+        Assert.Null(lookupResult.OrganismName);
+    }
+
+    [Fact]
+    public async Task GetOrganismNamesAsync_ListsTheOrganismsInTheFile()
+    {
+        await StoreRealSampleAsync();
+
+        IReadOnlyList<string> organismNames = await queryService.GetOrganismNamesAsync();
+
+        Assert.NotEmpty(organismNames);
+        Assert.Contains("Candida albicans", organismNames);
     }
 
     [Fact]

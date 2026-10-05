@@ -24,6 +24,12 @@
     different drug in a different file.
 </p>
 
+<p>
+    A file that already spells its antibiotics out in full needs no mapping at
+    all, and this page will say so rather than asking for work that is not
+    required.
+</p>
+
 @if (isLoading)
 {
     <p><em>Loading the current spreadsheet &hellip;</em></p>
@@ -51,7 +57,17 @@ else
         with @mappings.Count mapped.
     </p>
 
-    @if (canManageMappings)
+    @if (mappingIsNotApplicable)
+    {
+        <div class="alert alert-info" role="alert">
+            <strong>No mapping is needed for this file.</strong>
+            Every antibiotic in it is already listed under its full name, so
+            there is no abbreviation for a pathologist to interpret. This page
+            only has work to do when a file names its antibiotics in short form,
+            such as <code>AMK %S</code>.
+        </div>
+    }
+    else if (canManageMappings)
     {
         <section aria-label="Add a mapping">
             <h2>Add a mapping</h2>

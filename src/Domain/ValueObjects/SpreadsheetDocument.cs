@@ -18,7 +18,7 @@ public sealed class SpreadsheetDocument
     /// <param name="orientation">The layout that was detected in the source file.</param>
     /// <param name="organismNames">Every organism present, in source order.</param>
     /// <param name="antibioticNames">Every antibiotic present, in source order.</param>
-    /// <param name="measurements">Every non-blank measurement, in source order.</param>
+    /// <param name="measurements">Every measurement for the matrix, including untested cells.</param>
     public SpreadsheetDocument(
         string originalFileName,
         SpreadsheetFileFormat fileFormat,
@@ -50,6 +50,9 @@ public sealed class SpreadsheetDocument
     /// <summary>Every antibiotic present, in source order.</summary>
     public IReadOnlyList<string> AntibioticNames { get; }
 
-    /// <summary>Every non-blank measurement, in source order. Blank cells contribute nothing.</summary>
+    /// <summary>
+    /// One measurement per cell of the matrix, in source order. A blank cell
+    /// contributes an untested measurement rather than being omitted.
+    /// </summary>
     public IReadOnlyList<SusceptibilityMeasurement> Measurements { get; }
 }

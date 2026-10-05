@@ -35,6 +35,20 @@ public partial class AntibioticMapping
     private string editingFullName = string.Empty;
     private AntibioticAbbreviation? pendingDelete;
 
+    /// <summary>
+    /// True when the current file uses complete antibiotic names, so there is
+    /// nothing for a pathologist to interpret.
+    /// </summary>
+    /// <remarks>
+    /// The csv sample is the motivating case: it lists "Amoxicillin" and
+    /// "Amoxicillin/Clavulanic acid" outright. Offering to map those would ask
+    /// the user to re-enter a name the file already spells out, so the whole
+    /// workflow is withheld and the page explains why instead.
+    /// </remarks>
+    private bool mappingIsNotApplicable =>
+        currentDocument is not null
+        && AntibioticNameClassifier.NeedsNoMapping(currentDocument.AntibioticNames);
+
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
     {

@@ -1,9 +1,10 @@
+@using penicillisolver_v2.Domain.ValueObjects
 @using penicillisolver_v2.Services
 @inject AntibioticAbbreviationService AbbreviationService
 
 @*
-    Renders one antibiotic abbreviation together with the full name the
-    pathologists mapped it to, for a SPECIFIC upload.
+    Renders one antibiotic name together with the full name the pathologists
+    mapped it to, for a SPECIFIC upload.
 
     Usage:
         <AntibioticNameDisplay SpreadsheetUploadId="upload.Id" Abbreviation="@antibiotic" />
@@ -11,11 +12,26 @@
     The component is self-contained: it injects only the abbreviation service and
     takes the upload identity as a parameter, so it can be dropped into the
     viewer and upload pages without either page knowing how mappings are stored.
-    When no mapping exists for that (upload, abbreviation) pair the abbreviation
-    is shown alone with a muted "unmapped" marker.
+
+    THREE outcomes are possible, and the third is the one that matters:
+
+      - The name is already complete ("Amoxicillin"). It is rendered as-is with
+        NO marker, because nothing is missing. Marking it "unmapped" would tell a
+        reader that a decision is outstanding when the file has already given the
+        answer.
+      - The name is an abbreviation ("AMK %S") and a mapping exists. The meaning
+        is shown beside it.
+      - The name is an abbreviation and no mapping exists. It is shown with a
+        muted "unmapped" marker, because a decision genuinely is outstanding.
 *@
 
-@if (resolvedFullName is null)
+@if (IsCompleteName)
+{
+    <span class="antibiotic-name">
+        <span class="antibiotic-name__abbreviation">@Abbreviation</span>
+    </span>
+}
+else if (resolvedFullName is null)
 {
     <span class="antibiotic-name antibiotic-name--unmapped">
         <span class="antibiotic-name__abbreviation">@Abbreviation</span>
@@ -43,9 +59,23 @@ else
 
     private string? resolvedFullName;
 
+    /// <summary>
+    /// True when the name is a complete antibiotic name rather than an
+    /// abbreviation, so no mapping applies to it.
+    /// </summary>
+    private bool IsCompleteName => !AntibioticNameClassifier.IsAbbreviation(Abbreviation);
+
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
+        // A complete name is never looked up: there is nothing to resolve, and
+        // querying would make an already-answered name look like a missing one.
+        if (IsCompleteName)
+        {
+            resolvedFullName = null;
+            return;
+        }
+
         resolvedFullName = await AbbreviationService.ResolveDisplayNameAsync(
             SpreadsheetUploadId,
             Abbreviation);

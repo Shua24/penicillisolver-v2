@@ -119,10 +119,11 @@ public static partial class XlsxSpreadsheetReader
 
             string cellText = ReadCellText(worksheet, rowIndex, columnIndex);
 
-            if (cellText.Length == 0)
-            {
-                continue;
-            }
+            // A blank cell is NOT skipped: every matrix cell becomes a
+            // measurement and a blank becomes an untested measurement (Q14
+            // revision). See the remarks on ParseSusceptibilityValue for why a
+            // missing value is now distinct from a measured zero, and why
+            // malformed text is still an error.
 
             string antibioticName = antibioticNames[antibioticPosition];
 

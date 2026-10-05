@@ -145,10 +145,12 @@ public static partial class CsvSpreadsheetReader
         {
             string cellText = dataRow[columnIndex].Trim();
 
-            if (cellText.Length == 0)
-            {
-                continue;
-            }
+            // A blank cell is NOT skipped: the settled rule (Q14) is that every
+            // cell of the matrix becomes a measurement, and a blank becomes 0.
+            // ParseSusceptibilityValue turns the empty string into an untested
+            // measurement (Q14 revision); the malformed-text error path below is
+            // untouched, so non-numeric text is still an import failure rather
+            // than a missing value.
 
             int organismIndex = columnIndex - 1;
 
