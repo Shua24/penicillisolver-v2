@@ -52,6 +52,29 @@
             <dd class="col-sm-9">@currentUpload.AntibioticCount</dd>
         </dl>
     </section>
+
+    @if (antibioticNames.Count > 0)
+    {
+        <section class="mb-4">
+            <h2>Antibiotics in this file</h2>
+            <p>
+                Each abbreviation is shown with the meaning a pathologist has
+                mapped for it. An abbreviation marked
+                <em>(unmapped)</em> has no meaning yet — add one on the
+                <a href="/antibiotic-mappings">abbreviation mappings</a> page.
+            </p>
+            <ul>
+                @foreach (string antibioticName in antibioticNames)
+                {
+                    <li>
+                        <AntibioticNameDisplay
+                            SpreadsheetUploadId="currentUpload.Id"
+                            Abbreviation="@antibioticName" />
+                    </li>
+                }
+            </ul>
+        </section>
+    }
 }
 else
 {
@@ -99,6 +122,7 @@ else
 
 @code {
     private SpreadsheetUpload? currentUpload;
+    private IReadOnlyList<string> antibioticNames = [];
     private IBrowserFile? selectedFile;
     private string? selectedFileName;
     private string? statusMessage;
@@ -109,6 +133,26 @@ else
     protected override async Task OnInitializedAsync()
     {
         currentUpload = await QueryService.GetCurrentUploadAsync();
+
+        await LoadAntibioticNamesAsync();
+    }
+
+    /// <summary>
+    /// Reads the antibiotic names from the current document so the page can show
+    /// each one with its mapped meaning.
+    /// </summary>
+    private async Task LoadAntibioticNamesAsync()
+    {
+        SpreadsheetDocument? document = await QueryService.GetCurrentDocumentAsync();
+
+        if (document is null)
+        {
+            antibioticNames = [];
+
+            return;
+        }
+
+        antibioticNames = document.AntibioticNames;
     }
 
     private async Task OnFileSelectedAsync(InputFileChangeEventArgs eventArgs)
@@ -186,6 +230,7 @@ else
             if (uploadResult.IsSuccess)
             {
                 currentUpload = await QueryService.GetCurrentUploadAsync();
+                await LoadAntibioticNamesAsync();
                 selectedFile = null;
                 selectedFileName = null;
             }

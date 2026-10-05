@@ -58,3 +58,23 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ==========================================================================
+   PROJECT OVERRIDES
+   --------------------------------------------------------------------------
+   Everything above this line is the stock Blazor template stylesheet. Leave
+   it alone: it is what Bootstrap expects to sit on top of, and it is the part
+   that would be replaced wholesale if the template is ever regenerated.
+
+   Put every PenicilliSolver customization BELOW this banner. This file is
+   linked in Components/App.razor AFTER bootstrap.min.css, so a rule written
+   here wins any clash with a Bootstrap class at equal specificity. To beat a
+   Bootstrap style that is more specific (for example .btn-primary:focus),
+   match its selector here rather than reaching for !important.
+
+   The per-component stylesheets in razor.css are a different
+   thing: they are CSS-isolated, so they only ever apply inside their own
+   component, and they are the right place for styles that belong to one page.
+   This file is for anything site-wide: colours, spacing, typography, and the
+   overrides that make the shared Bootstrap look like this application.
+   ========================================================================== */

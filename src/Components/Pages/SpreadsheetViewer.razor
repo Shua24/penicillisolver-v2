@@ -80,8 +80,6 @@ else
                 <thead>
                     <tr>
                         <th scope="col">Rank</th>
-                        @* An abbreviation "meaning" column will slot in here,
-                           beside the name, once the mapping feature lands. *@
                         <th scope="col">Antibiotic</th>
                         <th scope="col">Mean % susceptible</th>
                         <th scope="col">Measurements</th>
@@ -94,7 +92,14 @@ else
                         AntibioticResistance row = topResistant[index];
                         <tr>
                             <td>@rank</td>
-                            <td>@row.AntibioticName</td>
+                            <td>
+                                @* Requirement 8: show what the abbreviation means
+                                   beside it, so an unmapped "CRO %S" is visibly
+                                   unmapped rather than silently cryptic. *@
+                                <AntibioticNameDisplay
+                                    SpreadsheetUploadId="currentUpload.Id"
+                                    Abbreviation="@row.AntibioticName" />
+                            </td>
                             <td>@FormatSusceptibility(row.MeanPercentSusceptible)</td>
                             <td>@row.MeasurementCount</td>
                         </tr>
@@ -119,7 +124,11 @@ else
             <ul>
                 @foreach (string antibioticName in antibioticsWithoutMeasurements)
                 {
-                    <li>@antibioticName</li>
+                    <li>
+                        <AntibioticNameDisplay
+                            SpreadsheetUploadId="currentUpload.Id"
+                            Abbreviation="@antibioticName" />
+                    </li>
                 }
             </ul>
         }

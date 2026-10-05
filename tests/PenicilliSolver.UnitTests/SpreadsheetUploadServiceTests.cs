@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
 using penicillisolver_v2.Data;
+using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Services;
 using Xunit;
@@ -14,8 +15,10 @@ namespace PenicilliSolver.UnitTests;
 /// Checks the accept-one-upload workflow against a real temporary storage
 /// directory and an in-memory database. The behaviour that matters most is that
 /// a rejected upload leaves whatever was already stored exactly as it was.
+/// The replacement and copy-forward cases live in the partial in
+/// <c>SpreadsheetUploadServiceTests.Replacement.cs</c>.
 /// </summary>
-public sealed class SpreadsheetUploadServiceTests : IDisposable
+public sealed partial class SpreadsheetUploadServiceTests : IDisposable
 {
     private readonly string contentRootPath;
     private readonly ApplicationDbContext database;
@@ -44,7 +47,15 @@ public sealed class SpreadsheetUploadServiceTests : IDisposable
 
         storageService = new SpreadsheetStorageService(environment, configuration);
 
-        uploadService = new SpreadsheetUploadService(database, storageService, configuration);
+        AntibioticAbbreviationService abbreviationService = new(
+            database,
+            new StubAuthorizationService());
+
+        uploadService = new SpreadsheetUploadService(
+            database,
+            storageService,
+            abbreviationService,
+            configuration);
     }
 
     /// <inheritdoc />
@@ -142,38 +153,6 @@ public sealed class SpreadsheetUploadServiceTests : IDisposable
         int storedFileCount = Directory.GetFiles(storageService.StorageDirectoryPath).Length;
 
         Assert.Equal(1, storedFileCount);
-    }
-
-    [Fact]
-    public async Task AcceptingASecondUpload_ReplacesTheSingleRowRatherThanAccumulating()
-    {
-        byte[] firstBytes = System.Text.Encoding.UTF8.GetBytes(
-            "Organism,Organism one\nAmoxicillin,90\n");
-
-        using (MemoryStream firstContent = new(firstBytes))
-        {
-            await uploadService.AcceptUploadAsync(firstContent, "first.csv", "pathologist-user-id");
-        }
-
-        byte[] secondBytes = System.Text.Encoding.UTF8.GetBytes(
-            "Organism,Organism one\nCefixime,10\n");
-
-        using (MemoryStream secondContent = new(secondBytes))
-        {
-            SpreadsheetUploadResult secondResult = await uploadService.AcceptUploadAsync(
-                secondContent,
-                "second.csv",
-                "pathologist-user-id");
-
-            Assert.True(secondResult.IsSuccess, secondResult.Message);
-        }
-
-        // There is only ever one current upload, so the row count stays at one.
-        Assert.Equal(1, database.SpreadsheetUploads.Count());
-
-        string storedFileName = database.SpreadsheetUploads.Single().OriginalFileName;
-
-        Assert.Equal("second.csv", storedFileName);
     }
 
     /// <summary>

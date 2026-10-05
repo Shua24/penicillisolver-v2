@@ -34,12 +34,18 @@ public sealed class SpreadsheetQueryService(
     /// Returns the current upload's metadata row, or null when nothing has been
     /// uploaded.
     /// </summary>
-    /// <returns>The single current upload row, or null.</returns>
+    /// <remarks>
+    /// Replacement appends a row rather than updating one in place, so the
+    /// current spreadsheet is the NEWEST row. Mapping rows hang off a specific
+    /// upload, and reusing an identifier across a replacement would carry the
+    /// previous file's mappings onto a different file.
+    /// </remarks>
+    /// <returns>The newest upload row, or null.</returns>
     public async Task<SpreadsheetUpload?> GetCurrentUploadAsync()
     {
         SpreadsheetUpload? currentUpload = await database.SpreadsheetUploads
             .AsNoTracking()
-            .OrderBy(upload => upload.Id)
+            .OrderByDescending(upload => upload.Id)
             .FirstOrDefaultAsync();
 
         return currentUpload;

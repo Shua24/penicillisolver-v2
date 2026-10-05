@@ -13,13 +13,25 @@ using penicillisolver_v2.Domain.ValueObjects;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>History vs. single row.</b> This implementation keeps exactly one
-/// <see cref="SpreadsheetUpload"/> row. Requirement 5 says an accepted upload
-/// replaces the current reference file, so the row is updated in place rather
-/// than appended to: the table's job is "what is the current spreadsheet", not
-/// "what has ever been uploaded". Keeping one row means the query service never
-/// has to decide which of several rows is current, and it keeps the
-/// <c>SpreadsheetUploads</c> table's meaning identical to the file on disk.
+/// <b>History, not a single overwritten row.</b> Requirement 5 says an
+/// accepted upload replaces the current reference file. That replacement is
+/// recorded as a NEW row, and the previous row is left in place as history.
+/// There are two reasons the row is appended rather than updated in place.
+/// </para>
+/// <para>
+/// First, an abbreviation mapping belongs to a specific upload (see
+/// <see cref="Domain.Entities.AntibioticAbbreviation"/>), because the same
+/// abbreviation can mean different drugs in different files. If a
+/// replacement reused the previous row's identifier, the previous file's
+/// mappings would silently carry over onto a new file and render the wrong
+/// drug names. Appending gives the new file its own mapping set, seeded by
+/// an explicit copy forward, while the old rows stay attached to the file
+/// they actually describe.
+/// </para>
+/// <para>
+/// Second, the file on disk is still a single canonical file: replacement
+/// overwrites it, exactly as requirement 5 asks. Only the metadata is
+/// append-only, and "the current spreadsheet" is the newest row.
 /// </para>
 /// <para>
 /// <b>Failed uploads must not destroy a working spreadsheet.</b> The incoming
@@ -34,6 +46,7 @@ using penicillisolver_v2.Domain.ValueObjects;
 public sealed class SpreadsheetUploadService(
     ApplicationDbContext database,
     SpreadsheetStorageService storageService,
+    AntibioticAbbreviationService abbreviationService,
     IConfiguration configuration)
 {
     /// <summary>The configuration key holding the maximum accepted file size in bytes.</summary>
@@ -112,7 +125,7 @@ public sealed class SpreadsheetUploadService(
         // gone and the new one is in its place.
         storageService.PromoteStagedFile(stagingResult.StoredFilePath, fileFormat);
 
-        SpreadsheetUpload uploadRow = await UpsertCurrentUploadAsync(
+        SpreadsheetUpload uploadRow = await CreateCurrentUploadAsync(
             originalFileName,
             fileFormat,
             document,
@@ -147,44 +160,61 @@ public sealed class SpreadsheetUploadService(
     }
 
     /// <summary>
-    /// Updates the single current upload row, or inserts one when none exists.
+    /// Appends a new current upload row, carrying the previous file's
+    /// abbreviation mappings forward onto it.
     /// </summary>
-    private async Task<SpreadsheetUpload> UpsertCurrentUploadAsync(
+    /// <remarks>
+    /// The previous row is left untouched so its mappings keep describing the
+    /// file they were written for. The copy forward seeds the new row with those
+    /// mappings by exact abbreviation match, so an abbreviation that appeared in
+    /// both files keeps its meaning and only genuinely new abbreviations arrive
+    /// unmapped.
+    /// </remarks>
+    private async Task<SpreadsheetUpload> CreateCurrentUploadAsync(
         string originalFileName,
         SpreadsheetFileFormat fileFormat,
         SpreadsheetDocument document,
         SpreadsheetStorageResult stagingResult,
         string uploadedByUserId)
     {
-        SpreadsheetUpload? existingUpload = await database.SpreadsheetUploads
-            .OrderBy(upload => upload.Id)
-            .FirstOrDefaultAsync();
+        SpreadsheetUpload? previousUpload = await FindCurrentUploadAsync();
 
-        SpreadsheetUpload uploadRow;
-
-        if (existingUpload is null)
+        SpreadsheetUpload uploadRow = new()
         {
-            uploadRow = new SpreadsheetUpload();
-            database.SpreadsheetUploads.Add(uploadRow);
-        }
-        else
-        {
-            uploadRow = existingUpload;
-        }
+            OriginalFileName = originalFileName,
+            StoredFilePath = stagingResult.RelativeStoredFilePath,
+            ContentHash = stagingResult.ContentHash,
+            UploadedAtUtc = DateTimeOffset.UtcNow,
+            UploadedByUserId = uploadedByUserId,
+            FileFormat = fileFormat,
+            Orientation = document.Orientation,
+            OrganismCount = document.OrganismNames.Count,
+            AntibioticCount = document.AntibioticNames.Count,
+        };
 
-        uploadRow.OriginalFileName = originalFileName;
-        uploadRow.StoredFilePath = stagingResult.RelativeStoredFilePath;
-        uploadRow.ContentHash = stagingResult.ContentHash;
-        uploadRow.UploadedAtUtc = DateTimeOffset.UtcNow;
-        uploadRow.UploadedByUserId = uploadedByUserId;
-        uploadRow.FileFormat = fileFormat;
-        uploadRow.Orientation = document.Orientation;
-        uploadRow.OrganismCount = document.OrganismNames.Count;
-        uploadRow.AntibioticCount = document.AntibioticNames.Count;
-
+        database.SpreadsheetUploads.Add(uploadRow);
         await database.SaveChangesAsync();
 
+        if (previousUpload is not null)
+        {
+            await abbreviationService.CarryMappingsToNewUploadAsync(
+                previousUpload.Id,
+                uploadRow.Id);
+        }
+
         return uploadRow;
+    }
+
+    /// <summary>
+    /// Reads the newest upload row, which is the current spreadsheet.
+    /// </summary>
+    private async Task<SpreadsheetUpload?> FindCurrentUploadAsync()
+    {
+        SpreadsheetUpload? currentUpload = await database.SpreadsheetUploads
+            .OrderByDescending(upload => upload.Id)
+            .FirstOrDefaultAsync();
+
+        return currentUpload;
     }
 
     /// <summary>

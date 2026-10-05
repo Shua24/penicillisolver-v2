@@ -13,13 +13,33 @@
     [Parameter]
     public string? Message { get; set; }
 
+    /// <summary>
+    /// The current HTTP context, when there is one.
+    /// </summary>
+    /// <remarks>
+    /// This is NULL inside an interactive Blazor circuit. A component rendered
+    /// with <c>@rendermode InteractiveServer</c> (the upload page, for example)
+    /// has no HTTP request behind it, so the framework cascades nothing and the
+    /// parameter stays null. Treating it as always-present throws a
+    /// NullReferenceException the moment such a component renders. The cookie
+    /// fallback below is therefore only read when a real request exists.
+    /// </remarks>
     [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private HttpContext? HttpContext { get; set; }
 
     private string? DisplayMessage => Message ?? messageFromCookie;
 
+    /// <inheritdoc />
     protected override void OnInitialized()
     {
+        // A page that passes Message explicitly (the upload page) needs no
+        // cookie lookup at all, and a null context means there is no cookie
+        // jar to read from. Both cases skip the read rather than dereferencing.
+        if (Message is not null || HttpContext is null)
+        {
+            return;
+        }
+
         messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
         if (messageFromCookie is not null)

@@ -15,23 +15,16 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
         <AuthorizeView Policy="@AuthorizationPolicyNames.CanReadSpreadsheet">
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="spreadsheet-viewer">
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Resistance ranking
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="antibiotic-mappings">
+                        <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span> Abbreviation mappings
                     </NavLink>
                 </div>
             </Authorized>

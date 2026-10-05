@@ -105,12 +105,6 @@ public sealed class AntibioticMappingWriteAccessTests
                 or HttpStatusCode.OK,
             $"Unexpected login status {response.StatusCode}.");
 
-        string loginBody = await response.Content.ReadAsStringAsync();
-        string location = response.Headers.Location?.ToString() ?? "(none)";
-        string diagnostics = $"status={response.StatusCode} location={location} " +
-            $"invalidLogin={loginBody.Contains("Invalid login attempt", StringComparison.OrdinalIgnoreCase)}";
-        await File.AppendAllTextAsync("/tmp/login-diag.txt", diagnostics + Environment.NewLine);
-
         return client;
     }
 

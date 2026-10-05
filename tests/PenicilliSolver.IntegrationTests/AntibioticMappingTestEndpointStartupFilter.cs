@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication;
@@ -6,8 +5,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.EntityFrameworkCore;
@@ -91,13 +88,6 @@ public sealed class AntibioticMappingTestEndpointStartupFilter : IStartupFilter
             context.User,
             document);
 
-        string claimDump = string.Join(
-            ",",
-            context.User.Claims.Select(claim => $"{claim.Type}={claim.Value}"));
-        await File.AppendAllTextAsync(
-            "/tmp/endpoint-diag.txt",
-            $"result={result.Succeeded} claims={claimDump}{Environment.NewLine}");
-
         context.Response.StatusCode = result.Succeeded
             ? StatusCodes.Status200OK
             : StatusCodes.Status403Forbidden;
@@ -110,9 +100,12 @@ public sealed class AntibioticMappingTestEndpointStartupFilter : IStartupFilter
         ApplicationDbContext database =
             context.RequestServices.GetRequiredService<ApplicationDbContext>();
 
+        // The current upload is the NEWEST row: replacement appends a row rather
+        // than updating one in place, so mapping rows stay attached to the file
+        // they were written for.
         SpreadsheetUpload? currentUpload = await database.SpreadsheetUploads
             .AsNoTracking()
-            .OrderBy(upload => upload.Id)
+            .OrderByDescending(upload => upload.Id)
             .FirstOrDefaultAsync();
 
         return currentUpload;

@@ -1,7 +1,94 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using penicillisolver_v2.Domain.Constants
 
-<PageTitle>Home</PageTitle>
+<PageTitle>PenicilliSolver</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>PenicilliSolver</h1>
 
-Welcome to your new app.
+<p>
+    Antimicrobial resistance data for the laboratory, shared from one reference
+    spreadsheet. Every reader sees the same file.
+</p>
+
+<AuthorizeView Context="signedInState">
+    <NotAuthorized>
+        <section class="mb-4">
+            <h2>Sign in to continue</h2>
+            <p>
+                This application is restricted to laboratory and clinical staff.
+                Accounts are created by registration and activated by a clinical
+                pathologist before they can read anything.
+            </p>
+            <p>
+                <a class="btn btn-primary" href="Account/Login">Log in</a>
+                <a class="btn btn-secondary" href="Account/Register">Register</a>
+            </p>
+        </section>
+    </NotAuthorized>
+
+    <Authorized>
+        @* A pending account can sign in but holds no permissions, so it reaches
+           no other page. Say so here rather than leaving a signed-in user on a
+           blank home screen wondering why every link is missing. *@
+        <AuthorizeView Policy="@AuthorizationPolicyNames.CanReadSpreadsheet" Context="readState">
+            <Authorized>
+                <section class="mb-4">
+                    <h2>Where to go</h2>
+                    <dl class="row">
+                        <dt class="col-sm-3">Resistance ranking</dt>
+                        <dd class="col-sm-9">
+                            The most resistant antibiotics in the current
+                            spreadsheet. Defaults to the top 3, adjustable to any
+                            count. <a href="spreadsheet-viewer">Open the ranking</a>
+                        </dd>
+
+                        <dt class="col-sm-3">Abbreviation mappings</dt>
+                        <dd class="col-sm-9">
+                            What each antibiotic abbreviation stands for. These
+                            are entered by hand, one file at a time, because the
+                            same abbreviation can mean different drugs in
+                            different files.
+                            <a href="antibiotic-mappings">Open the mappings</a>
+                        </dd>
+
+                        <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageSpreadsheet" Context="manageSpreadsheetState">
+                            <Authorized>
+                                <dt class="col-sm-3">Upload spreadsheet</dt>
+                                <dd class="col-sm-9">
+                                    Replace the single reference spreadsheet for
+                                    everyone. <a href="upload">Open the upload page</a>
+                                </dd>
+                            </Authorized>
+                        </AuthorizeView>
+
+                        <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageUserRoles" Context="manageRolesState">
+                            <Authorized>
+                                <dt class="col-sm-3">User and team settings</dt>
+                                <dd class="col-sm-9">
+                                    Activate registered accounts, assign roles, and
+                                    grant the infectious disease control team its
+                                    update and delete permissions.
+                                    <a href="settings/user-roles">Open the settings</a>
+                                </dd>
+                            </Authorized>
+                        </AuthorizeView>
+                    </dl>
+                </section>
+            </Authorized>
+
+            <NotAuthorized>
+                <section class="mb-4">
+                    <h2>Awaiting activation</h2>
+                    <p>
+                        Your account is registered but has not been activated yet.
+                        A clinical pathologist has to assign it a role before you
+                        can read the spreadsheet. Nothing is wrong with your
+                        sign-in: this is the deliberate gate that keeps
+                        registration from granting access on its own.
+                    </p>
+                </section>
+            </NotAuthorized>
+        </AuthorizeView>
+    </Authorized>
+</AuthorizeView>

@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
-using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Constants;
 using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Enums;
@@ -12,58 +7,14 @@ using Xunit;
 namespace PenicilliSolver.UnitTests;
 
 /// <summary>
-/// Checks the last-active-pathologist guard on
-/// <see cref="UserAdministrationService"/>. The guard is the only thing standing
-/// between a mis-click and a permanently locked-out application, so it is
-/// exercised against a real <see cref="UserManager{TUser}"/> over an in-memory
-/// database rather than a stub.
+/// Checks the last-active-pathologist guard and the other administration
+/// guards on <see cref="UserAdministrationService"/>. The guard is the only
+/// thing standing between a mis-click and a permanently locked-out
+/// application, so it is exercised against a real
+/// <see cref="Microsoft.AspNetCore.Identity.UserManager{TUser}"/>.
 /// </summary>
-public sealed class UserAdministrationServiceTests : IAsyncLifetime
+public sealed class UserAdministrationServiceTests : UserAdministrationTestFixture
 {
-    private ServiceProvider serviceProvider = null!;
-    private ApplicationDbContext database = null!;
-    private UserManager<ApplicationUser> userManager = null!;
-    private UserAdministrationService administrationService = null!;
-
-    /// <inheritdoc />
-    public async Task InitializeAsync()
-    {
-        string databaseName = $"user-administration-{Guid.NewGuid():N}";
-
-        ServiceCollection services = new();
-
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseInMemoryDatabase(databaseName));
-
-        services.AddIdentityCore<ApplicationUser>(options =>
-            {
-                options.SignIn.RequireConfirmedAccount = false;
-                options.Password.RequireDigit = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 1;
-            })
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
-
-        serviceProvider = services.BuildServiceProvider();
-
-        database = serviceProvider.GetRequiredService<ApplicationDbContext>();
-
-        userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        administrationService = new UserAdministrationService(database, userManager);
-
-        await SeedRolesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task DisposeAsync()
-    {
-        await serviceProvider.DisposeAsync();
-    }
-
     [Fact]
     public async Task Cannot_demote_the_last_active_pathologist()
     {
@@ -71,7 +22,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "sole.pathologist@example.test",
             AccountStatus.Active);
 
-        AdministrationResult result = await administrationService.SetRoleAsync(
+        AdministrationResult result = await AdministrationService.SetRoleAsync(
             actingPathologist.Id,
             actingPathologist.Id,
             ApplicationRoleNames.OtherDoctor);
@@ -79,7 +30,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
         Assert.False(result.IsSuccess);
 
         // The role must be unchanged: the refusal happens before any write.
-        bool stillPathologist = await userManager.IsInRoleAsync(
+        bool stillPathologist = await UserManager.IsInRoleAsync(
             actingPathologist,
             ApplicationRoleNames.ClinicalPathologist);
 
@@ -93,14 +44,14 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "sole.pathologist@example.test",
             AccountStatus.Active);
 
-        AdministrationResult result = await administrationService.SetAccountStatusAsync(
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
             actingPathologist.Id,
             actingPathologist.Id,
             AccountStatus.Disabled);
 
         Assert.False(result.IsSuccess);
 
-        ApplicationUser survivor = await userManager.FindByIdAsync(actingPathologist.Id)
+        ApplicationUser survivor = await UserManager.FindByIdAsync(actingPathologist.Id)
             ?? throw new InvalidOperationException("The account disappeared.");
 
         Assert.Equal(AccountStatus.Active, survivor.AccountStatus);
@@ -117,20 +68,20 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "second.pathologist@example.test",
             AccountStatus.Active);
 
-        AdministrationResult result = await administrationService.SetRoleAsync(
+        AdministrationResult result = await AdministrationService.SetRoleAsync(
             actingPathologist.Id,
             secondPathologist.Id,
             ApplicationRoleNames.OtherDoctor);
 
         Assert.True(result.IsSuccess);
 
-        bool stillPathologist = await userManager.IsInRoleAsync(
+        bool stillPathologist = await UserManager.IsInRoleAsync(
             secondPathologist,
             ApplicationRoleNames.ClinicalPathologist);
 
         Assert.False(stillPathologist);
 
-        bool nowOtherDoctor = await userManager.IsInRoleAsync(
+        bool nowOtherDoctor = await UserManager.IsInRoleAsync(
             secondPathologist,
             ApplicationRoleNames.OtherDoctor);
 
@@ -148,7 +99,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "second.pathologist@example.test",
             AccountStatus.Active);
 
-        AdministrationResult result = await administrationService.SetAccountStatusAsync(
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
             actingPathologist.Id,
             secondPathologist.Id,
             AccountStatus.Disabled);
@@ -156,7 +107,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
         Assert.True(result.IsSuccess);
 
         ApplicationUser disabledSurvivor =
-            await userManager.FindByIdAsync(secondPathologist.Id)
+            await UserManager.FindByIdAsync(secondPathologist.Id)
                 ?? throw new InvalidOperationException("The account disappeared.");
 
         Assert.Equal(AccountStatus.Disabled, disabledSurvivor.AccountStatus);
@@ -175,7 +126,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "dormant.pathologist@example.test",
             AccountStatus.Disabled);
 
-        AdministrationResult result = await administrationService.SetAccountStatusAsync(
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
             actingPathologist.Id,
             actingPathologist.Id,
             AccountStatus.Disabled);
@@ -196,7 +147,7 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             ApplicationRoleNames.OtherDoctor,
             AccountStatus.Pending);
 
-        AdministrationResult result = await administrationService.SetAccountStatusAsync(
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
             otherDoctor.Id,
             target.Id,
             AccountStatus.Active);
@@ -216,14 +167,14 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             ApplicationRoleNames.OtherDoctor,
             AccountStatus.Pending);
 
-        AdministrationResult result = await administrationService.SetAccountStatusAsync(
+        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
             actingPathologist.Id,
             pendingUser.Id,
             AccountStatus.Active);
 
         Assert.True(result.IsSuccess);
 
-        ApplicationUser activatedUser = await userManager.FindByIdAsync(pendingUser.Id)
+        ApplicationUser activatedUser = await UserManager.FindByIdAsync(pendingUser.Id)
             ?? throw new InvalidOperationException("The account disappeared.");
 
         Assert.Equal(AccountStatus.Active, activatedUser.AccountStatus);
@@ -236,91 +187,19 @@ public sealed class UserAdministrationServiceTests : IAsyncLifetime
             "acting.pathologist@example.test",
             AccountStatus.Active);
 
-        AdministrationResult result = await administrationService.SetTeamPermissionsAsync(
+        AdministrationResult result = await AdministrationService.SetTeamPermissionsAsync(
             actingPathologist.Id,
             canUpdateSpreadsheet: true,
             canDeleteSpreadsheet: false);
 
         Assert.True(result.IsSuccess);
 
-        TeamPermissionSummary summary = await administrationService.GetTeamPermissionsAsync();
+        TeamPermissionSummary summary = await AdministrationService.GetTeamPermissionsAsync();
 
         Assert.True(summary.CanUpdateSpreadsheet);
         Assert.False(summary.CanDeleteSpreadsheet);
         Assert.Equal(
             ApplicationRoleNames.InfectiousDiseaseControlTeam,
             summary.TeamName);
-    }
-
-    private async Task SeedRolesAsync()
-    {
-        RoleManager<IdentityRole> roleManager =
-            serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-        string[] roleNames =
-        [
-            ApplicationRoleNames.ClinicalPathologist,
-            ApplicationRoleNames.OtherDoctor,
-            ApplicationRoleNames.InfectiousDiseaseControlTeam,
-        ];
-
-        foreach (string roleName in roleNames)
-        {
-            bool roleExists = await roleManager.RoleExistsAsync(roleName);
-
-            if (!roleExists)
-            {
-                IdentityResult creationResult = await roleManager.CreateAsync(new IdentityRole(roleName));
-
-                Assert.True(creationResult.Succeeded, Describe(creationResult));
-            }
-        }
-    }
-
-    private async Task<ApplicationUser> CreatePathologistAsync(
-        string email,
-        AccountStatus accountStatus)
-    {
-        ApplicationUser user = await CreateUserAsync(
-            email,
-            ApplicationRoleNames.ClinicalPathologist,
-            accountStatus);
-
-        return user;
-    }
-
-    private async Task<ApplicationUser> CreateUserAsync(
-        string email,
-        string roleName,
-        AccountStatus accountStatus)
-    {
-        ApplicationUser user = new()
-        {
-            UserName = email,
-            Email = email,
-            EmailConfirmed = true,
-            DisplayName = $"Test account {email}",
-            RequestedRole = roleName,
-            AccountStatus = accountStatus,
-        };
-
-        IdentityResult creationResult = await userManager.CreateAsync(user, "Password1!");
-
-        Assert.True(creationResult.Succeeded, Describe(creationResult));
-
-        IdentityResult roleResult = await userManager.AddToRoleAsync(user, roleName);
-
-        Assert.True(roleResult.Succeeded, Describe(roleResult));
-
-        return user;
-    }
-
-    private static string Describe(IdentityResult identityResult)
-    {
-        IEnumerable<string> errors = identityResult.Errors.Select(error => error.Description);
-
-        string description = string.Join("; ", errors);
-
-        return description;
     }
 }
