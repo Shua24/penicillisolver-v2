@@ -202,4 +202,128 @@ public sealed class UserAdministrationServiceTests : UserAdministrationTestFixtu
             ApplicationRoleNames.InfectiousDiseaseControlTeam,
             summary.TeamName);
     }
+
+    [Fact]
+    public async Task A_pathologist_can_delete_a_doctor_account()
+    {
+        ApplicationUser actingPathologist = await CreatePathologistAsync(
+            "acting.pathologist@example.test",
+            AccountStatus.Active);
+
+        ApplicationUser doctor = await CreateUserAsync(
+            "plain.doctor@example.test",
+            ApplicationRoleNames.OtherDoctor,
+            AccountStatus.Active);
+
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            actingPathologist.Id,
+            doctor.Id,
+            isSelfDelete: false);
+
+        Assert.True(result.IsSuccess);
+
+        ApplicationUser? deletedAccount = await UserManager.FindByIdAsync(doctor.Id);
+
+        Assert.Null(deletedAccount);
+    }
+
+    [Fact]
+    public async Task A_pathologist_cannot_delete_the_last_active_pathologist()
+    {
+        // The administrator path refuses only when the delete would leave zero
+        // active pathologists: with no one able to manage users afterwards, the
+        // application is permanently locked out. A single active pathologist is
+        // therefore protected from being deleted through the admin UI.
+        ApplicationUser solePathologist = await CreatePathologistAsync(
+            "sole.pathologist@example.test",
+            AccountStatus.Active);
+
+        string solePathologistId = solePathologist.Id;
+
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            solePathologistId,
+            solePathologistId,
+            isSelfDelete: false);
+
+        Assert.False(result.IsSuccess);
+
+        ApplicationUser? stillThere = await UserManager.FindByIdAsync(solePathologistId);
+
+        Assert.NotNull(stillThere);
+    }
+
+    [Fact]
+    public async Task Self_delete_is_exempt_from_the_last_active_pathologist_guard()
+    {
+        // The sole active pathologist deletes their own account. This is the
+        // escape hatch the design asked for, so the guard must not stop it:
+        // if it empties the pool, the bootstrap seeder repairs it on the next
+        // startup.
+        ApplicationUser solePathologist = await CreatePathologistAsync(
+            "sole.pathologist@example.test",
+            AccountStatus.Active);
+
+        string solePathologistId = solePathologist.Id;
+
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            solePathologistId,
+            solePathologistId,
+            isSelfDelete: true);
+
+        Assert.True(result.IsSuccess);
+
+        ApplicationUser? remainingAccount = await UserManager.FindByIdAsync(solePathologistId);
+
+        Assert.Null(remainingAccount);
+    }
+
+    [Fact]
+    public async Task A_user_cannot_self_delete_someone_elses_account()
+    {
+        ApplicationUser otherDoctor = await CreateUserAsync(
+            "other.doctor@example.test",
+            ApplicationRoleNames.OtherDoctor,
+            AccountStatus.Active);
+
+        ApplicationUser anotherUser = await CreateUserAsync(
+            "another.user@example.test",
+            ApplicationRoleNames.OtherDoctor,
+            AccountStatus.Active);
+
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            otherDoctor.Id,
+            anotherUser.Id,
+            isSelfDelete: true);
+
+        Assert.False(result.IsSuccess);
+
+        ApplicationUser? untouchedAccount = await UserManager.FindByIdAsync(anotherUser.Id);
+
+        Assert.NotNull(untouchedAccount);
+    }
+
+    [Fact]
+    public async Task A_non_pathologist_cannot_delete_another_account_in_administrator_mode()
+    {
+        ApplicationUser otherDoctor = await CreateUserAsync(
+            "other.doctor@example.test",
+            ApplicationRoleNames.OtherDoctor,
+            AccountStatus.Active);
+
+        ApplicationUser target = await CreateUserAsync(
+            "target.user@example.test",
+            ApplicationRoleNames.OtherDoctor,
+            AccountStatus.Active);
+
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            otherDoctor.Id,
+            target.Id,
+            isSelfDelete: false);
+
+        Assert.False(result.IsSuccess);
+
+        ApplicationUser? survivingTarget = await UserManager.FindByIdAsync(target.Id);
+
+        Assert.NotNull(survivingTarget);
+    }
 }
