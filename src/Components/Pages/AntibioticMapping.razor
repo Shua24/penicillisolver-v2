@@ -13,6 +13,8 @@
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
+<script type="module" src="@Assets["Components/Pages/AntibioticMapping.razor.js"]"></script>
+
 <PageTitle>Antibiotic abbreviations</PageTitle>
 
 <h1>Antibiotic abbreviations</h1>
@@ -170,28 +172,32 @@ else
                 }
             }
         </section>
-
-        @if (pendingDelete is not null)
-        {
-            <div class="card border-danger mb-3">
-                <div class="card-body">
-                    <h3 class="card-title">Remove mapping</h3>
-                    <p>
-                        Remove the meaning of <code>@pendingDelete.Abbreviation</code>
-                        @if (!string.IsNullOrEmpty(pendingDelete.StoredFullName))
-                        {
-                            <text>(currently <em>@pendingDelete.StoredFullName</em>)</text>
-                        }
-                        ? The abbreviation will show as unmapped.
-                    </p>
-                    <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAsync">
-                        Yes, remove it
-                    </button>
-                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        }
     }
 }
+
+<dialog id="antibiotic-mapping-delete-dialog"
+        class="antibiotic-mapping-delete-dialog"
+        aria-labelledby="antibiotic-mapping-delete-title">
+    <div class="antibiotic-mapping-delete-card">
+        <h3 id="antibiotic-mapping-delete-title">Remove mapping</h3>
+        <p>
+            Remove the meaning of <code>@pendingDelete?.Abbreviation</code>
+            @if (pendingDelete is not null
+                && !string.IsNullOrEmpty(pendingDelete.StoredFullName))
+            {
+                <text>&nbsp;(currently <em>@pendingDelete.StoredFullName</em>)</text>
+            }
+            &mdash; the abbreviation will show as unmapped.
+        </p>
+        <div class="antibiotic-mapping-delete-actions">
+            <button id="antibiotic-mapping-delete-confirm"
+                    type="button" class="btn btn-danger" @onclick="() => ConfirmDeleteAsync()">
+                Yes, remove it
+            </button>
+            <button id="antibiotic-mapping-delete-cancel"
+                    type="button" class="btn btn-secondary" @onclick="() => CancelDelete()">
+                Cancel
+            </button>
+        </div>
+    </div>
+</dialog>

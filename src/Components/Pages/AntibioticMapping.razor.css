@@ -1,0 +1,37 @@
+/* Delete-confirmation modal for the /antibiotic-mappings page. Scoped to
+   AntibioticMapping.razor; styles the native <dialog> raised to match the
+   page's Bootstrap card look without touching global app.css. */
+
+.antibiotic-mapping-delete-dialog {
+    border: 0;
+    padding: 0;
+    margin: auto;
+    max-width: 24rem;
+    width: 100%;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+
+    &::backdrop {
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+}
+
+.antibiotic-mapping-delete-card {
+    padding: 1.25rem 1.5rem 1.5rem;
+
+    > h3 {
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+    }
+
+    > p {
+        margin-bottom: 1rem;
+    }
+}
+
+.antibiotic-mapping-delete-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}

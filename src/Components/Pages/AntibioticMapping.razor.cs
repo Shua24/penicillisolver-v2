@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
 using penicillisolver_v2.Domain.Constants;
 using penicillisolver_v2.Domain.Entities;
@@ -20,6 +21,9 @@ namespace penicillisolver_v2.Components.Pages;
 /// </summary>
 public partial class AntibioticMapping
 {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
     private SpreadsheetUpload? currentUpload;
     private SpreadsheetDocument? currentDocument;
     private IReadOnlyList<AntibioticMappingRow> mappingRows = [];
@@ -30,18 +34,10 @@ public partial class AntibioticMapping
     private string? statusMessage;
     private bool statusSucceeded;
 
-    private AntibioticMappingRow? pendingDelete;
-
     /// <summary>
     /// True when the current file uses complete antibiotic names, so there is
     /// nothing for a pathologist to interpret.
     /// </summary>
-    /// <remarks>
-    /// The csv sample is the motivating case: it lists "Amoxicillin" and
-    /// "Amoxicillin/Clavulanic acid" outright. Offering to map those would ask
-    /// the user to re-enter a name the file already spells out, so the whole
-    /// worksheet is withheld and the page explains why instead.
-    /// </remarks>
     private bool mappingIsNotApplicable =>
         currentDocument is not null
         && AntibioticNameClassifier.NeedsNoMapping(currentDocument.AntibioticNames);
@@ -72,6 +68,30 @@ public partial class AntibioticMapping
         }
 
         isLoading = false;
+    }
+
+    /// <inheritdoc />
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Register the .NET reference so the scoped module can relay a
+            // native close (Esc / backdrop) back into the component.
+            DotNetObjectReference<AntibioticMapping> reference =
+                DotNetObjectReference.Create(this);
+            return JSRuntime.InvokeVoidAsync(
+                "antibioticMappingDeleteDialog.init", reference).AsTask();
+        }
+
+        // Open only AFTER the render has flushed the pending row into the
+        // dialog's text; opening from the click handler would raise the box
+        // still showing the previous pending abbreviation.
+        if (deleteDialogOpen)
+        {
+            return JSRuntime.InvokeVoidAsync("antibioticMappingDeleteDialog.open").AsTask();
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -111,8 +131,8 @@ public partial class AntibioticMapping
 
             // Only abbreviated names need a meaning. A file that spells its
             // antibiotics out in full is withheld from this worksheet entirely
-            // (mappingIsNotApplicable), so here every listed row is one the file
-            // detected as needing interpretation.
+            // (mappingIsNotApplicable), so every listed row here is one the
+            // file detected as needing interpretation.
             bool isAbbreviation =
                 AntibioticNameClassifier.IsAbbreviation(antibioticName);
 
@@ -145,7 +165,7 @@ public partial class AntibioticMapping
     /// <summary>
     /// Persists every row at once: a filled box on an unmapped row creates a
     /// mapping, and a changed box on a mapped row updates it. Rows that are
-    /// unchanged, or blanked, are left for the row's Delete button.
+    /// unchanged, or blanked, are left for the row's Remove button.
     /// </summary>
     private async Task SaveMappingsAsync()
     {
@@ -164,7 +184,7 @@ public partial class AntibioticMapping
             string storedFullName = row.StoredFullName.Trim();
 
             // A blank or unchanged box writes nothing; removing a meaning is
-            // the row's Delete button, not the save button.
+            // the row's Remove button, not the save button.
             if (requestedFullName.Length == 0 || requestedFullName == storedFullName)
             {
                 continue;
@@ -230,50 +250,6 @@ public partial class AntibioticMapping
             .Select(result => result.Message));
 
         statusMessage = $"{succeededCount} saved, {failedCount} could not be saved. {failureDetail}";
-    }
-
-    private void RequestDelete(AntibioticMappingRow row)
-    {
-        pendingDelete = row;
-        statusMessage = null;
-    }
-
-    private void CancelDelete()
-    {
-        pendingDelete = null;
-    }
-
-    private async Task ConfirmDeleteAsync()
-    {
-        if (pendingDelete is null || actingPrincipal is null)
-        {
-            return;
-        }
-
-        AntibioticMappingRow row = pendingDelete;
-        pendingDelete = null;
-
-        if (row.Mapping is null)
-        {
-            statusSucceeded = false;
-            statusMessage = "That abbreviation has no meaning to remove.";
-            return;
-        }
-
-        string actingUserId = ResolveActingUserId();
-
-        WriteResult result = await AbbreviationService.DeleteMappingAsync(
-            row.Mapping.Id,
-            actingUserId,
-            actingPrincipal);
-
-        statusSucceeded = result.Succeeded;
-        statusMessage = result.Message;
-
-        if (result.Succeeded)
-        {
-            await ReloadMappingRowsAsync();
-        }
     }
 
     private string ResolveActingUserId()

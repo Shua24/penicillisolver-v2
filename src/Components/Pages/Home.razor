@@ -1,6 +1,13 @@
 @page "/"
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>PenicilliSolver</PageTitle>
 
@@ -31,7 +38,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
             <div>
                 <span class="text-body-secondary">Signed in as</span>
-                <strong>@(signedInState.User.Identity?.Name ?? "Authenticated User")</strong>
+                <strong>@signedInAs</strong>
             </div>
             <span class="badge bg-secondary">Signed In</span>
         </div>
@@ -132,3 +139,43 @@
         </AuthorizeView>
     </Authorized>
 </AuthorizeView>
+
+@code {
+    /// <summary>
+    /// The name the "Signed in as" line shows. Non-technical users know their
+    /// own name, not the email the account was made with, so the display name
+    /// is preferred; the email and a generic label cover the fallbacks.
+    /// </summary>
+    private string signedInAs = "Authenticated User";
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authenticationState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string? userId =
+            authenticationState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            string requiredUserId = userId;
+            ApplicationUser? user = await UserManager.FindByIdAsync(requiredUserId);
+
+            if (user is not null && user.DisplayName.Length > 0)
+            {
+                signedInAs = user.DisplayName;
+            }
+        }
+
+        // A display name could be blank (the seeder does not set one for every
+        // account); fall back to the email the claim already carries, then to
+        // the generic label.
+        string? emailFallback = authenticationState.User.FindFirstValue(ClaimTypes.Email);
+
+        if (signedInAs == "Authenticated User"
+            && !string.IsNullOrEmpty(emailFallback))
+        {
+            signedInAs = emailFallback;
+        }
+    }
+}
