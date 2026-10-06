@@ -177,16 +177,19 @@ public static partial class IdentitySeeder
 
         if (existingUser is not null)
         {
+            await RepairSeedAccountDisplayNameAsync(userManager, logger, existingUser, roleName);
             await EnsureUserHasRoleAsync(userManager, logger, existingUser, roleName);
             return;
         }
+
+        string roleDisplayName = ApplicationRoleDisplayNames.DisplayNameOf(roleName);
 
         ApplicationUser seedUser = new()
         {
             UserName = email,
             Email = email,
             EmailConfirmed = true,
-            DisplayName = $"{roleName} seed account",
+            DisplayName = $"{roleDisplayName} seed account",
             RequestedRole = roleName,
             AccountStatus = AccountStatus.Active,
         };
