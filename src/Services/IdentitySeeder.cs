@@ -10,11 +10,12 @@ namespace penicillisolver_v2.Services;
 
 /// <summary>
 /// Creates the three application roles and one seed account per role on
-/// startup. Seeding is tolerant by design: a missing email or password is
+/// startup, and guarantees that at least one active clinical pathologist
+/// exists. Seeding is tolerant by design: a missing email or password is
 /// logged as an error and that account is skipped, because an incomplete
 /// development configuration must not stop the application from starting.
 /// </summary>
-public static class IdentitySeeder
+public static partial class IdentitySeeder
 {
     private const string SeedAccountsConfigurationSection = "SeedAccounts";
 
@@ -62,6 +63,8 @@ public static class IdentitySeeder
         {
             await SeedAccountForRoleAsync(userManager, configuration, logger, roleName);
         }
+
+        await EnsureBootstrapClinicalPathologistAsync(userManager, logger);
 
         await EnsureTeamPermissionRowExistsAsync(database, logger);
     }

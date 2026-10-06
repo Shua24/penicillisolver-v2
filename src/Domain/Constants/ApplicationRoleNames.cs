@@ -2,9 +2,9 @@ namespace penicillisolver_v2.Domain.Constants;
 
 /// <summary>
 /// The names of the three roles the application recognises. These strings are
-/// also chosen by registrants on the registration form (except for
-/// <see cref="ClinicalPathologist"/>, which is never self-assignable) and are
-/// seeded into the identity role table on startup.
+/// chosen by registrants on the registration form and are seeded into the
+/// identity role table on startup. A registration is always pending: a
+/// clinical pathologist activates it before the requested role takes effect.
 /// </summary>
 public static class ApplicationRoleNames
 {

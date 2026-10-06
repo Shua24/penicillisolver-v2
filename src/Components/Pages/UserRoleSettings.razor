@@ -50,7 +50,9 @@ else
                         <td>@account.DisplayName</td>
                         <td>@account.Email</td>
                         <td>
-                            @(string.IsNullOrEmpty(account.RoleName) ? "—" : account.RoleName)
+                            @(string.IsNullOrEmpty(account.RoleName)
+                                ? "—"
+                                : ApplicationRoleDisplayNames.DisplayNameOf(account.RoleName))
                         </td>
                         <td>@account.AccountStatus</td>
                         <td>
@@ -61,7 +63,7 @@ else
                                 {
                                     <option value="@roleName"
                                             selected="@(account.RoleName == roleName)">
-                                        @roleName
+                                        @ApplicationRoleDisplayNames.DisplayNameOf(roleName)
                                     </option>
                                 }
                             </select>
