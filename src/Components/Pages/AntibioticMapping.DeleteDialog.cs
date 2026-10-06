@@ -17,6 +17,11 @@ public partial class AntibioticMapping
     private AntibioticMappingRow? pendingDelete;
     private bool deleteDialogOpen;
 
+    /// <summary>
+    /// Begins the delete flow for a row: remembers it as pending and opens the
+    /// confirmation dialog on the next render.
+    /// </summary>
+    /// <param name="row">The mapping row the user asked to remove.</param>
     private void RequestDelete(AntibioticMappingRow row)
     {
         pendingDelete = row;
@@ -27,6 +32,10 @@ public partial class AntibioticMapping
         // must flush this pending row into the dialog's text first.
     }
 
+    /// <summary>
+    /// Abandons the pending delete and closes the dialog without making any
+    /// change.
+    /// </summary>
     private void CancelDelete()
     {
         pendingDelete = null;
@@ -50,6 +59,9 @@ public partial class AntibioticMapping
         }
     }
 
+    /// <summary>
+    /// Deletes the pending mapping's meaning and refreshes the rows on success.
+    /// </summary>
     private async Task ConfirmDeleteAsync()
     {
         if (pendingDelete is null || actingPrincipal is null)

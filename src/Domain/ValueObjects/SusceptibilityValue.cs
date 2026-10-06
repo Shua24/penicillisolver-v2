@@ -34,6 +34,11 @@ public sealed class SusceptibilityValue
     /// <summary>The decimal places used when a percentage is rendered.</summary>
     private const string DisplayFormat = "F2";
 
+    /// <summary>
+    /// Creates a reading with the given measured state and percentage.
+    /// </summary>
+    /// <param name="isMeasured">Whether the file reported a percentage.</param>
+    /// <param name="percent">The reported percentage, or null when untested.</param>
     private SusceptibilityValue(bool isMeasured, double? percent)
     {
         IsMeasured = isMeasured;

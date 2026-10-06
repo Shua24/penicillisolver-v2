@@ -42,6 +42,14 @@ public sealed class IdentityRevalidatingAuthenticationStateProvider(
         return isValidSecurityStamp;
     }
 
+    /// <summary>
+    /// Checks whether the principal's security stamp claim still matches the
+    /// user's current security stamp in the store.
+    /// </summary>
+    /// <param name="userManager">The user manager to fetch the current stamp from.</param>
+    /// <param name="principal">The connected user's claims principal.</param>
+    /// <param name="cancellationToken">A token to cancel the check.</param>
+    /// <returns>True when the user exists and the stamps match or stamps are unsupported.</returns>
     private async Task<bool> ValidateSecurityStampAsync(
         UserManager<ApplicationUser> userManager,
         ClaimsPrincipal principal,

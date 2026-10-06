@@ -54,6 +54,13 @@ public static class DatabaseProviderSelector
         return options => options.UseNpgsql(connectionString);
     }
 
+    /// <summary>
+    /// Determines whether SQLite should be used based on the configured
+    /// provider name, falling back to the development flag when unset.
+    /// </summary>
+    /// <param name="configuredProviderName">The configured provider short name, if any.</param>
+    /// <param name="isDevelopment">Whether the host is running in development.</param>
+    /// <returns>True when SQLite should be used, false to use PostgreSQL.</returns>
     private static bool ResolveUseSqlite(string? configuredProviderName, bool isDevelopment)
     {
         if (!string.IsNullOrWhiteSpace(configuredProviderName))

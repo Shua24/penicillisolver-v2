@@ -17,6 +17,13 @@ using penicillisolver_v2.Domain.ValueObjects;
 /// </remarks>
 public sealed class SpreadsheetUploadResult
 {
+    /// <summary>
+    /// Creates a result with the given success state, document, upload, and message.
+    /// </summary>
+    /// <param name="isSuccess">Whether the upload was accepted.</param>
+    /// <param name="document">The parsed document, or null on failure.</param>
+    /// <param name="upload">The persisted upload row, or null on failure.</param>
+    /// <param name="message">The confirmation or failure message.</param>
     private SpreadsheetUploadResult(
         bool isSuccess,
         SpreadsheetDocument? document,
