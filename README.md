@@ -205,7 +205,7 @@ The solution is a binary `penicillisolver-v2.slnx` with three projects
 (`src` plus the two test projects). `bin/`, `obj/`, `App_Data/`, and the
 SQLite databases are all gitignored runtime state, never source.
 
-### Project conventions (from `INSTRUCTIONS.md`)
+### Project conventions
 
 These are hard rules for anyone modifying the code — read them before a PR:
 
