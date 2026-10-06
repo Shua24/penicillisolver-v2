@@ -8,6 +8,11 @@ using penicillisolver_v2.Domain.Enums;
 /// </summary>
 public sealed class AdministrationResult
 {
+    /// <summary>
+    /// Creates a result with the given success state and message.
+    /// </summary>
+    /// <param name="isSuccess">Whether the mutation was applied.</param>
+    /// <param name="message">The confirmation or refusal message.</param>
     private AdministrationResult(bool isSuccess, string message)
     {
         IsSuccess = isSuccess;

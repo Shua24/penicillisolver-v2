@@ -19,11 +19,21 @@
 const deleteDialogId = "antibiotic-mapping-delete-dialog";
 let closeCallbackReference;
 
+/**
+ * Looks up the delete-confirmation dialog element fresh from the DOM, since
+ * this module runs once at startup and the element may not exist yet.
+ * @returns {HTMLDialogElement|null} The dialog element, or null if it is not currently in the DOM.
+ */
 function findDialog() {
     return document.getElementById(deleteDialogId);
 }
 
 window.antibioticMappingDeleteDialog = {
+    /**
+     * Captures the DotNetObjectReference used to relay native dialog closes
+     * back into C#, and wires the native "close" event listener exactly once.
+     * @param {object} reference - The DotNetObjectReference for the page's AntibioticMapping component.
+     */
     init(reference) {
         closeCallbackReference = reference;
 
@@ -36,6 +46,9 @@ window.antibioticMappingDeleteDialog = {
         }
     },
 
+    /**
+     * Opens the delete-confirmation dialog if it exists and is not already open.
+     */
     open() {
         const dialog = findDialog();
         if (dialog !== null && !dialog.open) {
@@ -43,6 +56,9 @@ window.antibioticMappingDeleteDialog = {
         }
     },
 
+    /**
+     * Closes the delete-confirmation dialog if it exists and is open.
+     */
     close() {
         const dialog = findDialog();
         if (dialog !== null && dialog.open) {
@@ -51,6 +67,10 @@ window.antibioticMappingDeleteDialog = {
     },
 };
 
+/**
+ * Relays a native dialog close (Esc key or backdrop click) back into C# via
+ * the captured DotNetObjectReference, if one has been set.
+ */
 function handleNativeDialogClose() {
     if (closeCallbackReference !== undefined && closeCallbackReference !== null) {
         closeCallbackReference.SyncNativeDialogClose();

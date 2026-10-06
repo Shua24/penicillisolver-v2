@@ -25,6 +25,12 @@ public enum OrganismLookupOutcome
 /// </remarks>
 public sealed record OrganismLookupResult
 {
+    /// <summary>
+    /// Creates a result with the given outcome, matched organism, and candidates.
+    /// </summary>
+    /// <param name="outcome">Which of the three cases this result represents.</param>
+    /// <param name="organismName">The single matched organism, or null when not resolved.</param>
+    /// <param name="candidates">The choices or suggestions to show the reader.</param>
     private OrganismLookupResult(
         OrganismLookupOutcome outcome,
         string? organismName,

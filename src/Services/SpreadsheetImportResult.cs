@@ -12,6 +12,12 @@ using penicillisolver_v2.Domain.ValueObjects;
 /// </summary>
 public sealed class SpreadsheetImportResult
 {
+    /// <summary>
+    /// Creates a result with the given success state, document, and error message.
+    /// </summary>
+    /// <param name="isSuccess">Whether the import produced a document.</param>
+    /// <param name="document">The parsed document, or null on failure.</param>
+    /// <param name="errorMessage">The failure explanation, or empty on success.</param>
     private SpreadsheetImportResult(
         bool isSuccess,
         SpreadsheetDocument? document,
