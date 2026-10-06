@@ -18,10 +18,11 @@
 <h1>Antibiotic abbreviations</h1>
 
 <p>
-    Decide what each antibiotic abbreviation in the current spreadsheet stands
-    for. Nothing is pre-filled: the meanings are recorded by the pathologists,
-    and they belong to this file alone. The same abbreviation can mean a
-    different drug in a different file.
+    Each antibiotic abbreviation this file uses is listed below, in the order
+    the file lists it. Fill in the meaning next to the names that need one and
+    save them all at once. Nothing is pre-decided: the meanings are recorded
+    by the pathologists, and they belong to this file alone. The same
+    abbreviation can mean a different drug in a different file.
 </p>
 
 <p>
@@ -53,8 +54,9 @@ else
 
     <p>
         Current file: <strong>@currentUpload!.OriginalFileName</strong>
-        &mdash; @currentDocument.AntibioticNames.Count antibiotic names,
-        with @mappings.Count mapped.
+        &mdash; @mappingRows.Count detected abbreviation
+        @(mappingRows.Count == 1 ? "" : "s"),
+        with @mappedRowCount mapped.
     </p>
 
     @if (mappingIsNotApplicable)
@@ -67,150 +69,129 @@ else
             such as <code>AMK %S</code>.
         </div>
     }
-    else if (canManageMappings)
-    {
-        <section aria-label="Add a mapping">
-            <h2>Add a mapping</h2>
-
-            <EditForm Model="createInput" OnValidSubmit="CreateMappingAsync" FormName="create-mapping">
-                <DataAnnotationsValidator />
-
-                <div class="mb-3">
-                    <label class="form-label" for="create-abbreviation">Abbreviation</label>
-                    <InputText id="create-abbreviation"
-                               class="form-control"
-                               list="unmapped-abbreviations"
-                               @bind-Value="createInput.Abbreviation"
-                               placeholder="For example: GAT %S" />
-                    <datalist id="unmapped-abbreviations">
-                        @foreach (string unmappedAbbreviation in unmappedAbbreviations)
-                        {
-                            <option value="@unmappedAbbreviation"></option>
-                        }
-                    </datalist>
-                    <div class="form-text">
-                        Choose one of this file's unmapped names, or type an
-                        abbreviation that appears in the file.
-                    </div>
-                    <ValidationMessage For="() => createInput.Abbreviation" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" for="create-full-name">Full name</label>
-                    <InputText id="create-full-name"
-                               class="form-control"
-                               @bind-Value="createInput.FullName"
-                               placeholder="For example: Gatifloxacin" />
-                    <ValidationMessage For="() => createInput.FullName" />
-                </div>
-
-                <button type="submit" class="btn btn-primary">Add mapping</button>
-            </EditForm>
-        </section>
-    }
     else
     {
-        <p class="text-muted">
-            You can view the mappings, but only a clinical pathologist may add,
-            edit, or remove them.
-        </p>
-    }
+        <section aria-label="Abbreviation worksheet">
+            <h2>Abbreviation worksheet</h2>
 
-    <section aria-label="Current mappings">
-        <h2>Current mappings</h2>
+            @if (canManageMappings)
+            {
+                <p class="text-muted">
+                    Fill in any empty box with the full drug name, then press
+                    <em>Save mappings</em>. A meaning you want to remove is
+                    removed with its <em>Remove</em> button, not by clearing the
+                    box.
+                </p>
+            }
+            else
+            {
+                <p class="text-muted">
+                    You can view the mappings, but only a clinical pathologist may
+                    add, edit, or remove them.
+                </p>
+            }
 
-        @if (mappings.Count == 0)
-        {
-            <p><em>No abbreviations have been mapped for this file yet.</em></p>
-        }
-        else
-        {
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">Abbreviation</th>
-                        <th scope="col">Full name</th>
-                        <th scope="col">Last modified</th>
-                        @if (canManageMappings)
-                        {
-                            <th scope="col">Actions</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (AntibioticAbbreviation mapping in mappings)
-                    {
+            @if (mappingRows.Count == 0)
+            {
+                <p><em>This file lists no abbreviations that need a meaning.</em></p>
+            }
+            else
+            {
+                <table class="table align-middle">
+                    <thead>
                         <tr>
-                            <td><code>@mapping.Abbreviation</code></td>
-                            <td>
-                                @if (editingMappingId == mapping.Id)
-                                {
-                                    <InputText class="form-control"
-                                               @bind-Value="editingFullName" />
-                                }
-                                else
-                                {
-                                    @mapping.FullName
-                                }
-                            </td>
-                            <td>@mapping.LastModifiedAtUtc.ToLocalTime().ToString("g")</td>
+                            <th scope="col" class="col-auto">Abbreviation</th>
+                            <th scope="col">Full name</th>
+                            <th scope="col">Last modified</th>
                             @if (canManageMappings)
                             {
+                                <th scope="col" class="col-auto">Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (AntibioticMappingRow row in mappingRows)
+                        {
+                            <tr>
+                                <td><code>@row.Abbreviation</code></td>
                                 <td>
-                                    @if (editingMappingId == mapping.Id)
+                                    @if (canManageMappings)
                                     {
-                                        <button type="button"
-                                                class="btn btn-sm btn-primary"
-                                                @onclick="() => SaveEditAsync(mapping.Id)">
-                                            Save
-                                        </button>
-                                        <button type="button"
-                                                class="btn btn-sm btn-secondary"
-                                                @onclick="CancelEdit">
-                                            Cancel
-                                        </button>
+                                        <InputText class="form-control"
+                                                   placeholder="Full drug name"
+                                                   @bind-Value="row.WorkingFullName" />
                                     }
                                     else
                                     {
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary"
-                                                @onclick="() => BeginEdit(mapping)">
-                                            Edit
-                                        </button>
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger"
-                                                @onclick="() => RequestDelete(mapping)">
-                                            Delete
-                                        </button>
+                                        @if (string.IsNullOrEmpty(row.StoredFullName))
+                                        {
+                                            <em>unmapped</em>
+                                        }
+                                        else
+                                        {
+                                            @row.StoredFullName
+                                        }
                                     }
                                 </td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </section>
+                                <td>
+                                    @(row.Mapping is null
+                                        ? "—"
+                                        : row.Mapping.LastModifiedAtUtc.ToLocalTime().ToString("g"))
+                                </td>
+                                @if (canManageMappings)
+                                {
+                                    <td>
+                                        @if (row.Mapping is not null)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => RequestDelete(row)">
+                                                Remove
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
 
-    @if (pendingDelete is not null)
-    {
-        <div class="card border-danger mb-3">
-            <div class="card-body">
-                <h3 class="card-title">Remove mapping</h3>
-                <p>
-                    Remove the mapping for <code>@pendingDelete.Abbreviation</code>
-                    (currently <em>@pendingDelete.FullName</em>)? The
-                    abbreviation will show as unmapped.
-                </p>
-                <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAsync">
-                    Yes, remove it
-                </button>
-                <button type="button" class="btn btn-secondary" @onclick="() => pendingDelete = null">
-                    Cancel
-                </button>
+                @if (canManageMappings)
+                {
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="SaveMappingsAsync">
+                        Save mappings
+                    </button>
+                }
+            }
+        </section>
+
+        @if (pendingDelete is not null)
+        {
+            <div class="card border-danger mb-3">
+                <div class="card-body">
+                    <h3 class="card-title">Remove mapping</h3>
+                    <p>
+                        Remove the meaning of <code>@pendingDelete.Abbreviation</code>
+                        @if (!string.IsNullOrEmpty(pendingDelete.StoredFullName))
+                        {
+                            <text>(currently <em>@pendingDelete.StoredFullName</em>)</text>
+                        }
+                        ? The abbreviation will show as unmapped.
+                    </p>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAsync">
+                        Yes, remove it
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">
+                        Cancel
+                    </button>
+                </div>
             </div>
-        </div>
+        }
     }
 }
-
-
