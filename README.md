@@ -5,12 +5,12 @@ PenicilliSolver 2 is a web app that reads a lab's antimicrobial-resistance
 organism is most resistant to. One shared spreadsheet serves everyone in the
 lab; different people can do more or less depending on their role.
 
-This README is split in two:
+This documentation consists of these sections:
 
-1. **What Users Can Do** — for clinicians and lab staff who just want to use
-   the app. No programming knowledge needed.
-2. **Developer Onboarding** — for engineers who want to build, run, and
-   change the code.
+1. [**What Users Can Do**](#1-what-users-can-do) — for clinicians and lab staff who just want to
+   use the app. No programming knowledge needed.
+2. [**Developer Onboarding**](#2-developer-onboarding) — for engineers who want to build, run,
+   and change the code.
 
 ---
 
