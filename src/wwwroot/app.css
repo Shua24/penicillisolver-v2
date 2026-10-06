@@ -78,3 +78,35 @@ h1:focus {
    This file is for anything site-wide: colours, spacing, typography, and the
    overrides that make the shared Bootstrap look like this application.
    ========================================================================== */
+
+html, body {
+    font-family: Poppins;
+    font-size: 0.92rem;
+}
+
+.btn-primary {
+    color: #00473e;
+    background-color: #00ffcc;
+    border-color: #00ffcc;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #00473e;
+}
+
+.btn-primary:hover {
+    color: #00473e;
+    background-color: #00e6b8;
+    border-color: #00e6b8;
+}
+
+.btn-outline-primary {
+    color: #00473e;
+    border-color: #007566;
+}
+
+.btn-outline-primary:hover {
+    color: #00473e;
+    background-color: #00ffcc;
+    border-color: #00ffcc;
+}

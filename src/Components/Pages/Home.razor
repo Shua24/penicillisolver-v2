@@ -1,6 +1,13 @@
-﻿@page "/"
+@page "/"
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
 @using penicillisolver_v2.Domain.Constants
+@using penicillisolver_v2.Domain.Entities
+
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>PenicilliSolver</PageTitle>
 
@@ -28,67 +35,147 @@
     </NotAuthorized>
 
     <Authorized>
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+            <div>
+                <span class="text-body-secondary">Signed in as</span>
+                <strong>@signedInAs</strong>
+            </div>
+            <span class="badge bg-secondary">Signed In</span>
+        </div>
+
         @* A pending account can sign in but holds no permissions, so it reaches
            no other page. Say so here rather than leaving a signed-in user on a
            blank home screen wondering why every link is missing. *@
         <AuthorizeView Policy="@AuthorizationPolicyNames.CanReadSpreadsheet" Context="readState">
             <Authorized>
+                <!-- Clinical Tools -->
                 <section class="mb-4">
-                    <h2>Where to go</h2>
-                    <dl class="row">
-                        <dt class="col-sm-3">Resistance ranking</dt>
-                        <dd class="col-sm-9">
-                            The most resistant antibiotics in the current
-                            spreadsheet. Defaults to the top 3, adjustable to any
-                            count. <a href="spreadsheet-viewer">Open the ranking</a>
-                        </dd>
+                    <h2 class="h4 mb-3">Clinical Tools</h2>
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">Resistance Ranking</h5>
+                                    <p class="card-text text-body-secondary flex-grow-1">
+                                        Analyze organism susceptibility and view the top resistant antibiotics
+                                        from the reference spreadsheet.
+                                    </p>
+                                    <a href="spreadsheet-viewer" class="btn btn-primary mt-2">Open Ranking</a>
+                                </div>
+                            </div>
+                        </div>
 
-                        <dt class="col-sm-3">Abbreviation mappings</dt>
-                        <dd class="col-sm-9">
-                            What each antibiotic abbreviation stands for. These
-                            are entered by hand, one file at a time, because the
-                            same abbreviation can mean different drugs in
-                            different files.
-                            <a href="antibiotic-mappings">Open the mappings</a>
-                        </dd>
-
-                        <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageSpreadsheet" Context="manageSpreadsheetState">
-                            <Authorized>
-                                <dt class="col-sm-3">Upload spreadsheet</dt>
-                                <dd class="col-sm-9">
-                                    Replace the single reference spreadsheet for
-                                    everyone. <a href="upload">Open the upload page</a>
-                                </dd>
-                            </Authorized>
-                        </AuthorizeView>
-
-                        <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageUserRoles" Context="manageRolesState">
-                            <Authorized>
-                                <dt class="col-sm-3">User and team settings</dt>
-                                <dd class="col-sm-9">
-                                    Activate registered accounts, assign roles, and
-                                    grant the infectious disease control team its
-                                    update and delete permissions.
-                                    <a href="settings/user-roles">Open the settings</a>
-                                </dd>
-                            </Authorized>
-                        </AuthorizeView>
-                    </dl>
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">Abbreviation Mappings</h5>
+                                    <p class="card-text text-body-secondary flex-grow-1">
+                                        Look up and manage definitions for antibiotic codes and abbreviations
+                                        used across laboratory reports.
+                                    </p>
+                                    <a href="antibiotic-mappings" class="btn btn-outline-primary mt-2">Open Mappings</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
+
+                <!-- Management Section (Rendered only for permitted roles) -->
+                <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageSpreadsheet" Context="manageSpreadsheetState">
+                    <Authorized>
+                        <section class="mb-4">
+                            <h2 class="h4 mb-3">Laboratory Administration</h2>
+                            <div class="row row-cols-1 row-cols-md-2 g-3">
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">Upload Spreadsheet</h5>
+                                            <p class="card-text text-body-secondary flex-grow-1">
+                                                Replace or update the active reference AMR spreadsheet (CSV or XLSX)
+                                                for all clinicians and laboratory staff.
+                                            </p>
+                                            <a href="upload" class="btn btn-outline-secondary mt-2">Upload Page</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageUserRoles" Context="manageRolesState">
+                                    <Authorized>
+                                        <div class="col">
+                                            <div class="card h-100">
+                                                <div class="card-body d-flex flex-column">
+                                                    <h5 class="card-title">User &amp; Team Settings</h5>
+                                                    <p class="card-text text-body-secondary flex-grow-1">
+                                                        Activate registered accounts, assign roles, and grant permissions
+                                                        to the Infectious Disease Control Team.
+                                                    </p>
+                                                    <a href="settings/user-roles" class="btn btn-outline-secondary mt-2">Manage Users</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </div>
+                        </section>
+                    </Authorized>
+                </AuthorizeView>
             </Authorized>
 
             <NotAuthorized>
-                <section class="mb-4">
-                    <h2>Awaiting activation</h2>
-                    <p>
-                        Your account is registered but has not been activated yet.
-                        A clinical pathologist has to assign it a role before you
-                        can read the spreadsheet. Nothing is wrong with your
-                        sign-in: this is the deliberate gate that keeps
-                        registration from granting access on its own.
+                <div class="alert alert-warning mt-3" role="alert">
+                    <h4 class="alert-heading">Awaiting Account Activation</h4>
+                    <p class="mb-2">
+                        Your account is registered but has not yet been assigned a clinical role.
+                        A clinical pathologist has to assign it a role before you can read the spreadsheet.
+                        Nothing is wrong with your sign-in: this is the deliberate gate that keeps registration
+                        from granting access on its own.
                     </p>
-                </section>
+                    <hr />
+                    <p class="mb-0 text-body-secondary small">
+                        If you need access, please contact a clinical pathologist to activate your account.
+                    </p>
+                </div>
             </NotAuthorized>
         </AuthorizeView>
     </Authorized>
 </AuthorizeView>
+
+@code {
+    /// <summary>
+    /// The name the "Signed in as" line shows. Non-technical users know their
+    /// own name, not the email the account was made with, so the display name
+    /// is preferred; the email and a generic label cover the fallbacks.
+    /// </summary>
+    private string signedInAs = "Authenticated User";
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authenticationState =
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string? userId =
+            authenticationState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            string requiredUserId = userId;
+            ApplicationUser? user = await UserManager.FindByIdAsync(requiredUserId);
+
+            if (user is not null && user.DisplayName.Length > 0)
+            {
+                signedInAs = user.DisplayName;
+            }
+        }
+
+        // A display name could be blank (the seeder does not set one for every
+        // account); fall back to the email the claim already carries, then to
+        // the generic label.
+        string? emailFallback = authenticationState.User.FindFirstValue(ClaimTypes.Email);
+
+        if (signedInAs == "Authenticated User"
+            && !string.IsNullOrEmpty(emailFallback))
+        {
+            signedInAs = emailFallback;
+        }
+    }
+}

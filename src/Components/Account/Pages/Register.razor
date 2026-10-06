@@ -45,7 +45,9 @@
                 <InputSelect @bind-Value="Input.RequestedRole" id="Input.RequestedRole" class="form-select" aria-required="true">
                     @foreach (string roleName in SelectableRoleNames)
                     {
-                        <option value="@roleName">@roleName</option>
+                        <option value="@roleName">
+                            @ApplicationRoleDisplayNames.DisplayNameOf(roleName)
+                        </option>
                     }
                 </InputSelect>
                 <label for="Input.RequestedRole">Requested role</label>
@@ -68,11 +70,13 @@
 
 @code {
     /// <summary>
-    /// The roles a registrant may ask for. The clinical pathologist role is
-    /// deliberately absent: it can only be granted by an existing pathologist.
+    /// The roles a registrant may request. All three are selectable; every
+    /// registration is pending, so a clinical pathologist request only takes
+    /// effect once an active pathologist activates the account.
     /// </summary>
     private static readonly string[] SelectableRoleNames =
     [
+        ApplicationRoleNames.ClinicalPathologist,
         ApplicationRoleNames.OtherDoctor,
         ApplicationRoleNames.InfectiousDiseaseControlTeam,
     ];
