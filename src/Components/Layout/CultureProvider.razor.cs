@@ -59,8 +59,6 @@ public sealed partial class CultureProvider : ComponentBase, IDisposable
             : SupportedLanguages.Default;
 
         CultureInfo culture = new(cultureToApply);
-        CultureInfo.DefaultThreadCurrentCulture = culture;
-        CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
     }

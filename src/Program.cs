@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
@@ -161,9 +162,15 @@ app.MapPost("/culture/set", async (HttpContext httpContext) =>
             MaxAge = TimeSpan.FromDays(365),
         });
 
+    Uri requestOrigin = new($"{httpContext.Request.Scheme}://{httpContext.Request.Host}");
+
     string returnPath = httpContext.Request.Headers.Referer.ToString() switch
     {
-        { Length: > 0 } referer when Uri.TryCreate(referer, UriKind.Absolute, out Uri? refererUri) =>
+        { Length: > 0 } referer when Uri.TryCreate(referer, UriKind.Absolute, out Uri? refererUri)
+            && string.Equals(refererUri.Scheme, requestOrigin.Scheme, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(refererUri.Host, requestOrigin.Host, StringComparison.OrdinalIgnoreCase)
+            && refererUri.Port == requestOrigin.Port
+            && RedirectHttpResult.IsLocalUrl(refererUri.PathAndQuery) =>
             refererUri.PathAndQuery,
         _ => "/",
     };

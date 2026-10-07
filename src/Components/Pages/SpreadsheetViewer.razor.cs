@@ -158,7 +158,7 @@ public partial class SpreadsheetViewer
     /// <param name="candidateName">The name the user typed, if any.</param>
     /// <param name="suggestions">Organism names to offer instead.</param>
     /// <returns>The message to display to the reader.</returns>
-    private static string BuildNotFoundMessage(
+    private string BuildNotFoundMessage(
         string? candidateName,
         IReadOnlyList<string> suggestions)
     {

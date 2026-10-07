@@ -205,7 +205,7 @@
   <data name="Upload_NoSpreadsheet" xml:space="preserve"><value>Belum ada tabel yang diunggah.</value></data>
   <data name="Upload_ChooseFile" xml:space="preserve"><value>Pilih berkas</value></data>
   <data name="Upload_ReplaceFile" xml:space="preserve"><value>Ganti berkas</value></data>
-  <data name="Upload_AcceptedFormats" xml:space="preserve"><value>Format yang diterima: .csv dan .Excel, hingga 10 MB.</value></data>
+  <data name="Upload_AcceptedFormats" xml:space="preserve"><value>Format yang diterima: .csv dan .xlsx, hingga 10 MB.</value></data>
   <data name="Upload_Selected" xml:space="preserve"><value>Dipilih:</value></data>
   <data name="Upload_Clear" xml:space="preserve"><value>Bersihkan</value></data>
   <data name="Upload_ConfirmReplace" xml:space="preserve"><value>tabel sudah diunggah. Mengunggah {0} akan menggantikan berkas acuan saat ini untuk semua orang.</value></data>
@@ -339,7 +339,7 @@
   <data name="Service_UnableToLoadUser" xml:space="preserve"><value>Error: Tidak dapat memuat pengguna dengan ID '{0}'.</value></data>
 
   <!-- Lapisan layanan: unggahan tabel dan pembaca berkas -->
-  <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .Excel.</value></data>
+  <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .xlsx.</value></data>
   <data name="Service_FileCouldNotBeSaved" xml:space="preserve"><value>Berkas '{0}' tidak dapat disimpan: {1}</value></data>
   <data name="Service_UploadSucceeded" xml:space="preserve"><value>Mengunggah '{0}' ({1} organisme, {2} antibiotik). Berkas ini kini menjadi tabel saat ini.</value></data>
   <data name="Service_FileTooLarge" xml:space="preserve"><value>Berkas berukuran {0} MB, melebihi ukuran unggahan maksimum {1} MB.</value></data>
@@ -350,7 +350,6 @@
   <data name="Service_XlsxWorksheetEmpty" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' kosong.</value></data>
   <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
   <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai antibiotik apa pun di baris tajuknya.</value></data>
-  <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak dapat ditafsirkan sebagai tabel berorientasi baris maupun berorientasi kolom.</value></data>
   <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak dapat ditafsirkan sebagai tabel berorientasi baris maupun berorientasi kolom.</value></data>
   <data name="Service_CsvMalformedLine" xml:space="preserve"><value>Berkas '{0}' memuat baris yang rusak: {1}</value></data>
   <data name="Service_FileContainsNoRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris apa pun.</value></data>

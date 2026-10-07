@@ -354,7 +354,6 @@
   <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any organism in its header row.</value></data>
   <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any antibiotic in its header row.</value></data>
   <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>The worksheet '{0}' in '{1}' could not be interpreted as either a row oriented or a column oriented table.</value></data>
-  <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>The worksheet '{0}' in '{1}' could not be interpreted as either a row oriented or a column oriented table.</value></data>
   <data name="Service_CsvMalformedLine" xml:space="preserve"><value>The file '{0}' contains a malformed line: {1}</value></data>
   <data name="Service_FileContainsNoRows" xml:space="preserve"><value>The file '{0}' contains no rows.</value></data>
   <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>The file '{0}' is not a valid xlsx workbook: {1}</value></data>

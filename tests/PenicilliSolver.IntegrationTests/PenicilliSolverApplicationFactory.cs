@@ -96,10 +96,11 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
                 new ConfigureOptions<RequestLocalizationOptions>(options =>
                 {
                     CultureInfo englishCulture = new(SupportedLanguages.English);
+                    CultureInfo indonesianCulture = new(SupportedLanguages.Indonesian);
 
                     options.DefaultRequestCulture = new RequestCulture(SupportedLanguages.English);
-                    options.SupportedCultures = [englishCulture];
-                    options.SupportedUICultures = [englishCulture];
+                    options.SupportedCultures = [englishCulture, indonesianCulture];
+                    options.SupportedUICultures = [englishCulture, indonesianCulture];
                 }));
         });
     }
