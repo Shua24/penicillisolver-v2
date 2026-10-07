@@ -90,29 +90,30 @@ public class XlsxSpreadsheetReaderTests
     }
 
     [Fact]
-    public void RankWithinOrganism_TheRealSample_LeadsWithTheMostResistantTestedAntibiotics()
+    public void RankWithinOrganism_TheRealSample_LeadsWithTheMostSusceptibleTestedAntibiotics()
     {
         // A blank cell is an untested reading, not a zero (Q14 revision), so the
-        // antigens this species was never tested against are no longer scored as
-        // maximally resistant and the leaderboard leads with the tested drugs.
-        // Acinetobacter baumannii's lowest reported value in this workbook is
-        // 36 percent susceptible.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        // antigens this species was never tested against sort after every
+        // measured drug, and the leaderboard leads with the highest reading.
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
         List<string> leadingNames = rankedAntibiotics
             .Take(3)
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
-        // Source column order is AMK, AMX, AMC, AMP, ... which is NOT
-        // alphabetical. The leaders are the tested drugs, most resistant first:
-        // the ones measured at zero percent susceptible, ordered by name.
-        Assert.Equal(["AMP %S", "ATM %S", "CSL %S"], leadingNames);
+        // The leaders are the tested drugs at a hundred percent susceptible,
+        // tied and broken by name in ordinal order.
+        Assert.Equal(["COL %S", "DOR %S", "IPM %S"], leadingNames);
+
+        double leadingValue = rankedAntibiotics[0].Value.Percent!.Value;
+
+        Assert.Equal(100.0, leadingValue, tolerance: 1e-9);
 
         bool everyLeadingRowWasMeasured = rankedAntibiotics
             .Take(3)
-            .All(resistance => resistance.Value.IsMeasured);
+            .All(susceptibility => susceptibility.Value.IsMeasured);
 
         Assert.True(everyLeadingRowWasMeasured);
     }
@@ -122,21 +123,21 @@ public class XlsxSpreadsheetReaderTests
     {
         // Untested antigens are listed after the measured ones rather than
         // dropped, so a reader still sees which drugs the workbook did not
-        // report, but none of them is presented as resistant evidence.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        // report, but none of them is presented as a measured value.
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
         int firstUntestedIndex = rankedAntibiotics
             .ToList()
-            .FindIndex(resistance => !resistance.Value.IsMeasured);
+            .FindIndex(susceptibility => !susceptibility.Value.IsMeasured);
 
         bool everyMeasuredRowComesFirst = rankedAntibiotics
             .Take(firstUntestedIndex)
-            .All(resistance => resistance.Value.IsMeasured);
+            .All(susceptibility => susceptibility.Value.IsMeasured);
 
         bool everyUntestedRowComesLast = rankedAntibiotics
             .Skip(firstUntestedIndex)
-            .All(resistance => !resistance.Value.IsMeasured);
+            .All(susceptibility => !susceptibility.Value.IsMeasured);
 
         Assert.True(everyMeasuredRowComesFirst);
         Assert.True(everyUntestedRowComesLast);
@@ -145,7 +146,7 @@ public class XlsxSpreadsheetReaderTests
     [Fact]
     public void RankWithinOrganism_TheRealSample_EveryAntibioticIsRankedForTheSpecies()
     {
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
         int rankedCount = rankedAntibiotics.Count;
@@ -156,29 +157,30 @@ public class XlsxSpreadsheetReaderTests
     [Fact]
     public void RankWithinOrganism_TheRealSample_RanksTestedAntibioticsAboveTheUntestedOnes()
     {
-        // Acinetobacter baumannii has tested values of 0 and above in this file,
-        // so every measured drug must sort ABOVE the untested antigens, and the
-        // last measured row is the one with the highest percentage.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        // Acinetobacter baumannii has measured values up to a hundred percent
+        // susceptible in this file, so every measured drug must sort ABOVE the
+        // untested antigens, and the first measured row is the one with the
+        // highest percentage.
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
-        AntibioticResistance firstTested = rankedAntibiotics
-            .First(resistance => resistance.Value.IsMeasured);
+        AntibioticSusceptibility firstTested = rankedAntibiotics
+            .First(susceptibility => susceptibility.Value.IsMeasured);
 
-        Assert.Equal(0.0, firstTested.Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal(100.0, firstTested.Value.Percent!.Value, tolerance: 1e-9);
 
         int measuredCount = rankedAntibiotics
-            .Count(resistance => resistance.Value.IsMeasured);
+            .Count(susceptibility => susceptibility.Value.IsMeasured);
 
         bool everyMeasuredRowPrecedesTheUntestedOnes = rankedAntibiotics
             .Take(measuredCount)
-            .All(resistance => resistance.Value.IsMeasured);
+            .All(susceptibility => susceptibility.Value.IsMeasured);
 
         Assert.True(everyMeasuredRowPrecedesTheUntestedOnes);
         Assert.Equal(25, measuredCount);
     }
 
-    private static IReadOnlyList<AntibioticResistance> RankRealSampleFor(string organismName)
+    private static IReadOnlyList<AntibioticSusceptibility> RankRealSampleFor(string organismName)
     {
         string samplePath = SampleDataLocator.XlsxSamplePath();
 
@@ -188,7 +190,7 @@ public class XlsxSpreadsheetReaderTests
 
         SpreadsheetDocument document = result.Document!;
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, organismName);
 
         return rankedAntibiotics;

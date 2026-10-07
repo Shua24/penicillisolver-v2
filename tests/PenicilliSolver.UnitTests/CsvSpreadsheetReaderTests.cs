@@ -75,28 +75,26 @@ public class CsvSpreadsheetReaderTests
     }
 
     [Fact]
-    public void RankWithinOrganism_TheRealSample_LeadsWithTheMostResistantTestedAntibiotics()
+    public void RankWithinOrganism_TheRealSample_LeadsWithTheMostSusceptibleTestedAntibiotics()
     {
         // A blank cell is an untested reading, not a zero (Q14 revision), so the
-        // drugs this species was never tested against are no longer scored as
-        // maximally resistant. The leaderboard leads with the tested drugs, and
-        // the most resistant of them are the ones measured at zero percent
-        // susceptible, ordered by name.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        // drugs this species was never tested against sort after every measured
+        // drug. The leaderboard leads with the highest susceptibility reading.
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
-        AntibioticResistance mostResistant = rankedAntibiotics[0];
+        AntibioticSusceptibility mostSusceptible = rankedAntibiotics[0];
 
-        Assert.True(mostResistant.Value.IsMeasured);
-        Assert.Equal("Amoxicillin/Clavulanic acid", mostResistant.AntibioticName);
-        Assert.Equal(0.0, mostResistant.Value.Percent!.Value, tolerance: 1e-9);
+        Assert.True(mostSusceptible.Value.IsMeasured);
+        Assert.Equal("Polymyxin B / Polysorbate 80", mostSusceptible.AntibioticName);
+        Assert.Equal(100.0, mostSusceptible.Value.Percent!.Value, tolerance: 1e-9);
 
         List<string> leadingNames = rankedAntibiotics
             .Take(3)
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
-        Assert.Equal(["Amoxicillin/Clavulanic acid", "Ampicillin", "Aztreonam"], leadingNames);
+        Assert.Equal(["Polymyxin B / Polysorbate 80", "Anidulafungin", "Ampicillin/Sulbactam"], leadingNames);
     }
 
     [Fact]
@@ -105,20 +103,20 @@ public class CsvSpreadsheetReaderTests
         // The untested drugs are still listed, so a reader who asks for more rows
         // than the report has tested drugs sees what was not reported rather than
         // a table that stops short. They must all sort below every measured drug.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
         int firstUntestedIndex = rankedAntibiotics
             .ToList()
-            .FindIndex(resistance => !resistance.Value.IsMeasured);
+            .FindIndex(susceptibility => !susceptibility.Value.IsMeasured);
 
         bool everyMeasuredRowComesFirst = rankedAntibiotics
             .Take(firstUntestedIndex)
-            .All(resistance => resistance.Value.IsMeasured);
+            .All(susceptibility => susceptibility.Value.IsMeasured);
 
         bool everyUntestedRowComesLast = rankedAntibiotics
             .Skip(firstUntestedIndex)
-            .All(resistance => !resistance.Value.IsMeasured);
+            .All(susceptibility => !susceptibility.Value.IsMeasured);
 
         Assert.True(everyMeasuredRowComesFirst);
         Assert.True(everyUntestedRowComesLast);
@@ -129,31 +127,32 @@ public class CsvSpreadsheetReaderTests
     {
         // Candida albicans has only four tested antigens in the sample, so the
         // ordering is a real ordering rather than a name tie, except for the
-        // final pair which share 100 and must fall back to name. This is exactly
-        // the shape the reference implementation produces with its top-N sort.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        // leading pair which share 100 and must fall back to name. This is
+        // exactly the shape the reference implementation produces with its
+        // descending top-N sort.
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Candida albicans");
 
-        List<AntibioticResistance> testedAntibiotics = rankedAntibiotics
-            .Where(resistance => resistance.Value.IsMeasured)
+        List<AntibioticSusceptibility> testedAntibiotics = rankedAntibiotics
+            .Where(susceptibility => susceptibility.Value.IsMeasured)
             .ToList();
 
         List<string> testedNames = testedAntibiotics
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
         Assert.Equal(
-            ["Amphotericin B", "Voriconazole", "Caspofungin", "Fluconazole"],
+            ["Caspofungin", "Fluconazole", "Voriconazole", "Amphotericin B"],
             testedNames);
 
-        Assert.Equal(66.7, testedAntibiotics[0].Value.Percent!.Value, tolerance: 1e-9);
-        Assert.Equal(88.9, testedAntibiotics[1].Value.Percent!.Value, tolerance: 1e-9);
-        Assert.Equal(100.0, testedAntibiotics[2].Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal(100.0, testedAntibiotics[0].Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal(100.0, testedAntibiotics[1].Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal(88.9, testedAntibiotics[2].Value.Percent!.Value, tolerance: 1e-9);
 
         // The untested antigens are listed after them and carry no percentage.
         int testedCount = testedAntibiotics.Count;
 
-        AntibioticResistance firstUntested = rankedAntibiotics[testedCount];
+        AntibioticSusceptibility firstUntested = rankedAntibiotics[testedCount];
 
         Assert.False(firstUntested.Value.IsMeasured);
         Assert.Null(firstUntested.Value.Percent);
@@ -165,7 +164,7 @@ public class CsvSpreadsheetReaderTests
         // The count is the document's antibiotic count, not the number that
         // happened to carry a value in the source file: untested drugs are
         // listed last rather than dropped.
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankRealSampleFor("Acinetobacter baumannii");
 
         int rankedCount = rankedAntibiotics.Count;
@@ -173,7 +172,7 @@ public class CsvSpreadsheetReaderTests
         Assert.True(rankedCount > 0);
 
         int untestedCount = rankedAntibiotics
-            .Count(resistance => !resistance.Value.IsMeasured);
+            .Count(susceptibility => !susceptibility.Value.IsMeasured);
 
         Assert.Equal(51, untestedCount);
         Assert.Equal(75, rankedCount);
@@ -223,7 +222,7 @@ public class CsvSpreadsheetReaderTests
         }
     }
 
-    private static IReadOnlyList<AntibioticResistance> RankRealSampleFor(string organismName)
+    private static IReadOnlyList<AntibioticSusceptibility> RankRealSampleFor(string organismName)
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
@@ -233,7 +232,7 @@ public class CsvSpreadsheetReaderTests
 
         SpreadsheetDocument document = result.Document!;
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, organismName);
 
         return rankedAntibiotics;

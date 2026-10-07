@@ -6,7 +6,7 @@ using penicillisolver_v2.Domain.Services;
 namespace penicillisolver_v2.Components.Pages;
 
 /// <summary>
-/// The behaviour of the searchable organism picker on the resistance ranking
+/// The behaviour of the searchable organism picker on the susceptibility ranking
 /// page: what it offers, what is keyboard highlighted, and whether it is open.
 /// </summary>
 /// <remarks>
@@ -71,7 +71,7 @@ public partial class SpreadsheetViewer
         if (!typedNameStillMatchesResolution)
         {
             resolvedOrganismName = null;
-            topResistant = [];
+            topSusceptible = [];
         }
 
         lookupMessage = null;

@@ -11,10 +11,11 @@ namespace penicillisolver_v2.Domain.ValueObjects;
 /// This exists because "never tested" and "tested, zero percent susceptible"
 /// are different clinical findings. A blank cell means the drug was not
 /// reported against that organism; a cell holding <c>0</c> means it was tested
-/// and nothing was susceptible. Treating both as zero made the resistance
-/// leaderboard lead with every untested drug, in alphabetical order, because
-/// zero is the most resistant score there is — the untested antigens crowded
-/// out the ones the report actually flagged.
+/// and nothing was susceptible. Treating both as zero let an untested drug
+/// masquerade as a flagged one, so the leaderboard could not tell a drug the
+/// report never measured apart from one measured at a hundred percent
+/// susceptible. The measured-versus-untested split keeps that distinction
+/// intact.
 /// </para>
 /// <para>
 /// The distinction lives in <see cref="IsMeasured"/> and <see cref="Percent"/>.

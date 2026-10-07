@@ -67,7 +67,7 @@
 
   <!-- Navigation and layout -->
   <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
-  <data name="Nav_ResistanceRanking" xml:space="preserve"><value>Resistance ranking</value></data>
+  <data name="Nav_SusceptibilityRanking" xml:space="preserve"><value>Susceptibility ranking</value></data>
   <data name="Nav_AbbreviationMappings" xml:space="preserve"><value>Abbreviation mappings</value></data>
   <data name="Nav_UploadSpreadsheet" xml:space="preserve"><value>Upload spreadsheet</value></data>
   <data name="Nav_UserAndTeamSettings" xml:space="preserve"><value>User and team settings</value></data>
@@ -98,8 +98,8 @@
   <data name="Home_DeleteMyAccount" xml:space="preserve"><value>Delete my account</value></data>
   <data name="Home_AuthenticatedUser" xml:space="preserve"><value>Authenticated User</value></data>
   <data name="Home_ClinicalToolsHeading" xml:space="preserve"><value>Clinical Tools</value></data>
-  <data name="Home_ResistanceRankingTitle" xml:space="preserve"><value>Resistance Ranking</value></data>
-  <data name="Home_ResistanceRankingBody" xml:space="preserve"><value>Analyze organism susceptibility and view the top resistant antibiotics from the reference spreadsheet.</value></data>
+  <data name="Home_SusceptibilityRankingTitle" xml:space="preserve"><value>Susceptibility Ranking</value></data>
+  <data name="Home_SusceptibilityRankingBody" xml:space="preserve"><value>Analyze organism susceptibility and view the antibiotics that organism is still most susceptible to, from the reference spreadsheet.</value></data>
   <data name="Home_OpenRanking" xml:space="preserve"><value>Open Ranking</value></data>
   <data name="Home_AbbreviationMappingsTitle" xml:space="preserve"><value>Abbreviation Mappings</value></data>
   <data name="Home_AbbreviationMappingsBody" xml:space="preserve"><value>Look up and manage definitions for antibiotic codes and abbreviations used across laboratory reports.</value></data>
@@ -218,9 +218,9 @@
   <data name="Upload_ChooseExactlyOneFile" xml:space="preserve"><value>Error: choose exactly one file. Multiple files are not supported.</value></data>
   <data name="Upload_FileTooLargeForPicker" xml:space="preserve"><value>Error: the file is larger than the permitted 10 MB limit.</value></data>
 
-  <!-- Resistance ranking -->
-  <data name="Ranking_Title" xml:space="preserve"><value>Resistance ranking</value></data>
-  <data name="Ranking_Heading" xml:space="preserve"><value>Resistance ranking</value></data>
+  <!-- Susceptibility ranking -->
+  <data name="Ranking_Title" xml:space="preserve"><value>Susceptibility ranking</value></data>
+  <data name="Ranking_Heading" xml:space="preserve"><value>Susceptibility ranking</value></data>
   <data name="Ranking_Loading" xml:space="preserve"><value>Loading the current spreadsheet…</value></data>
   <data name="Ranking_NoSpreadsheet" xml:space="preserve"><value>No spreadsheet has been uploaded yet. A clinical pathologist can upload one from the upload page.</value></data>
   <data name="Ranking_FieldFileName" xml:space="preserve"><value>File name</value></data>
@@ -228,18 +228,18 @@
   <data name="Ranking_FieldOrganisms" xml:space="preserve"><value>Organisms</value></data>
   <data name="Ranking_FieldAntibiotics" xml:space="preserve"><value>Antibiotics</value></data>
   <data name="Ranking_OrganismLabel" xml:space="preserve"><value>Which organism are you treating?</value></data>
-  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>The ranking is per organism: it lists what that one species is least susceptible to, most resistant first. Drugs this report never tested against the organism carry no percentage and are listed after the measured ones. Type any part of the name — "aureus" finds every Staphylococcus aureus — then choose it from the list.</value></data>
+  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>The ranking is per organism: it lists what that one species is still most susceptible to, highest susceptibility first. Drugs this report never tested against the organism carry no percentage and are listed after the measured ones. Type any part of the name — "aureus" finds every Staphylococcus aureus — then choose it from the list.</value></data>
   <data name="Ranking_OrganismPlaceholder" xml:space="preserve"><value>Start typing an organism name</value></data>
   <data name="Ranking_ShowWholeList" xml:space="preserve"><value>Show the whole list</value></data>
   <data name="Ranking_ShowRanking" xml:space="preserve"><value>Show ranking</value></data>
   <data name="Ranking_NoOrganismMatch" xml:space="preserve"><value>No organism in this file matches "{0}".</value></data>
   <data name="Ranking_OrganismCount" xml:space="preserve"><value>{0} of {1} organisms available.</value></data>
   <data name="Ranking_SeveralMatch" xml:space="preserve"><value>Several organisms match. Choose the one you meant:</value></data>
-  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>How many of the most resistant antibiotics to show</value></data>
+  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>How many of the most susceptible antibiotics to show</value></data>
   <data name="Ranking_TopCountHelp" xml:space="preserve"><value>Between 1 and {0}. Defaults to 3.</value></data>
   <data name="Ranking_TopCountEmpty" xml:space="preserve"><value>Enter a whole number.</value></data>
   <data name="Ranking_TopCountInvalid" xml:space="preserve"><value>Enter a whole number, for example 3.</value></data>
-  <data name="Ranking_TopHeading" xml:space="preserve"><value>Top {0} most resistant for {1}</value></data>
+  <data name="Ranking_TopHeading" xml:space="preserve"><value>Top {0} most susceptible for {1}</value></data>
   <data name="Ranking_RankColumn" xml:space="preserve"><value>Rank</value></data>
   <data name="Ranking_AntibioticColumn" xml:space="preserve"><value>Antibiotic</value></data>
   <data name="Ranking_SusceptibleColumn" xml:space="preserve"><value>% susceptible</value></data>

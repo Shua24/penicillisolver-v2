@@ -17,7 +17,7 @@ namespace PenicilliSolver.UnitTests;
 public class AntibioticRankingServiceTopCountTests
 {
     [Fact]
-    public void GetMostResistantWithinOrganism_ReturnsOnlyTheRequestedNumberOfLeaders()
+    public void GetMostSusceptibleWithinOrganism_ReturnsOnlyTheRequestedNumberOfLeaders()
     {
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["First", "Second", "Third"],
@@ -28,19 +28,19 @@ public class AntibioticRankingServiceTopCountTests
                 new SusceptibilityMeasurement("Third", "Organism one", SusceptibilityValue.Measured(30)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> leadingAntibiotics =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> leadingAntibiotics =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 "Organism one",
                 requestedCount: 2);
 
         Assert.Equal(2, leadingAntibiotics.Count);
-        Assert.Equal("First", leadingAntibiotics[0].AntibioticName);
+        Assert.Equal("Third", leadingAntibiotics[0].AntibioticName);
         Assert.Equal("Second", leadingAntibiotics[1].AntibioticName);
     }
 
     [Fact]
-    public void GetMostResistantWithinOrganism_FillsTheRequestFromUntestedDrugsWhenTooFewWereMeasured()
+    public void GetMostSusceptibleWithinOrganism_FillsTheRequestFromUntestedDrugsWhenTooFewWereMeasured()
     {
         // Asking for more rows than the report has tested drugs still returns
         // that many rows, ending with the untested ones, rather than a table
@@ -49,8 +49,8 @@ public class AntibioticRankingServiceTopCountTests
             antibioticNames: ["Only", "Alpha", "Bravo"],
             measurements: [new SusceptibilityMeasurement("Only", "Organism one", SusceptibilityValue.Measured(10))]);
 
-        IReadOnlyList<AntibioticResistance> leadingAntibiotics =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> leadingAntibiotics =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 "Organism one",
                 requestedCount: 3);
@@ -58,14 +58,14 @@ public class AntibioticRankingServiceTopCountTests
         Assert.Equal(3, leadingAntibiotics.Count);
 
         List<string> orderedNames = leadingAntibiotics
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
         Assert.Equal(["Only", "Alpha", "Bravo"], orderedNames);
     }
 
     [Fact]
-    public void GetMostResistantWithinOrganism_ClampsACountBelowOneToOne()
+    public void GetMostSusceptibleWithinOrganism_ClampsACountBelowOneToOne()
     {
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["First", "Second"],
@@ -75,8 +75,8 @@ public class AntibioticRankingServiceTopCountTests
                 new SusceptibilityMeasurement("Second", "Organism one", SusceptibilityValue.Measured(20)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> leadingAntibiotics =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> leadingAntibiotics =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 "Organism one",
                 requestedCount: 0);
@@ -87,14 +87,14 @@ public class AntibioticRankingServiceTopCountTests
     }
 
     [Fact]
-    public void GetMostResistantWithinOrganism_NeverReturnsMoreThanExist()
+    public void GetMostSusceptibleWithinOrganism_NeverReturnsMoreThanExist()
     {
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["Only"],
             measurements: [new SusceptibilityMeasurement("Only", "Organism one", SusceptibilityValue.Measured(10))]);
 
-        IReadOnlyList<AntibioticResistance> leadingAntibiotics =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> leadingAntibiotics =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 "Organism one",
                 requestedCount: 10);
@@ -105,14 +105,14 @@ public class AntibioticRankingServiceTopCountTests
     }
 
     [Fact]
-    public void GetMostResistantWithinOrganism_ReturnsNothingForAnAbsentOrganism()
+    public void GetMostSusceptibleWithinOrganism_ReturnsNothingForAnAbsentOrganism()
     {
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["Only"],
             measurements: [new SusceptibilityMeasurement("Only", "Organism one", SusceptibilityValue.Measured(10))]);
 
-        IReadOnlyList<AntibioticResistance> leadingAntibiotics =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> leadingAntibiotics =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 "Nothing like this",
                 requestedCount: 3);
@@ -123,9 +123,9 @@ public class AntibioticRankingServiceTopCountTests
     }
 
     [Fact]
-    public void GetMostResistantWithinOrganism_ThrowsWhenTheDocumentIsNull()
+    public void GetMostSusceptibleWithinOrganism_ThrowsWhenTheDocumentIsNull()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            AntibioticRankingService.GetMostResistantWithinOrganism(null!, "Organism one", 3));
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(null!, "Organism one", 3));
     }
 }

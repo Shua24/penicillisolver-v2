@@ -16,15 +16,15 @@ namespace PenicilliSolver.UnitTests;
 /// now per organism, and every test below states which organism it ranks.
 /// <para>
 /// The second thing these tests pin down is that an UNTESTED reading is not a
-/// zero. A blank cell carries no percentage at all, so it is never scored as
-/// maximally resistant and never leads a ranking; it is listed after every
-/// measured drug instead.
+/// zero. A blank cell carries no percentage at all, so it is never scored and
+/// never competes with a measured drug; it is listed after every measured drug
+/// instead.
 /// </para>
 /// </remarks>
 public class AntibioticRankingServiceTests
 {
     [Fact]
-    public void RankWithinOrganism_PlacesTheLowestSusceptibilityFirst()
+    public void RankWithinOrganism_PlacesTheHighestSusceptibilityFirst()
     {
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["Broad", "Narrow"],
@@ -34,12 +34,12 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Narrow", "Escherichia coli", SusceptibilityValue.Measured(5)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Escherichia coli");
 
-        string mostResistantAntibioticName = rankedAntibiotics[0].AntibioticName;
+        string mostSusceptibleAntibioticName = rankedAntibiotics[0].AntibioticName;
 
-        Assert.Equal("Narrow", mostResistantAntibioticName);
+        Assert.Equal("Broad", mostSusceptibleAntibioticName);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Tested", "Organism three", SusceptibilityValue.Measured(100)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism three");
 
         double? susceptibilityForOrganismThree = rankedAntibiotics[0].Value.Percent;
@@ -79,11 +79,11 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Bravo", "Organism one", SusceptibilityValue.Measured(0)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism one");
 
         List<string> orderedNames = rankedAntibiotics
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
         Assert.Equal(["Alpha", "Bravo", "Charlie", "Delta"], orderedNames);
@@ -103,15 +103,15 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Zero", "Organism one", SusceptibilityValue.Measured(0)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism one");
 
         int rankedCount = rankedAntibiotics.Count;
 
         Assert.Equal(2, rankedCount);
 
-        // "Zero" scores lower, so it leads.
-        Assert.Equal("Zero", rankedAntibiotics[0].AntibioticName);
+        // "Measured" scores higher, so it leads.
+        Assert.Equal("Measured", rankedAntibiotics[0].AntibioticName);
     }
 
     [Fact]
@@ -123,14 +123,14 @@ public class AntibioticRankingServiceTests
             antibioticNames: ["Present", "Absent"],
             measurements: [new SusceptibilityMeasurement("Present", "Organism one", SusceptibilityValue.Measured(70))]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism one");
 
-        AntibioticResistance absentAntibiotic = rankedAntibiotics[0];
+        AntibioticSusceptibility absentAntibiotic = rankedAntibiotics[0];
 
         Assert.Equal("Present", absentAntibiotic.AntibioticName);
 
-        AntibioticResistance untestedAntibiotic = rankedAntibiotics[1];
+        AntibioticSusceptibility untestedAntibiotic = rankedAntibiotics[1];
 
         Assert.Equal("Absent", untestedAntibiotic.AntibioticName);
         Assert.False(untestedAntibiotic.Value.IsMeasured);
@@ -141,8 +141,9 @@ public class AntibioticRankingServiceTests
     public void RankWithinOrganism_NeverRanksAnUntestedDrugAboveAMeasuredOne()
     {
         // The regression this whole change exists to fix: a blank cell used to
-        // score zero, and zero is the most resistant score there is, so the
-        // untested drugs led every leaderboard in alphabetical order.
+        // score zero rather than being left untested, so the untested drugs
+        // were treated as if they held a value and competed with the measured
+        // ones on the value axis.
         SpreadsheetDocument document = RankingTestDocument.Build(
             antibioticNames: ["Aardvark", "Zebra", "Measured"],
             measurements:
@@ -152,18 +153,19 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Measured", "Organism one", SusceptibilityValue.Measured(100)),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism one");
 
+        // The measured drug leads even when it is the one reading the file
+        // reported: 100 percent susceptible is the highest value, so it tops
+        // the measured group and the two untested drugs trail it in name order.
         string leaderName = rankedAntibiotics[0].AntibioticName;
 
-        // Measured at 100 percent susceptible is the LEAST resistant reading
-        // possible, and it still outranks a drug nobody tested.
         Assert.Equal("Measured", leaderName);
 
         List<string> trailingNames = rankedAntibiotics
             .Skip(1)
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
         Assert.Equal(["Aardvark", "Zebra"], trailingNames);
@@ -182,14 +184,14 @@ public class AntibioticRankingServiceTests
                 new SusceptibilityMeasurement("Bravo", "Organism one", SusceptibilityValue.Untested),
             ]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Organism one");
 
         List<string> orderedNames = rankedAntibiotics
-            .Select(resistance => resistance.AntibioticName)
+            .Select(susceptibility => susceptibility.AntibioticName)
             .ToList();
 
-        Assert.Equal(["Charlie", "Delta", "Alpha", "Bravo"], orderedNames);
+        Assert.Equal(["Delta", "Charlie", "Alpha", "Bravo"], orderedNames);
     }
 
     [Fact]
@@ -199,7 +201,7 @@ public class AntibioticRankingServiceTests
             antibioticNames: ["Only"],
             measurements: [new SusceptibilityMeasurement("Only", "Organism one", SusceptibilityValue.Measured(10))]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "Nothing like this");
 
         int rankedCount = rankedAntibiotics.Count;
@@ -214,7 +216,7 @@ public class AntibioticRankingServiceTests
             antibioticNames: ["Only"],
             measurements: [new SusceptibilityMeasurement("Only", "Escherichia coli", SusceptibilityValue.Measured(10))]);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             AntibioticRankingService.RankWithinOrganism(document, "  escherichia COLI  ");
 
         int rankedCount = rankedAntibiotics.Count;

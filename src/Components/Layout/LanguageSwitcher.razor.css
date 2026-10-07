@@ -1,0 +1,14 @@
+.language-switcher {
+    color: white;
+    background: none;
+}
+
+.language-switcher .form-select {
+    color: white;
+    background-color: #007566;
+    border: none;
+}
+
+.language-switcher .form-label {
+    color: white !important;
+}
