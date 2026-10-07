@@ -11,7 +11,7 @@ using penicillisolver_v2.Resources;
 
 /// <summary>
 /// Serves the current spreadsheet to the pages: the persisted metadata row, the
-/// parsed document, and the resistance ranking derived from it.
+/// parsed document, and the susceptibility ranking derived from it.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -104,13 +104,13 @@ public sealed class SpreadsheetQueryService(
     }
 
     /// <summary>
-    /// Returns the most resistant antibiotics for ONE organism in the current
+    /// Returns the most susceptible antibiotics for ONE organism in the current
     /// spreadsheet.
     /// </summary>
     /// <param name="organismName">The organism to rank against.</param>
     /// <param name="requestedCount">How many antibiotics to return.</param>
     /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
-    public async Task<IReadOnlyList<AntibioticResistance>> GetTopResistantWithinOrganismAsync(
+    public async Task<IReadOnlyList<AntibioticSusceptibility>> GetTopSusceptibleWithinOrganismAsync(
         string organismName,
         int requestedCount)
     {
@@ -121,8 +121,8 @@ public sealed class SpreadsheetQueryService(
             return [];
         }
 
-        IReadOnlyList<AntibioticResistance> ranking =
-            AntibioticRankingService.GetMostResistantWithinOrganism(
+        IReadOnlyList<AntibioticSusceptibility> ranking =
+            AntibioticRankingService.GetMostSusceptibleWithinOrganism(
                 document,
                 organismName,
                 requestedCount);
@@ -136,7 +136,7 @@ public sealed class SpreadsheetQueryService(
     /// </summary>
     /// <param name="organismName">The organism to rank against.</param>
     /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
-    public async Task<IReadOnlyList<AntibioticResistance>> GetFullRankingWithinOrganismAsync(
+    public async Task<IReadOnlyList<AntibioticSusceptibility>> GetFullRankingWithinOrganismAsync(
         string organismName)
     {
         SpreadsheetDocument? document = await GetCurrentDocumentAsync();
@@ -146,7 +146,7 @@ public sealed class SpreadsheetQueryService(
             return [];
         }
 
-        IReadOnlyList<AntibioticResistance> ranking =
+        IReadOnlyList<AntibioticSusceptibility> ranking =
             AntibioticRankingService.RankWithinOrganism(document, organismName);
 
         return ranking;

@@ -95,8 +95,8 @@ public abstract class IntegrationTestBase : IClassFixture<PenicilliSolverApplica
     /// <remarks>
     /// The file names two organisms, "Organism one" and "Organism two", and four
     /// antibiotics. Two of those antibiotics are measured at 0 and two at
-    /// higher values, which is enough to assert both the resistance order and
-    /// the measured-versus-untested rule.
+    /// higher values, which is enough to assert both the susceptibility order
+    /// and the measured-versus-untested rule.
     /// </remarks>
     protected async Task SeedStoredSpreadsheetAsync()
     {

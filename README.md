@@ -2,7 +2,7 @@
 
 PenicilliSolver 2 is a web app that reads a lab's antimicrobial-resistance
 (antibiogram) spreadsheet and tells you, per organism, which antibiotics that
-organism is most resistant to. One shared spreadsheet serves everyone in the
+organism is still most susceptible to. One shared spreadsheet serves everyone in the
 lab; different people can do more or less depending on their role.
 
 This documentation consists of these sections:
@@ -34,23 +34,25 @@ There are three roles. What you can do depends on which one you hold:
 | Role | What they can do |
 |---|---|
 | **Clinical Pathologist** | Everything. Upload or replace the shared spreadsheet, add or remove antibiotic abbreviations, manage other people's roles and activation, and set the team's permissions. The only role with administration power. |
-| **Doctor** | Read-only. Open the resistance rankings and view the abbreviation list, but cannot upload, edit mappings, or administer the app. |
+| **Doctor** | Read-only. Open the susceptibility rankings and view the abbreviation list, but cannot upload, edit mappings, or administer the app. |
 | **Infectious Disease Control Team** | Read by default. A pathologist can additionally let the team replace or remove the spreadsheet. Both of these are *off* on a fresh system and granted one at a time. |
 
 Every role must also have an *active* account; a pending or disabled account
 gets no tools at all.
 
-### Looking up resistance rankings
+### Looking up susceptibility rankings
 
-On the **resistance ranking** page:
+On the **susceptibility ranking** page:
 
 1. Type or pick an organism. The picker matches any part of the name, so
    typing `aureus` finds *Staphylococcus aureus*.
 2. Choose how many rows to show (from 1 up to every antibiotic in the file;
    the default is the **top 3**).
-3. The table lists that organism's most resistant antibiotics: their rank,
-   name, and the percentage of isolates that are *susceptible*. The lowest
-   percentage comes first — that is the drug the organism resists most.
+3. The table lists that organism's most susceptible antibiotics: their rank,
+   name, and the percentage of isolates that are *susceptible*. The highest
+   percentage comes first — that is the drug the organism is still most
+   susceptible to (the one a treatment is most likely to work against). A drug
+   reported at 0.00, or one the file never tested, sinks to the bottom.
 
 Antibiotics the file never tested against that organism appear after the
 measured ones with a dash in place of a percentage, so an "untested" drug is

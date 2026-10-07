@@ -1,12 +1,12 @@
 namespace penicillisolver_v2.Domain.ValueObjects;
 
 /// <summary>
-/// One row of the resistance leaderboard: an antibiotic together with the
+/// One row of the susceptibility leaderboard: an antibiotic together with the
 /// susceptibility reading the file reported for ONE organism.
 /// <para>
-/// The lower the percentage, the more resistant that organism is to the
-/// antibiotic, so the most resistant antibiotics sort first. The reading is the
-/// single value reported for that organism, not a mean across organisms: the
+/// The higher the percentage, the more susceptible that organism is to the
+/// antibiotic, so the most susceptible antibiotics sort first. The reading is
+/// the single value reported for that organism, not a mean across organisms: the
 /// ranking is always scoped to one species.
 /// </para>
 /// <para>
@@ -20,6 +20,6 @@ namespace penicillisolver_v2.Domain.ValueObjects;
 /// </summary>
 /// <param name="AntibioticName">The full display name of the antibiotic.</param>
 /// <param name="Value">The susceptibility reading for the selected organism, measured or untested.</param>
-public sealed record AntibioticResistance(
+public sealed record AntibioticSusceptibility(
     string AntibioticName,
     SusceptibilityValue Value);

@@ -7,7 +7,7 @@ using penicillisolver_v2.Services;
 namespace penicillisolver_v2.Components.Pages;
 
 /// <summary>
-/// The behaviour behind the resistance ranking page.
+/// The behaviour behind the susceptibility ranking page.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -30,7 +30,7 @@ public partial class SpreadsheetViewer
 
     private SpreadsheetUpload? currentUpload;
     private IReadOnlyList<string> organismNames = [];
-    private IReadOnlyList<AntibioticResistance> topResistant = [];
+    private IReadOnlyList<AntibioticSusceptibility> topSusceptible = [];
     private IReadOnlyList<string> ambiguousCandidates = [];
     private string? typedOrganismName;
     private string? resolvedOrganismName;
@@ -64,7 +64,7 @@ public partial class SpreadsheetViewer
             maximumTopCount = 1;
             organismNames = [];
             suggestions = [];
-            topResistant = [];
+            topSusceptible = [];
             isLoading = false;
             return;
         }
@@ -79,7 +79,7 @@ public partial class SpreadsheetViewer
 
         if (hasResolvedOrganism)
         {
-            topResistant = await QueryService.GetTopResistantWithinOrganismAsync(
+            topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
                 effectiveTopCount);
         }
@@ -125,7 +125,7 @@ public partial class SpreadsheetViewer
         lookupMessage = null;
         ambiguousCandidates = [];
         resolvedOrganismName = null;
-        topResistant = [];
+        topSusceptible = [];
 
         OrganismLookupResult lookupResult =
             await QueryService.ResolveOrganismAsync(candidateName);
@@ -136,7 +136,7 @@ public partial class SpreadsheetViewer
             typedOrganismName = lookupResult.OrganismName;
 
             isLoading = true;
-            topResistant = await QueryService.GetTopResistantWithinOrganismAsync(
+            topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
                 effectiveTopCount);
             isLoading = false;

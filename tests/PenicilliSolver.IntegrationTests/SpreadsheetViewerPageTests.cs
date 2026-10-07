@@ -8,7 +8,7 @@ using penicillisolver_v2.Services;
 namespace PenicilliSolver.IntegrationTests;
 
 /// <summary>
-/// The resistance ranking page end to end: it renders, it offers the organisms
+/// The susceptibility ranking page end to end: it renders, it offers the organisms
 /// that are really in the current file, and it ranks a real one.
 /// </summary>
 /// <remarks>
@@ -30,8 +30,9 @@ public sealed class SpreadsheetViewerPageTests : IntegrationTestBase
     public async Task Viewer_page_resolves_and_ranks_a_real_organism()
     {
         // End to end on the seed file: resolving a real name yields a ranking,
-        // and the leader is the most resistant measured drug. The seed's
-        // Cefetamet and Cefixime are both 0, so Cefetamet leads by name.
+        // and the leader is the most susceptible measured drug. For Organism
+        // one the seed holds Cefetamet=0, Cefixime=1, Ceftibuten=2,
+        // Amoxicillin=90, so the two highest readings lead, in value order.
         await SeedStoredSpreadsheetAsync();
 
         using IServiceScope scope = Factory.Services.CreateScope();
@@ -44,12 +45,14 @@ public sealed class SpreadsheetViewerPageTests : IntegrationTestBase
 
         Assert.Equal(OrganismLookupOutcome.Resolved, lookupResult.Outcome);
 
-        IReadOnlyList<AntibioticResistance> ranking =
-            await queryService.GetTopResistantWithinOrganismAsync("Organism one", 2);
+        IReadOnlyList<AntibioticSusceptibility> ranking =
+            await queryService.GetTopSusceptibleWithinOrganismAsync("Organism one", 2);
 
         Assert.Equal(2, ranking.Count);
-        Assert.Equal("Cefetamet", ranking[0].AntibioticName);
-        Assert.Equal(0.0, ranking[0].Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal("Amoxicillin", ranking[0].AntibioticName);
+        Assert.Equal(90.0, ranking[0].Value.Percent!.Value, tolerance: 1e-9);
+        Assert.Equal("Ceftibuten", ranking[1].AntibioticName);
+        Assert.Equal(2.0, ranking[1].Value.Percent!.Value, tolerance: 1e-9);
 
         bool everyRowWasMeasured = ranking.All(row => row.Value.IsMeasured);
 

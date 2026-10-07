@@ -3,12 +3,14 @@ using penicillisolver_v2.Domain.ValueObjects;
 namespace penicillisolver_v2.Domain.Services;
 
 /// <summary>
-/// Ranks antibiotics by how resistant ONE organism is to them.
+/// Ranks antibiotics by how susceptible ONE organism is to them.
 /// </summary>
 /// <remarks>
-/// Resistance is measured inversely through susceptibility: the lower the
-/// percentage of susceptible isolates, the more resistant the antibiotic, so
-/// the most resistant antibiotics sort first.
+/// The leaderboard is ordered by how susceptible ONE organism is to each
+/// antibiotic: the higher the percentage of susceptible isolates, the more the
+/// drug still works against that species, so the most susceptible (highest
+/// percentage) antibiotics sort first. A drug reported at 0.00, or one the
+/// file never tested, is the least useful, so those sink to the bottom.
 /// <para>
 /// The ranking is always scoped to a single organism. An earlier version
 /// averaged each antibiotic across every organism in the file, which made the
@@ -19,13 +21,11 @@ namespace penicillisolver_v2.Domain.Services;
 /// single species is still susceptible to.
 /// </para>
 /// <para>
-/// ONLY ACTUAL MEASUREMENTS ARE SCORED. A drug the file never reported against
-/// this organism carries no value and sorts after every measured drug, because
-/// "not tested" is not evidence of resistance (Q14 revision). Treating a blank
-/// cell as a zero scored it as maximally resistant, which put every untested
-/// antigen at the top of the leaderboard in alphabetical order. This mirrors
-/// the reference implementation, whose sort drops missing values and whose
-/// top-N is a descending sort of the reported percentages.
+/// ONLY ACTUAL MEASUREMENTS LEAD THE LIST. A drug the file never reported
+/// against this organism carries no value and sorts after every measured drug,
+/// because "not tested" is not evidence of susceptibility (Q14 revision). This
+/// mirrors the reference implementation, whose top-N is a descending sort of the
+/// reported percentages and whose blank cells therefore land at the bottom.
 /// </para>
 /// <para>
 /// An untested drug is still LISTED, after the measured ones, so a reader who
@@ -37,22 +37,24 @@ namespace penicillisolver_v2.Domain.Services;
 public static class AntibioticRankingService
 {
     /// <summary>
-    /// Ranks every antibiotic in the document for one organism, most resistant first.
+    /// Ranks every antibiotic in the document for one organism, most susceptible first.
     /// </summary>
     /// <remarks>
-    /// Measured drugs come first, ordered by ascending susceptibility (most
-    /// resistant first) and then by antibiotic name using ordinal comparison.
-    /// The name tie-break is a correctness requirement rather than a nicety:
-    /// drugs sharing a percentage would otherwise come back in an unstable, run
+    /// Measured drugs come first, ordered by descending susceptibility (the
+    /// highest percentage leads, the drug the organism is still most susceptible
+    /// to) and then by antibiotic name using ordinal comparison. A drug reported
+    /// at 0.00 therefore sits at the bottom of the measured group. The name
+    /// tie-break is a correctness requirement rather than a nicety: drugs
+    /// sharing a percentage would otherwise come back in an unstable, run
     /// dependent order.
     /// </remarks>
     /// <param name="document">The parsed spreadsheet to rank.</param>
     /// <param name="organismName">The organism to rank against.</param>
     /// <returns>
-    /// Every antibiotic in the document, most resistant for that organism first.
-    /// Empty when the organism is not present in the document.
+    /// Every antibiotic in the document, most susceptible for that organism
+    /// first. Empty when the organism is not present in the document.
     /// </returns>
-    public static IReadOnlyList<AntibioticResistance> RankWithinOrganism(
+    public static IReadOnlyList<AntibioticSusceptibility> RankWithinOrganism(
         SpreadsheetDocument document,
         string organismName)
     {
@@ -69,11 +71,11 @@ public static class AntibioticRankingService
             return [];
         }
 
-        List<AntibioticResistance> resistancePerAntibiotic =
-            ComputeResistanceWithinOrganism(document, trimmedOrganismName);
+        List<AntibioticSusceptibility> susceptibilityPerAntibiotic =
+            ComputeSusceptibilityWithinOrganism(document, trimmedOrganismName);
 
-        IReadOnlyList<AntibioticResistance> orderedResult =
-            SortMostResistantFirst(resistancePerAntibiotic);
+        IReadOnlyList<AntibioticSusceptibility> orderedResult =
+            SortMostSusceptibleFirst(susceptibilityPerAntibiotic);
 
         return orderedResult;
     }
@@ -84,8 +86,8 @@ public static class AntibioticRankingService
     /// <param name="document">The parsed spreadsheet to rank.</param>
     /// <param name="organismName">The organism to rank against.</param>
     /// <param name="requestedCount">How many to return. Values below one are clamped to one.</param>
-    /// <returns>The most resistant antibiotics, at most <paramref name="requestedCount"/> of them.</returns>
-    public static IReadOnlyList<AntibioticResistance> GetMostResistantWithinOrganism(
+    /// <returns>The most susceptible antibiotics, at most <paramref name="requestedCount"/> of them.</returns>
+    public static IReadOnlyList<AntibioticSusceptibility> GetMostSusceptibleWithinOrganism(
         SpreadsheetDocument document,
         string organismName,
         int requestedCount)
@@ -95,35 +97,35 @@ public static class AntibioticRankingService
 
         int effectiveCount = Math.Max(requestedCount, 1);
 
-        IReadOnlyList<AntibioticResistance> rankedAntibiotics =
+        IReadOnlyList<AntibioticSusceptibility> rankedAntibiotics =
             RankWithinOrganism(document, organismName);
 
-        IEnumerable<AntibioticResistance> leadingAntibiotics = rankedAntibiotics.Take(effectiveCount);
+        IEnumerable<AntibioticSusceptibility> leadingAntibiotics = rankedAntibiotics.Take(effectiveCount);
 
-        List<AntibioticResistance> limitedResult = leadingAntibiotics.ToList();
+        List<AntibioticSusceptibility> limitedResult = leadingAntibiotics.ToList();
 
         return limitedResult;
     }
 
     /// <summary>
-    /// Orders the rows with the most resistant measured drug first, followed by
+    /// Orders the rows with the most susceptible measured drug first, followed by
     /// the drugs that carry no measurement.
     /// </summary>
     /// <remarks>
     /// A drug with no measurement is placed after every measured drug rather
-    /// than given a score of zero. Zero is the most resistant score possible,
-    /// so scoring an absent reading as zero let drugs nobody had tested lead
-    /// the leaderboard.
+    /// than given a score. An untested reading carries no percentage at all, so
+    /// it can never compete with a measured drug on the value axis; the
+    /// untested group always trails the measured group.
     /// </remarks>
-    private static IReadOnlyList<AntibioticResistance> SortMostResistantFirst(
-        List<AntibioticResistance> resistancePerAntibiotic)
+    private static IReadOnlyList<AntibioticSusceptibility> SortMostSusceptibleFirst(
+        List<AntibioticSusceptibility> susceptibilityPerAntibiotic)
     {
-        IEnumerable<AntibioticResistance> measuredFirst = resistancePerAntibiotic
-            .OrderBy(resistance => resistance.Value.IsMeasured ? 0 : 1)
-            .ThenBy(RankOrderKey)
-            .ThenBy(resistance => resistance.AntibioticName, StringComparer.Ordinal);
+        IEnumerable<AntibioticSusceptibility> measuredFirst = susceptibilityPerAntibiotic
+            .OrderBy(susceptibility => susceptibility.Value.IsMeasured ? 0 : 1)
+            .ThenByDescending(RankOrderKey)
+            .ThenBy(susceptibility => susceptibility.AntibioticName, StringComparer.Ordinal);
 
-        List<AntibioticResistance> orderedResult = measuredFirst.ToList();
+        List<AntibioticSusceptibility> orderedResult = measuredFirst.ToList();
 
         return orderedResult;
     }
@@ -138,9 +140,9 @@ public static class AntibioticRankingService
     /// susceptible. The primary ordering already separates the two groups, so
     /// this key only ever orders rows within their own group.
     /// </remarks>
-    private static double RankOrderKey(AntibioticResistance resistance)
+    private static double RankOrderKey(AntibioticSusceptibility susceptibility)
     {
-        double? percentSusceptible = resistance.Value.Percent;
+        double? percentSusceptible = susceptibility.Value.Percent;
 
         if (percentSusceptible is null)
         {
@@ -157,15 +159,15 @@ public static class AntibioticRankingService
     /// Every antibiotic the file names gets exactly one row, so the ranking
     /// covers the whole matrix. An antibiotic the file never reported against
     /// this organism produces an untested row, which is listed after the
-    /// measured ones rather than scored as resistant.
+    /// measured ones rather than carrying a value.
     /// </remarks>
-    private static List<AntibioticResistance> ComputeResistanceWithinOrganism(
+    private static List<AntibioticSusceptibility> ComputeSusceptibilityWithinOrganism(
         SpreadsheetDocument document,
         string organismName)
     {
         HashSet<string> rankedAntibioticNames = new HashSet<string>(StringComparer.Ordinal);
 
-        List<AntibioticResistance> resistancePerAntibiotic = new List<AntibioticResistance>();
+        List<AntibioticSusceptibility> susceptibilityPerAntibiotic = new List<AntibioticSusceptibility>();
 
         foreach (SusceptibilityMeasurement measurement in document.Measurements)
         {
@@ -179,11 +181,11 @@ public static class AntibioticRankingService
                 continue;
             }
 
-            AntibioticResistance resistance = new AntibioticResistance(
+            AntibioticSusceptibility susceptibility = new AntibioticSusceptibility(
                 measurement.AntibioticName,
                 measurement.Value);
 
-            resistancePerAntibiotic.Add(resistance);
+            susceptibilityPerAntibiotic.Add(susceptibility);
             rankedAntibioticNames.Add(measurement.AntibioticName);
         }
 
@@ -196,13 +198,13 @@ public static class AntibioticRankingService
                 continue;
             }
 
-            AntibioticResistance missingResistance = new AntibioticResistance(
+            AntibioticSusceptibility missingSusceptibility = new AntibioticSusceptibility(
                 antibioticName,
                 SusceptibilityValue.Untested);
 
-            resistancePerAntibiotic.Add(missingResistance);
+            susceptibilityPerAntibiotic.Add(missingSusceptibility);
         }
 
-        return resistancePerAntibiotic;
+        return susceptibilityPerAntibiotic;
     }
 }

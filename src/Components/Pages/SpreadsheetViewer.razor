@@ -177,10 +177,10 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @for (int index = 0; index < topResistant.Count; index++)
+                    @for (int index = 0; index < topSusceptible.Count; index++)
                     {
                         int rank = index + 1;
-                        AntibioticResistance row = topResistant[index];
+                        AntibioticSusceptibility row = topSusceptible[index];
                         <tr>
                             <td>@rank</td>
                             <td>

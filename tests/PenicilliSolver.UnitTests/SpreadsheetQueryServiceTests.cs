@@ -75,57 +75,57 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetTopResistantWithinOrganismAsync_HonoursTheRequestedCount()
+    public async Task GetTopSusceptibleWithinOrganismAsync_HonoursTheRequestedCount()
     {
         await StoreRealSampleAsync();
 
-        IReadOnlyList<AntibioticResistance> five =
-            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 5);
+        IReadOnlyList<AntibioticSusceptibility> five =
+            await queryService.GetTopSusceptibleWithinOrganismAsync("Acinetobacter baumannii", 5);
 
-        IReadOnlyList<AntibioticResistance> two =
-            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 2);
+        IReadOnlyList<AntibioticSusceptibility> two =
+            await queryService.GetTopSusceptibleWithinOrganismAsync("Acinetobacter baumannii", 2);
 
         Assert.Equal(5, five.Count);
         Assert.Equal(2, two.Count);
 
         // The first entries of the shorter list must match the longer one, so
         // the ranking is stable regardless of how many are requested.
-        List<string> fiveNames = five.Select(resistance => resistance.AntibioticName).ToList();
-        List<string> twoNames = two.Select(resistance => resistance.AntibioticName).ToList();
+        List<string> fiveNames = five.Select(susceptibility => susceptibility.AntibioticName).ToList();
+        List<string> twoNames = two.Select(susceptibility => susceptibility.AntibioticName).ToList();
 
         Assert.Equal(fiveNames.Take(2), twoNames);
     }
 
     [Fact]
-    public async Task GetTopResistantWithinOrganismAsync_LeadsWithTheMostResistantTestedAntibiotics()
+    public async Task GetTopSusceptibleWithinOrganismAsync_LeadsWithTheMostSusceptibleTestedAntibiotics()
     {
         await StoreRealSampleAsync();
 
-        IReadOnlyList<AntibioticResistance> three =
-            await queryService.GetTopResistantWithinOrganismAsync("Acinetobacter baumannii", 3);
+        IReadOnlyList<AntibioticSusceptibility> three =
+            await queryService.GetTopSusceptibleWithinOrganismAsync("Acinetobacter baumannii", 3);
 
         Assert.Equal(3, three.Count);
 
-        List<string> names = three.Select(resistance => resistance.AntibioticName).ToList();
+        List<string> names = three.Select(susceptibility => susceptibility.AntibioticName).ToList();
 
         // A blank cell is an UNTESTED reading, not a zero (Q14 revision), so the
-        // drugs nobody tested no longer lead. The real sample's most resistant
-        // tested drugs for this species are the ones measured at zero percent
-        // susceptible, ordered by name.
-        Assert.Equal(["Amoxicillin/Clavulanic acid", "Ampicillin", "Aztreonam"], names);
+        // drugs nobody tested sort after every measured drug. The real sample's
+        // top readings for this species are the highest-percentage ones, so the
+        // leader is the drug measured at a hundred percent susceptible.
+        Assert.Equal(["Polymyxin B / Polysorbate 80", "Anidulafungin", "Ampicillin/Sulbactam"], names);
 
-        bool everyRowWasMeasured = three.All(resistance => resistance.Value.IsMeasured);
+        bool everyRowWasMeasured = three.All(susceptibility => susceptibility.Value.IsMeasured);
 
         Assert.True(everyRowWasMeasured);
     }
 
     [Fact]
-    public async Task GetTopResistantWithinOrganismAsync_ReturnsNothingForAnUnknownOrganism()
+    public async Task GetTopSusceptibleWithinOrganismAsync_ReturnsNothingForAnUnknownOrganism()
     {
         await StoreRealSampleAsync();
 
-        IReadOnlyList<AntibioticResistance> ranking =
-            await queryService.GetTopResistantWithinOrganismAsync("Nothing like this", 3);
+        IReadOnlyList<AntibioticSusceptibility> ranking =
+            await queryService.GetTopSusceptibleWithinOrganismAsync("Nothing like this", 3);
 
         int rankedCount = ranking.Count;
 
