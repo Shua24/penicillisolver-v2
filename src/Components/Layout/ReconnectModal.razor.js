@@ -8,6 +8,12 @@ retryButton.addEventListener("click", retry);
 const resumeButton = document.getElementById("components-resume-button");
 resumeButton.addEventListener("click", resume);
 
+/**
+ * Reacts to a Blazor reconnection state change by showing or hiding the
+ * reconnect modal, or reloading the page when the server rejected the
+ * circuit.
+ * @param {CustomEvent} event - The components-reconnect-state-changed event, whose detail.state is "show", "hide", "failed", or "rejected".
+ */
 function handleReconnectStateChanged(event) {
     if (event.detail.state === "show") {
         reconnectModal.showModal();
@@ -20,6 +26,11 @@ function handleReconnectStateChanged(event) {
     }
 }
 
+/**
+ * Attempts to reconnect the Blazor circuit. Falls back to resuming or
+ * reloading the page when reconnection succeeds but the circuit is gone, and
+ * retries on next visibility change when the server could not be reached.
+ */
 async function retry() {
     document.removeEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
 
@@ -45,6 +56,10 @@ async function retry() {
     }
 }
 
+/**
+ * Attempts to resume the paused circuit, reloading the page if it can no
+ * longer be resumed.
+ */
 async function resume() {
     try {
         const successful = await Blazor.resumeCircuit();
@@ -56,6 +71,9 @@ async function resume() {
     }
 }
 
+/**
+ * Retries the reconnection once the document becomes visible again.
+ */
 async function retryWhenDocumentBecomesVisible() {
     if (document.visibilityState === "visible") {
         await retry();

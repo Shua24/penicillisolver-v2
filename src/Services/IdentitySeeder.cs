@@ -111,6 +111,12 @@ public static partial class IdentitySeeder
             writtenRowCount);
     }
 
+    /// <summary>
+    /// Creates the given role when it does not already exist.
+    /// </summary>
+    /// <param name="roleManager">The role manager to query and write through.</param>
+    /// <param name="logger">A logger used to report what happened.</param>
+    /// <param name="roleName">The role to ensure exists.</param>
     private static async Task EnsureRoleExistsAsync(
         RoleManager<IdentityRole> roleManager,
         ILogger logger,
@@ -139,6 +145,15 @@ public static partial class IdentitySeeder
         }
     }
 
+    /// <summary>
+    /// Creates the configured seed account for a role, or assigns the role to
+    /// an existing account with the same email. Skips the role, logging an
+    /// error, when the email or password configuration is missing or blank.
+    /// </summary>
+    /// <param name="userManager">The user manager to query and write through.</param>
+    /// <param name="configuration">The application configuration holding the seed credentials.</param>
+    /// <param name="logger">A logger used to report what happened.</param>
+    /// <param name="roleName">The role whose seed account is being created.</param>
     private static async Task SeedAccountForRoleAsync(
         UserManager<ApplicationUser> userManager,
         IConfiguration configuration,
@@ -225,6 +240,14 @@ public static partial class IdentitySeeder
         }
     }
 
+    /// <summary>
+    /// Assigns the given role to an existing user when they do not already
+    /// hold it.
+    /// </summary>
+    /// <param name="userManager">The user manager to query and write through.</param>
+    /// <param name="logger">A logger used to report what happened.</param>
+    /// <param name="existingUser">The user to check and assign the role to.</param>
+    /// <param name="roleName">The role to ensure the user holds.</param>
     private static async Task EnsureUserHasRoleAsync(
         UserManager<ApplicationUser> userManager,
         ILogger logger,
@@ -261,6 +284,11 @@ public static partial class IdentitySeeder
         }
     }
 
+    /// <summary>
+    /// Joins an identity result's errors into a single readable string.
+    /// </summary>
+    /// <param name="identityResult">The failed result whose errors are described.</param>
+    /// <returns>A semicolon-separated list of error codes and descriptions.</returns>
     private static string DescribeErrors(IdentityResult identityResult)
     {
         ArgumentNullException.ThrowIfNull(identityResult);

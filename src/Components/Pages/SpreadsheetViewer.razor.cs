@@ -49,6 +49,10 @@ public partial class SpreadsheetViewer
         await LoadCurrentSpreadsheetAsync();
     }
 
+    /// <summary>
+    /// Loads the current upload and its organism names, then re-ranks the
+    /// already-resolved organism (if any) against the fresh data.
+    /// </summary>
     private async Task LoadCurrentSpreadsheetAsync()
     {
         isLoading = true;
@@ -83,6 +87,10 @@ public partial class SpreadsheetViewer
         isLoading = false;
     }
 
+    /// <summary>
+    /// Handles the "Show ranking" button: closes the picker and resolves and
+    /// ranks whatever organism name is currently typed.
+    /// </summary>
     private async Task OnShowRankingClickedAsync()
     {
         // The box holds an exact name once a suggestion has been picked, so the
@@ -94,6 +102,11 @@ public partial class SpreadsheetViewer
         await ResolveAndRankAsync(typedOrganismName);
     }
 
+    /// <summary>
+    /// Handles the user picking one of several ambiguous candidates: adopts it
+    /// as the typed name and resolves and ranks it.
+    /// </summary>
+    /// <param name="candidate">The organism name the user chose.</param>
     private async Task OnCandidateChosenAsync(string candidate)
     {
         typedOrganismName = candidate;
@@ -101,6 +114,12 @@ public partial class SpreadsheetViewer
         await OnSuggestionChosenAsync(candidate);
     }
 
+    /// <summary>
+    /// Resolves a typed organism name and, when it resolves to exactly one
+    /// organism, ranks the antibiotics for it. Otherwise records the
+    /// ambiguous candidates or a not-found message.
+    /// </summary>
+    /// <param name="candidateName">The organism name to resolve.</param>
     private async Task ResolveAndRankAsync(string? candidateName)
     {
         lookupMessage = null;
@@ -133,7 +152,13 @@ public partial class SpreadsheetViewer
         lookupMessage = BuildNotFoundMessage(candidateName, lookupResult.Candidates);
     }
 
-    private string BuildNotFoundMessage(
+    /// <summary>
+    /// Builds the message shown when an organism name did not resolve.
+    /// </summary>
+    /// <param name="candidateName">The name the user typed, if any.</param>
+    /// <param name="suggestions">Organism names to offer instead.</param>
+    /// <returns>The message to display to the reader.</returns>
+    private static string BuildNotFoundMessage(
         string? candidateName,
         IReadOnlyList<string> suggestions)
     {
@@ -154,6 +179,11 @@ public partial class SpreadsheetViewer
         return Localizer["Ranking_SpeciesNotFoundWithList", trimmedName, joinedSuggestions];
     }
 
+    /// <summary>
+    /// Handles the top-count input changing: validates it is a whole number,
+    /// clamps it to the allowed range, and reloads the ranking.
+    /// </summary>
+    /// <param name="eventArgs">The change event carrying the typed value.</param>
     private async Task OnTopCountChangedAsync(ChangeEventArgs eventArgs)
     {
         topCountError = null;
@@ -183,6 +213,12 @@ public partial class SpreadsheetViewer
         await LoadCurrentSpreadsheetAsync();
     }
 
+    /// <summary>
+    /// Clamps a requested top count to between 1 and the maximum allowed by
+    /// the current spreadsheet.
+    /// </summary>
+    /// <param name="requestedCount">The count requested by the user.</param>
+    /// <returns>The clamped count.</returns>
     private int ClampTopCount(int requestedCount)
     {
         if (requestedCount < 1)

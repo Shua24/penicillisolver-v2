@@ -252,6 +252,10 @@ public partial class AntibioticMapping
         statusMessage = $"{succeededCount} saved, {failedCount} could not be saved. {failureDetail}";
     }
 
+    /// <summary>
+    /// Reads the current user's id claim from the acting principal.
+    /// </summary>
+    /// <returns>The user id, or an empty string when there is no acting principal.</returns>
     private string ResolveActingUserId()
     {
         string? userId = actingPrincipal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

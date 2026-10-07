@@ -49,6 +49,12 @@ public partial class SpreadsheetViewer
         highlightedSuggestionIndex = suggestions.Count > 0 ? 0 : -1;
     }
 
+    /// <summary>
+    /// Handles the picker's text input changing: refreshes the suggestion
+    /// list and drops any previous resolution that no longer matches the
+    /// typed text.
+    /// </summary>
+    /// <param name="eventArgs">The change event carrying the typed value.</param>
     private void OnTypedOrganismChanged(ChangeEventArgs eventArgs)
     {
         typedOrganismName = eventArgs.Value?.ToString();
@@ -75,12 +81,20 @@ public partial class SpreadsheetViewer
         isPickerOpen = true;
     }
 
+    /// <summary>
+    /// Opens the picker and refreshes its suggestions when the input gains
+    /// focus.
+    /// </summary>
     private void OnPickerFocused()
     {
         RefreshSuggestions();
         isPickerOpen = true;
     }
 
+    /// <summary>
+    /// Opens the picker (refreshing its suggestions) or closes it, depending
+    /// on whether it is already open.
+    /// </summary>
     private async Task OnTogglePickerAsync()
     {
         if (isPickerOpen)
@@ -96,6 +110,12 @@ public partial class SpreadsheetViewer
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Handles keyboard navigation of the picker: Escape closes it, the arrow
+    /// keys move the highlight, and Enter or Tab accept the highlighted
+    /// suggestion.
+    /// </summary>
+    /// <param name="eventArgs">The keyboard event.</param>
     private async Task OnPickerKeyDown(KeyboardEventArgs eventArgs)
     {
         if (eventArgs.Key == "Escape")
