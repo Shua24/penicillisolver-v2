@@ -96,7 +96,7 @@
   <data name="Home_AuthenticatedUser" xml:space="preserve"><value>Pengguna Terautentikasi</value></data>
   <data name="Home_ClinicalToolsHeading" xml:space="preserve"><value>Alat Klinis</value></data>
   <data name="Home_SusceptibilityRankingTitle" xml:space="preserve"><value>Peringkat Kerentanan</value></data>
-  <data name="Home_SusceptibilityRankingBody" xml:space="preserve"><value>Analisis kerentanan organisme dan lihat antibiotik yang paling rentan terhadap organisme tersebut dari tabel acuan.</value></data>
+  <data name="Home_SusceptibilityRankingBody" xml:space="preserve"><value>Analisis kerentanan organisme dan lihat antibiotik yang paling efektif terhadap organisme tersebut dari tabel acuan.</value></data>
   <data name="Home_OpenRanking" xml:space="preserve"><value>Buka Peringkat</value></data>
   <data name="Home_AbbreviationMappingsTitle" xml:space="preserve"><value>Pemetaan Singkatan</value></data>
   <data name="Home_AbbreviationMappingsBody" xml:space="preserve"><value>Cari dan kelola definisi untuk kode dan singkatan antibiotik yang digunakan di seluruh laporan laboratorium.</value></data>
@@ -225,14 +225,14 @@
   <data name="Ranking_FieldOrganisms" xml:space="preserve"><value>Organisme</value></data>
   <data name="Ranking_FieldAntibiotics" xml:space="preserve"><value>Antibiotik</value></data>
   <data name="Ranking_OrganismLabel" xml:space="preserve"><value>Organisme apa yang sedang Anda tangani?</value></data>
-  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>Peringkat dihitung per organisme: daftar ini menampilkan obat yang masih paling rentan terhadap spesies tersebut, dimulai dari yang paling rentan (persentase tertinggi). Obat yang tidak pernah diuji laporan ini terhadap organisme tersebut tidak memiliki persentase dan dicantumkan setelah yang terukur. Ketik sebagian nama — "aureus" menemukan setiap Staphylococcus aureus — lalu pilih dari daftar.</value></data>
+  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>Peringkat dihitung per organisme: daftar ini menampilkan obat yang masih paling efektif terhadap spesies tersebut, dimulai dari yang paling efektif (persentase tertinggi). Obat yang tidak pernah diuji laporan ini terhadap organisme tersebut tidak memiliki persentase dan dicantumkan setelah yang terukur. Ketik sebagian nama — "aureus" menemukan setiap Staphylococcus aureus — lalu pilih dari daftar.</value></data>
   <data name="Ranking_OrganismPlaceholder" xml:space="preserve"><value>Mulai ketik nama organisme</value></data>
   <data name="Ranking_ShowWholeList" xml:space="preserve"><value>Tampilkan seluruh daftar</value></data>
   <data name="Ranking_ShowRanking" xml:space="preserve"><value>Tampilkan peringkat</value></data>
   <data name="Ranking_NoOrganismMatch" xml:space="preserve"><value>Tidak ada organisme dalam berkas ini yang cocok dengan "{0}".</value></data>
   <data name="Ranking_OrganismCount" xml:space="preserve"><value>{0} dari {1} organisme tersedia.</value></data>
   <data name="Ranking_SeveralMatch" xml:space="preserve"><value>Beberapa organisme cocok. Pilih yang Anda maksud:</value></data>
-  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>Berapa banyak antibiotik paling rentan yang ditampilkan</value></data>
+  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>Berapa banyak antibiotik paling efektif yang ditampilkan</value></data>
   <data name="Ranking_TopCountHelp" xml:space="preserve"><value>Antara 1 dan {0}. Bawaan 3.</value></data>
   <data name="Ranking_TopCountEmpty" xml:space="preserve"><value>Masukkan bilangan bulat.</value></data>
   <data name="Ranking_TopCountInvalid" xml:space="preserve"><value>Masukkan bilangan bulat, misalnya 3.</value></data>
