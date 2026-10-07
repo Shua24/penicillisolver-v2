@@ -40,7 +40,12 @@
                 <span class="text-body-secondary">Signed in as</span>
                 <strong>@signedInAs</strong>
             </div>
-            <span class="badge bg-secondary">Signed In</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary">Signed In</span>
+                <a class="btn btn-link btn-sm text-body-secondary p-0" href="Account/Delete">
+                    Delete my account
+                </a>
+            </div>
         </div>
 
         @* A pending account can sign in but holds no permissions, so it reaches

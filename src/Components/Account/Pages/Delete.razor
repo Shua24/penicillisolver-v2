@@ -1,0 +1,130 @@
+@page "/Account/Delete"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using penicillisolver_v2.Domain.Entities
+@using penicillisolver_v2.Services
+@using penicillisolver_v2.Components.Account.Shared
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserAdministrationService AdministrationService
+@inject ILogger<Delete> Logger
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Delete my account</PageTitle>
+
+<h1>Delete my account</h1>
+<div class="row">
+    <div class="col-lg-6">
+        <StatusMessage Message="@Message" />
+
+        @if (CurrentUser is null)
+        {
+            <div class="alert alert-warning" role="alert">
+                <strong>Not signed in.</strong>
+                This page only deletes the account you are signed in as, so log
+                in first and try again.
+                <a class="btn btn-primary mt-2" href="Account/Login">Log in</a>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="Input" method="post" OnValidSubmit="DeleteAccountAsync" FormName="delete-account">
+                <DataAnnotationsValidator />
+                <h2>Permanently delete this account.</h2>
+                <hr />
+                <p class="text-muted">
+                    This removes <strong>@CurrentUser.DisplayName</strong>
+                    (@CurrentUser.Email) and the role it holds. The account can
+                    not be reactivated; a clinical pathologist would have to
+                    register it again from scratch.
+                </p>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.ConfirmationText"
+                               id="Input.ConfirmationText"
+                               class="form-control"
+                               placeholder="I am sure" />
+                    <label for="Input.ConfirmationText">Type I am sure to confirm</label>
+                    <ValidationMessage For="() => Input.ConfirmationText" class="text-danger" />
+                </div>
+                <button type="submit" class="w-100 btn btn-lg btn-danger">Delete my account</button>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>The phrase a user must type to arm the delete button.</summary>
+    private const string ConfirmationPhrase = "I am sure";
+
+    /// <summary>The account about to be deleted, or null when not signed in.</summary>
+    private ApplicationUser? CurrentUser;
+
+    /// <summary>A refusal message from the service, shown above the form.</summary>
+    private string? Message;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        string? userId = UserManager.GetUserId(HttpContext.User);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            CurrentUser = await UserManager.FindByIdAsync(userId);
+        }
+    }
+
+    public async Task DeleteAccountAsync(EditContext editContext)
+    {
+        ArgumentNullException.ThrowIfNull(editContext);
+
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        string actingUserId = CurrentUser.Id;
+
+        // The voluntary self-delete path: it is exempt from the last-active
+        // pathologist guard by design, because it is the escape hatch. If it
+        // empties the pathologist pool, the bootstrap seeder repairs it on next
+        // startup.
+        AdministrationResult result = await AdministrationService.DeleteUserAsync(
+            actingUserId,
+            actingUserId,
+            isSelfDelete: true);
+
+        if (!result.IsSuccess)
+        {
+            Message = $"Error: {result.Message}";
+            return;
+        }
+
+        await SignInManager.SignOutAsync();
+
+        Logger.LogInformation("User {UserId} deleted their own account.", actingUserId);
+
+        RedirectManager.RedirectToWithStatus(
+            "Account/Login",
+            "Your account has been deleted.",
+            HttpContext);
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [RegularExpression(
+            $@"^{ConfirmationPhrase}$",
+            ErrorMessage = "Type the exact phrase shown above to confirm.")]
+        [Display(Name = "Confirmation")]
+        public string ConfirmationText { get; set; } = "";
+    }
+}

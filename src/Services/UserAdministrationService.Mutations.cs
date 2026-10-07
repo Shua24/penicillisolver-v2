@@ -58,8 +58,10 @@ public sealed partial class UserAdministrationService
 
         if (!roleIsChanging)
         {
+            string roleDisplayName = ApplicationRoleDisplayNames.DisplayNameOf(newRoleName);
+
             string unchangedMessage =
-                $"{DisplayNameOf(targetUser)} already holds the {newRoleName} role.";
+                $"{DisplayNameOf(targetUser)} already holds the {roleDisplayName} role.";
 
             return AdministrationResult.Success(unchangedMessage);
         }
@@ -95,7 +97,10 @@ public sealed partial class UserAdministrationService
             return AdministrationResult.Failure(DescribeIdentityFailures(addRoleResult));
         }
 
-        string successMessage = $"{DisplayNameOf(targetUser)} is now a {newRoleName}.";
+        string newRoleDisplayName = ApplicationRoleDisplayNames.DisplayNameOf(newRoleName);
+
+        string successMessage =
+            $"{DisplayNameOf(targetUser)}'s role is now {newRoleDisplayName}.";
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 
