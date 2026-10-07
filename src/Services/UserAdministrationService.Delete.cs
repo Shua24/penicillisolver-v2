@@ -66,7 +66,11 @@ public sealed partial class UserAdministrationService
 
             if (!guardResult.IsSuccess)
             {
-                return guardResult;
+                AdministrationResult refusalResult = AdministrationResult.Failure(
+                    "This is the last active clinical pathologist. Deleting this account " +
+                    "would leave nobody able to manage users or the spreadsheet.");
+
+                return refusalResult;
             }
         }
 

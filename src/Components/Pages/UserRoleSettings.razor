@@ -80,11 +80,31 @@ else
                                         @onclick="() => ChangeStatusAsync(account, AccountStatus.Disabled)">
                                     Disable
                                 </button>
-                                <button type="button"
-                                        class="btn btn-sm btn-danger"
-                                        @onclick="() => DeleteAccountAsync(account)">
-                                    Delete
-                                </button>
+                                @if (pendingDeleteUserId == account.UserId)
+                                {
+                                    <span>Delete @account.DisplayName's account? This cannot be undone.</span>
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            disabled="@isDeleting"
+                                            @onclick="() => DeleteAccountAsync(account)">
+                                        @(isDeleting ? "Deleting…" : "Confirm delete")
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-secondary"
+                                            disabled="@isDeleting"
+                                            @onclick="() => pendingDeleteUserId = null">
+                                        Cancel
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            disabled="@isDeleting"
+                                            @onclick="() => pendingDeleteUserId = account.UserId">
+                                        Delete
+                                    </button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -201,26 +221,6 @@ else
             actingUserId,
             account.UserId,
             newState);
-
-        await ApplyResultAsync(result);
-    }
-
-    private async Task DeleteAccountAsync(UserAccountSummary account)
-    {
-        if (actingUserId is null)
-        {
-            statusMessage = "Error: your session has expired. Sign in again and retry.";
-            return;
-        }
-
-        // The settings page is the pathologist's tool: this path deletes ANOTHER
-        // account, so it runs through the administrator authorization and the
-        // last-active-pathologist lockout guard. Voluntary self-deletion is a
-        // separate route (the Account/Delete page) and is exempt from that guard.
-        AdministrationResult result = await AdministrationService.DeleteUserAsync(
-            actingUserId,
-            account.UserId,
-            isSelfDelete: false);
 
         await ApplyResultAsync(result);
     }
