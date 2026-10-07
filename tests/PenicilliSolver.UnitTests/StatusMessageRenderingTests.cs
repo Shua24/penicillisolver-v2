@@ -28,6 +28,7 @@ namespace PenicilliSolver.UnitTests;
 /// </remarks>
 public sealed class StatusMessageRenderingTests : TestContext
 {
+    /// <summary>Registers the shared localizer required to render the status component.</summary>
     public StatusMessageRenderingTests()
     {
         // The component is rendered through _Imports, which injects the shared
@@ -36,6 +37,7 @@ public sealed class StatusMessageRenderingTests : TestContext
         Services.AddSingleton(TestLocalizerFactory.ClosedLocalizer);
     }
 
+    /// <summary>Verifies that an explicit message renders without a cascading HTTP context.</summary>
     [Fact]
     public void Renders_without_an_http_context_when_a_message_is_supplied()
     {
@@ -63,6 +65,7 @@ public sealed class StatusMessageRenderingTests : TestContext
         Assert.DoesNotContain("alert", renderedMarkup, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that an explicitly marked error receives the danger alert class.</summary>
     [Fact]
     public void Applies_the_danger_class_to_an_error_message()
     {
@@ -77,6 +80,7 @@ public sealed class StatusMessageRenderingTests : TestContext
         Assert.Contains("alert-danger", component.Markup, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that a message marked as successful receives the success alert class.</summary>
     [Fact]
     public void Applies_the_success_class_to_a_non_error_message()
     {
@@ -88,6 +92,7 @@ public sealed class StatusMessageRenderingTests : TestContext
         Assert.Contains("alert-success", component.Markup, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that an error-like text prefix does not override explicit success severity.</summary>
     [Fact]
     public void A_message_beginning_with_the_error_word_is_not_assumed_to_be_an_error()
     {

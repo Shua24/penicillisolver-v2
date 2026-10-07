@@ -4,6 +4,12 @@
 // HTTP request behind each render, so the only way it can learn the chosen
 // language is to read the cookie in the browser. The value is a culture tag, so
 // it carries no secret and this exposure costs nothing.
+/**
+ * Reads and decodes the first cookie with the given name.
+ * @param {string} name The cookie name to match exactly.
+ * @returns {string|null} The decoded value, or null if the cookie or document is absent.
+ * @throws {URIError} If the cookie value contains malformed URI encoding.
+ */
 export function read(name) {
     if (typeof document === "undefined") {
         return null;

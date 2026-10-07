@@ -50,6 +50,10 @@ public sealed partial class CultureProvider : ComponentBase, IDisposable
         await ApplyStoredCultureAsync();
     }
 
+    /// <summary>
+    /// Applies the stored culture, or the application default, to the current
+    /// formatting and UI cultures and the defaults for new threads.
+    /// </summary>
     private async Task ApplyStoredCultureAsync()
     {
         string? storedCulture = await ReadCultureCookieAsync();
@@ -63,6 +67,10 @@ public sealed partial class CultureProvider : ComponentBase, IDisposable
         CultureInfo.CurrentUICulture = culture;
     }
 
+    /// <summary>
+    /// Reads the culture preference cookie through JavaScript and extracts its
+    /// formatting culture, returning null when the cookie or culture is absent.
+    /// </summary>
     private async Task<string?> ReadCultureCookieAsync()
     {
         // The framework's cookie provider stores "c=<culture>|uic=<culture>".
@@ -98,6 +106,10 @@ public sealed partial class CultureProvider : ComponentBase, IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Checks whether a nonblank culture matches a configured tag or shares
+    /// a configured language prefix, ignoring case for prefix comparisons.
+    /// </summary>
     private static bool IsSupported(string? culture)
     {
         if (string.IsNullOrWhiteSpace(culture))
@@ -116,6 +128,9 @@ public sealed partial class CultureProvider : ComponentBase, IDisposable
         return matchesTag || matchesTwoLetter;
     }
 
+    /// <summary>
+    /// Starts reapplying the stored culture after navigation without awaiting it.
+    /// </summary>
     private void OnLocationChanged(object? sender, LocationChangedEventArgs eventArgs)
     {
         // A navigation is a good moment to re-read the cookie: the switcher may

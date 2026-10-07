@@ -58,6 +58,7 @@ internal static class TestLocalizerFactory
     {
         private readonly IStringLocalizer innerLocalizer;
 
+        /// <summary>Creates a localizer for the application's shared resources using the supplied factory.</summary>
         public SharedResourceLocalizer(IStringLocalizerFactory factory)
         {
             innerLocalizer = factory.Create(typeof(SharedResource));
@@ -68,6 +69,7 @@ internal static class TestLocalizerFactory
         public LocalizedString this[string name, params object[] arguments] =>
             innerLocalizer[name, arguments];
 
+        /// <summary>Enumerates shared resource strings, optionally including parent culture resources.</summary>
         public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
             innerLocalizer.GetAllStrings(includeParentCultures);
     }

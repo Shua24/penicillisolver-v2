@@ -7,6 +7,10 @@ public partial class UserRoleSettings
     private string? pendingDeleteUserId;
     private bool isDeleting;
 
+    /// <summary>
+    /// Deletes the account pending confirmation through the administration
+    /// service, displays the result, and clears the pending deletion state.
+    /// </summary>
     private async Task DeleteAccountAsync(UserAccountSummary account)
     {
         if (isDeleting || pendingDeleteUserId != account.UserId)

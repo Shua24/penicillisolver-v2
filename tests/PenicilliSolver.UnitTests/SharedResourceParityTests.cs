@@ -16,6 +16,7 @@ namespace PenicilliSolver.UnitTests;
 /// </remarks>
 public sealed class SharedResourceParityTests
 {
+    /// <summary>Verifies that the neutral and Indonesian resources have identical, nonempty key sets.</summary>
     [Fact]
     public void Every_key_has_an_entry_in_both_languages()
     {
@@ -36,6 +37,7 @@ public sealed class SharedResourceParityTests
             "Keys with no neutral fallback: " + string.Join(", ", missingFromNeutral));
     }
 
+    /// <summary>Verifies that neither resource file contains a blank translation.</summary>
     [Fact]
     public void Every_key_has_a_non_empty_value_in_both_languages()
     {
@@ -43,6 +45,7 @@ public sealed class SharedResourceParityTests
         AssertNoEmptyValues("SharedResource.id.resx");
     }
 
+    /// <summary>Loads the named resource file's nonempty keys using ordinal comparison.</summary>
     private static HashSet<string> ReadKeys(string fileName)
     {
         XDocument document = XDocument.Load(ResolveResourcePath(fileName));
@@ -56,6 +59,7 @@ public sealed class SharedResourceParityTests
         return new HashSet<string>(names, StringComparer.Ordinal);
     }
 
+    /// <summary>Fails with the affected keys when a resource value is missing, empty, or whitespace.</summary>
     private static void AssertNoEmptyValues(string fileName)
     {
         XDocument document = XDocument.Load(ResolveResourcePath(fileName));
