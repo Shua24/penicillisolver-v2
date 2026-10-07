@@ -1,5 +1,6 @@
 namespace penicillisolver_v2.Services;
 
+using Microsoft.Extensions.Localization;
 using OfficeOpenXml;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
@@ -32,7 +33,8 @@ public static partial class XlsxSpreadsheetReader
         SpreadsheetOrientation orientation,
         int rowCount,
         int columnCount,
-        List<string> headerCells)
+        List<string> headerCells,
+        IStringLocalizer localizer)
     {
         List<int> antibioticColumnIndexes = new List<int>();
 
@@ -52,7 +54,7 @@ public static partial class XlsxSpreadsheetReader
         if (antibioticColumnIndexes.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
-                $"The worksheet '{worksheet.Name}' in '{originalFileName}' does not name any antibiotic in its header row.");
+                localizer["Service_XlsxNoAntibioticInHeader", worksheet.Name, originalFileName]);
         }
 
         List<string> antibioticNames = new List<string>();
@@ -82,7 +84,8 @@ public static partial class XlsxSpreadsheetReader
                 organismName,
                 antibioticColumnIndexes,
                 antibioticNames,
-                measurements);
+                measurements,
+                localizer);
 
             if (rowFailure is not null)
             {
@@ -111,7 +114,8 @@ public static partial class XlsxSpreadsheetReader
         string organismName,
         List<int> antibioticColumnIndexes,
         List<string> antibioticNames,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         for (int antibioticPosition = 0; antibioticPosition < antibioticColumnIndexes.Count; antibioticPosition++)
         {
@@ -134,7 +138,8 @@ public static partial class XlsxSpreadsheetReader
                 antibioticName,
                 organismName,
                 cellReference,
-                measurements);
+                measurements,
+                localizer);
 
             if (cellFailure is not null)
             {

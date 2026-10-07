@@ -19,36 +19,34 @@
    re-validates the extension through SpreadsheetFormatResolver, because a
    browser-supplied hint is not a security boundary. *@
 
-<PageTitle>Upload spreadsheet</PageTitle>
+<PageTitle>@Localizer["Upload_Title"]</PageTitle>
 
-<h1>Upload spreadsheet</h1>
+<h1>@Localizer["Upload_Heading"]</h1>
 
 <p>
-    There is a single reference spreadsheet. Uploading a new file replaces it
-    for everyone, so you are asked to confirm before an existing file is
-    replaced.
+    @Localizer["Upload_Intro"]
 </p>
 
-<StatusMessage Message="@statusMessage" />
+<StatusMessage Message="@statusMessage" IsError="@statusFailed" />
 
 @if (currentUpload is not null)
 {
     <section class="mb-4">
-        <h2>Current spreadsheet</h2>
+        <h2>@Localizer["Upload_CurrentSpreadsheetHeading"]</h2>
         <dl class="row">
-            <dt class="col-sm-3">File name</dt>
+            <dt class="col-sm-3">@Localizer["Upload_FieldFileName"]</dt>
             <dd class="col-sm-9">@currentUpload.OriginalFileName</dd>
 
-            <dt class="col-sm-3">Uploaded</dt>
+            <dt class="col-sm-3">@Localizer["Upload_FieldUploaded"]</dt>
             <dd class="col-sm-9">@currentUpload.UploadedAtUtc.ToLocalTime().ToString("f")</dd>
 
-            <dt class="col-sm-3">Format</dt>
+            <dt class="col-sm-3">@Localizer["Upload_FieldFormat"]</dt>
             <dd class="col-sm-9">@currentUpload.FileFormat</dd>
 
-            <dt class="col-sm-3">Organisms</dt>
+            <dt class="col-sm-3">@Localizer["Upload_FieldOrganisms"]</dt>
             <dd class="col-sm-9">@currentUpload.OrganismCount</dd>
 
-            <dt class="col-sm-3">Antibiotics</dt>
+            <dt class="col-sm-3">@Localizer["Upload_FieldAntibiotics"]</dt>
             <dd class="col-sm-9">@currentUpload.AntibioticCount</dd>
         </dl>
     </section>
@@ -56,12 +54,9 @@
     @if (antibioticNames.Count > 0)
     {
         <section class="mb-4">
-            <h2>Antibiotics in this file</h2>
+            <h2>@Localizer["Upload_AntibioticsInFileHeading"]</h2>
             <p>
-                Each abbreviation is shown with the meaning a pathologist has
-                mapped for it. An abbreviation marked
-                <em>(unmapped)</em> has no meaning yet — add one on the
-                <a href="/antibiotic-mappings">abbreviation mappings</a> page.
+                @Localizer["Upload_AntibioticsInFileBody"]
             </p>
             <ul>
                 @foreach (string antibioticName in antibioticNames)
@@ -78,22 +73,22 @@
 }
 else
 {
-    <p>No spreadsheet has been uploaded yet.</p>
+    <p>@Localizer["Upload_NoSpreadsheet"]</p>
 }
 
 <section>
-    <h2>@(currentUpload is null ? "Choose a file" : "Replace the file")</h2>
+    <h2>@(currentUpload is null ? Localizer["Upload_ChooseFile"] : Localizer["Upload_ReplaceFile"])</h2>
 
     <div class="mb-3">
         <InputFile OnChange="OnFileSelectedAsync" accept=".csv,.xlsx" class="form-control" />
-        <div class="form-text">Accepted formats: .csv and .xlsx, up to 10 MB.</div>
+        <div class="form-text">@Localizer["Upload_AcceptedFormats"]</div>
     </div>
 
     @if (selectedFileName is not null && !isAwaitingConfirmation)
     {
         <p>
-            Selected: <strong>@selectedFileName</strong>
-            <button type="button" class="btn btn-link" @onclick="ClearSelection">Clear</button>
+            @Localizer["Upload_Selected"] <strong>@selectedFileName</strong>
+            <button type="button" class="btn btn-link" @onclick="ClearSelection">@Localizer["Upload_Clear"]</button>
         </p>
     }
 
@@ -101,22 +96,20 @@ else
     {
         <div class="alert alert-warning" role="alert">
             <p>
-                A spreadsheet is already uploaded. Uploading
-                <strong>@selectedFileName</strong> will replace the current
-                reference file for everyone.
+                @Localizer["Upload_ConfirmReplace", selectedFileName!]
             </p>
             <button type="button" class="btn btn-danger" @onclick="ConfirmAndUploadAsync">
-                Replace the current spreadsheet
+                @Localizer["Upload_ConfirmReplaceButton"]
             </button>
             <button type="button" class="btn btn-secondary" @onclick="ClearSelection">
-                Cancel
+                @Localizer["Upload_Cancel"]
             </button>
         </div>
     }
 
     @if (isUploading)
     {
-        <p><em>Uploading and checking the file…</em></p>
+        <p><em>@Localizer["Upload_Uploading"]</em></p>
     }
 </section>
 
@@ -126,6 +119,13 @@ else
     private IBrowserFile? selectedFile;
     private string? selectedFileName;
     private string? statusMessage;
+
+    /// <summary>
+    /// Whether <see cref="statusMessage"/> describes a failure. Set alongside
+    /// every failure message so the alert is styled as an error without the
+    /// component having to guess from the text.
+    /// </summary>
+    private bool statusFailed;
     private bool isAwaitingConfirmation;
     private bool isUploading;
     private string? uploadingUserId;
@@ -158,14 +158,15 @@ else
     private async Task OnFileSelectedAsync(InputFileChangeEventArgs eventArgs)
     {
         statusMessage = null;
+        statusFailed = false;
 
         IBrowserFile file = eventArgs.File;
 
         // A single reference file, so an ambiguity is resolved by refusing.
         if (eventArgs.FileCount != 1)
         {
-            statusMessage =
-                "Error: choose exactly one file. Multiple files are not supported.";
+            statusMessage = Localizer["Upload_ChooseExactlyOneFile"];
+            statusFailed = true;
 
             return;
         }
@@ -209,7 +210,8 @@ else
 
             if (uploadingUserId is null)
             {
-                statusMessage = "Error: your session has expired. Sign in again and retry.";
+                statusMessage = Localizer["Status_SessionExpired"];
+                statusFailed = true;
                 return;
             }
 
@@ -225,7 +227,8 @@ else
 
             statusMessage = uploadResult.IsSuccess
                 ? uploadResult.Message
-                : $"Error: {uploadResult.Message}";
+                : $"{Localizer["Status_ErrorPrefix"]}{uploadResult.Message}";
+            statusFailed = !uploadResult.IsSuccess;
 
             if (uploadResult.IsSuccess)
             {
@@ -240,7 +243,8 @@ else
             // InputFile raises this when the file exceeds the permitted size.
             // Reflect the configured limit rather than the browser's message.
             statusMessage =
-                $"Error: the file is larger than the permitted 10 MB limit. ({exception.Message})";
+                $"{Localizer["Upload_FileTooLargeForPicker"]} ({exception.Message})";
+            statusFailed = true;
         }
         finally
         {

@@ -1,5 +1,6 @@
 namespace penicillisolver_v2.Services;
 
+using Microsoft.Extensions.Localization;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
 
@@ -16,12 +17,13 @@ public static partial class CsvSpreadsheetReader
     private static SpreadsheetImportResult ParseRowOriented(
         string originalFileName,
         List<string[]> dataRows,
-        SpreadsheetOrientation orientation)
+        SpreadsheetOrientation orientation,
+        IStringLocalizer localizer)
     {
         if (dataRows.Count < 2)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' does not contain an organism header row and data rows.");
+                localizer["Service_CsvMissingHeaderOrRows", originalFileName]);
         }
 
         string[] organismHeaderRow = dataRows[0];
@@ -41,7 +43,7 @@ public static partial class CsvSpreadsheetReader
         if (organismNames.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' does not name any organism in its header row.");
+                localizer["Service_CsvNoOrganismInHeader", originalFileName]);
         }
 
         int isolateCountRowIndex = FindIsolateCountRowIndex(dataRows);
@@ -77,7 +79,8 @@ public static partial class CsvSpreadsheetReader
                 rowIndex,
                 antibioticName,
                 organismNames,
-                measurements);
+                measurements,
+                localizer);
 
             if (rowFailure is not null)
             {
@@ -139,7 +142,8 @@ public static partial class CsvSpreadsheetReader
         int rowIndex,
         string antibioticName,
         List<string> organismNames,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         for (int columnIndex = 1; columnIndex < dataRow.Length; columnIndex++)
         {
@@ -171,7 +175,8 @@ public static partial class CsvSpreadsheetReader
                 antibioticName,
                 organismName,
                 cellReference,
-                measurements);
+                measurements,
+                localizer);
 
             if (cellFailure is not null)
             {

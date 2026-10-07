@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Domain.Entities;
+using penicillisolver_v2.Resources;
 
 namespace penicillisolver_v2.Services;
 
@@ -25,12 +27,18 @@ public sealed class IdentityRedirectManager
     };
 
     private readonly NavigationManager navigationManager;
+    private readonly IStringLocalizer localizer;
 
     /// <summary>Creates the manager over the circuit's navigation manager.</summary>
-    public IdentityRedirectManager(NavigationManager navigationManager)
+    public IdentityRedirectManager(
+        NavigationManager navigationManager,
+        IStringLocalizerFactory localizerFactory)
     {
         ArgumentNullException.ThrowIfNull(navigationManager);
+        ArgumentNullException.ThrowIfNull(localizerFactory);
+
         this.navigationManager = navigationManager;
+        this.localizer = localizerFactory.Create(typeof(SharedResource));
     }
 
     private string CurrentPath =>
@@ -90,7 +98,7 @@ public sealed class IdentityRedirectManager
 
         RedirectToWithStatus(
             "Account/InvalidUser",
-            $"Error: Unable to load user with ID '{userManager.GetUserId(context.User)}'.",
+            localizer["Service_UnableToLoadUser", userManager.GetUserId(context.User) ?? string.Empty],
             context);
     }
 }

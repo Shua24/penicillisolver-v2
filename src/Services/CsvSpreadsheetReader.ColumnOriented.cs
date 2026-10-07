@@ -1,6 +1,7 @@
 namespace penicillisolver_v2.Services;
 
 using System.Globalization;
+using Microsoft.Extensions.Localization;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
 
@@ -26,7 +27,8 @@ public static partial class CsvSpreadsheetReader
     private static SpreadsheetImportResult ParseColumnOriented(
         string originalFileName,
         List<string[]> dataRows,
-        SpreadsheetOrientation orientation)
+        SpreadsheetOrientation orientation,
+        IStringLocalizer localizer)
     {
         string[] headerRow = dataRows[0];
 
@@ -68,7 +70,8 @@ public static partial class CsvSpreadsheetReader
                 rowIndex,
                 organismName,
                 antibioticNames,
-                measurements);
+                measurements,
+                localizer);
 
             if (rowFailure is not null)
             {
@@ -95,7 +98,8 @@ public static partial class CsvSpreadsheetReader
         int rowIndex,
         string organismName,
         List<string> antibioticNames,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         for (int columnIndex = 1; columnIndex < dataRow.Length; columnIndex++)
         {
@@ -126,7 +130,8 @@ public static partial class CsvSpreadsheetReader
                 antibioticName,
                 organismName,
                 cellReference,
-                measurements);
+                measurements,
+                localizer);
 
             if (cellFailure is not null)
             {
@@ -161,7 +166,8 @@ public static partial class CsvSpreadsheetReader
         string antibioticName,
         string organismName,
         string cellReference,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         if (cellText.Length == 0)
         {
@@ -184,7 +190,7 @@ public static partial class CsvSpreadsheetReader
         if (!parsed)
         {
             return SpreadsheetImportResult.Failure(
-                $"The value '{cellText}' at {cellReference} is not a number.");
+                localizer["Service_CellValueNotANumber", cellText, cellReference]);
         }
 
         bool isInRange = parsedValue >= MinimumPercentSusceptible
@@ -193,7 +199,7 @@ public static partial class CsvSpreadsheetReader
         if (!isInRange)
         {
             return SpreadsheetImportResult.Failure(
-                $"The value '{cellText}' at {cellReference} is outside the permitted range of 0 to 100.");
+                localizer["Service_CellValueOutOfRange", cellText, cellReference]);
         }
 
         SusceptibilityMeasurement measurement = new SusceptibilityMeasurement(

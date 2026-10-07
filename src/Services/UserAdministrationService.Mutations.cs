@@ -41,14 +41,15 @@ public sealed partial class UserAdministrationService
 
         if (!IsApplicationRole(newRoleName))
         {
-            return AdministrationResult.Failure($"'{newRoleName}' is not a recognised role.");
+            return AdministrationResult.Failure(
+                Localizer["Service_RoleNotRecognised", newRoleName]);
         }
 
         ApplicationUser? targetUser = await userManager.FindByIdAsync(targetUserId);
 
         if (targetUser is null)
         {
-            return AdministrationResult.Failure("That account no longer exists.");
+            return AdministrationResult.Failure(Localizer["Service_AccountNoLongerExists"]);
         }
 
         string currentRoleName = await ResolveSingleRoleAsync(targetUser);
@@ -132,15 +133,14 @@ public sealed partial class UserAdministrationService
 
         if (newState == AccountStatus.Pending)
         {
-            return AdministrationResult.Failure(
-                "An account cannot be returned to the pending state.");
+            return AdministrationResult.Failure(Localizer["Service_CannotReturnToPending"]);
         }
 
         ApplicationUser? targetUser = await userManager.FindByIdAsync(targetUserId);
 
         if (targetUser is null)
         {
-            return AdministrationResult.Failure("That account no longer exists.");
+            return AdministrationResult.Failure(Localizer["Service_AccountNoLongerExists"]);
         }
 
         if (targetUser.AccountStatus == newState)
@@ -178,7 +178,7 @@ public sealed partial class UserAdministrationService
 
         string successMessage =
             $"{DisplayNameOf(targetUser)} is now {DescribeState(newState)}. " +
-            "The change applies on that account's next sign-in.";
+            Localizer["Service_ChangeAppliesOnNextSignIn"];
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 
@@ -229,7 +229,7 @@ public sealed partial class UserAdministrationService
         await database.SaveChangesAsync();
 
         string successMessage =
-            "Team permissions updated. The change applies to the team's next request.";
+            Localizer["Service_TeamPermissionsUpdated"];
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 

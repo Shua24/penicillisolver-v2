@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Constants;
@@ -35,7 +36,10 @@ public sealed class AntibioticAbbreviationServiceTests : IDisposable
                 .Options;
 
         database = new ApplicationDbContext(options);
-        service = new AntibioticAbbreviationService(database, new StubAuthorizationService());
+        service = new AntibioticAbbreviationService(
+            database,
+            new StubAuthorizationService(),
+            TestLocalizerFactory.Create());
         pathologistPrincipal = StubAuthorizationService.BuildPrincipal(
             ApplicationRoleNames.ClinicalPathologist,
             AccountStatus.Active);

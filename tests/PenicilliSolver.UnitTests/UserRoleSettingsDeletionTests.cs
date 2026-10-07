@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 
 using AngleSharp.Dom;
@@ -89,6 +90,15 @@ public sealed class UserRoleSettingsDeletionTests : UserAdministrationTestFixtur
         authorization.SetAuthorized(administrator.Email!);
         authorization.SetClaims(new Claim(ClaimTypes.NameIdentifier, administrator.Id));
         context.Services.AddSingleton(AdministrationService);
+
+        // The page resolves its labels through the localizer, so the test
+        // container has to provide one. AddLocalization registers the open
+        // generic IStringLocalizer<T>; the closed type the component injects is
+        // registered explicitly below.
+        context.Services.AddLocalization();
+        context.Services.AddSingleton(TestLocalizerFactory.ClosedLocalizer);
+        CultureInfo.CurrentCulture = new CultureInfo("en-US");
+        CultureInfo.CurrentUICulture = new CultureInfo("en-US");
 
         IRenderedComponent<UserRoleSettings> component = context.RenderComponent<UserRoleSettings>();
         component.WaitForElement("tbody tr");

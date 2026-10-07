@@ -20,7 +20,8 @@ public partial class UserRoleSettings
         {
             if (actingUserId is null)
             {
-                statusMessage = "Error: your session has expired. Sign in again and retry.";
+                statusFailed = true;
+                statusMessage = Localizer["Status_SessionExpired"];
                 return;
             }
 

@@ -1,6 +1,7 @@
 namespace penicillisolver_v2.Services;
 
 using System.Globalization;
+using Microsoft.Extensions.Localization;
 using OfficeOpenXml;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
@@ -26,7 +27,8 @@ public static partial class XlsxSpreadsheetReader
         SpreadsheetOrientation orientation,
         int rowCount,
         int columnCount,
-        List<string> headerCells)
+        List<string> headerCells,
+        IStringLocalizer localizer)
     {
         List<int> organismColumnIndexes = new List<int>();
 
@@ -43,7 +45,7 @@ public static partial class XlsxSpreadsheetReader
         if (organismColumnIndexes.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
-                $"The worksheet '{worksheet.Name}' in '{originalFileName}' does not name any organism in its header row.");
+                localizer["Service_XlsxNoOrganismInHeader", worksheet.Name, originalFileName]);
         }
 
         List<string> organismNames = new List<string>();
@@ -73,7 +75,8 @@ public static partial class XlsxSpreadsheetReader
                 antibioticName,
                 organismColumnIndexes,
                 organismNames,
-                measurements);
+                measurements,
+                localizer);
 
             if (rowFailure is not null)
             {
@@ -102,7 +105,8 @@ public static partial class XlsxSpreadsheetReader
         string antibioticName,
         List<int> organismColumnIndexes,
         List<string> organismNames,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         for (int organismPosition = 0; organismPosition < organismColumnIndexes.Count; organismPosition++)
         {
@@ -125,7 +129,8 @@ public static partial class XlsxSpreadsheetReader
                 antibioticName,
                 organismName,
                 cellReference,
-                measurements);
+                measurements,
+                localizer);
 
             if (cellFailure is not null)
             {
@@ -160,7 +165,8 @@ public static partial class XlsxSpreadsheetReader
         string antibioticName,
         string organismName,
         string cellReference,
-        List<SusceptibilityMeasurement> measurements)
+        List<SusceptibilityMeasurement> measurements,
+        IStringLocalizer localizer)
     {
         if (cellText.Length == 0)
         {
@@ -183,7 +189,7 @@ public static partial class XlsxSpreadsheetReader
         if (!parsed)
         {
             return SpreadsheetImportResult.Failure(
-                $"The value '{cellText}' at {cellReference} is not a number.");
+                localizer["Service_CellValueNotANumber", cellText, cellReference]);
         }
 
         bool isInRange = parsedValue >= MinimumPercentSusceptible
@@ -192,7 +198,7 @@ public static partial class XlsxSpreadsheetReader
         if (!isInRange)
         {
             return SpreadsheetImportResult.Failure(
-                $"The value '{cellText}' at {cellReference} is outside the permitted range of 0 to 100.");
+                localizer["Service_CellValueOutOfRange", cellText, cellReference]);
         }
 
         SusceptibilityMeasurement measurement = new SusceptibilityMeasurement(

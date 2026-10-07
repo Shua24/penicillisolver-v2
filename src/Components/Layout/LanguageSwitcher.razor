@@ -1,0 +1,91 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Localization
+@using penicillisolver_v2.Domain.Constants
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+@* The switcher writes the culture cookie through a dedicated minimal endpoint
+   and then reloads, because a culture change cannot be applied to an already
+   running circuit: the strings are resolved from resources at render time and
+   the whole page has to be produced again under the new culture. *@
+<div class="language-switcher px-3 pb-3">
+    <label class="form-label small text-body-secondary mb-1" for="language-select">
+        @Localizer["Language_Label"]
+    </label>
+    <form action="culture/set" method="post" id="language-form">
+        <AntiforgeryToken />
+        <select id="language-select"
+                name="@LanguagePreference.FormFieldName"
+                class="form-select form-select-sm"
+                onchange="document.getElementById('language-form').submit()">
+            @foreach (string culture in SupportedLanguages.All)
+            {
+                @* The selected attribute is bound to a nullable string: Razor
+                   treats a non null string as a present attribute even when the
+                   value is empty, so a string.Empty fallback marked every option
+                   as selected. null omits the attribute entirely. The culture is
+                   also compared as a full tag ("id-ID") against the same full
+                   tag, because comparing a full tag to a two letter code never
+                   matched. *@
+                bool isCurrentCulture = culture == CurrentCultureName;
+
+                string? selectionAttributeValue = isCurrentCulture ? "selected" : null;
+
+                <option value="@culture" selected="@selectionAttributeValue">
+                    @CultureDisplayName(culture)
+                </option>
+            }
+        </select>
+    </form>
+</div>
+
+@code {
+    /// <summary>
+    /// The culture the switcher should show as chosen.
+    /// </summary>
+    /// <remarks>
+    /// The resolved culture is read from the request's
+    /// <see cref="IRequestCultureFeature"/> rather than from
+    /// <see cref="CultureInfo.CurrentUICulture"/>. The current-culture value is
+    /// thread static, and a Blazor static render does not reliably run on the
+    /// same execution context that the localisation middleware populated, so
+    /// reading it made the dropdown fall back to its first entry even when the
+    /// page text had correctly switched language.
+    /// </remarks>
+    private string CurrentCultureName
+    {
+        get
+        {
+            IRequestCultureFeature? requestCultureFeature =
+                HttpContextAccessor.HttpContext?
+                    .Features.Get<IRequestCultureFeature>();
+
+            CultureInfo resolvedCulture =
+                requestCultureFeature?.RequestCulture.UICulture
+                ?? CultureInfo.CurrentUICulture;
+
+            // The full tag ("id-ID") is returned so it can be compared directly
+            // against the entries offered by SupportedLanguages.All, which are
+            // full tags. A two letter code would never match them.
+            return resolvedCulture.Name;
+        }
+    }
+
+    /// <summary>
+    /// The label for a culture option. Language names are shown in their own
+    /// language (autonyms) and are deliberately NOT translated: a reader looking
+    /// for their language finds it written the way they write it.
+    /// </summary>
+    private string CultureDisplayName(string culture)
+    {
+        bool isIndonesian = culture.StartsWith(
+            SupportedLanguages.IndonesianTwoLetter,
+            StringComparison.OrdinalIgnoreCase);
+
+        string displayKey = isIndonesian
+            ? "Language_Indonesian"
+            : "Language_English";
+
+        return Localizer[displayKey];
+    }
+}

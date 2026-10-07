@@ -233,7 +233,7 @@ public partial class AntibioticMapping
         if (writeResults.Count == 0)
         {
             statusSucceeded = false;
-            statusMessage = "Nothing has changed since the last save.";
+            statusMessage = Localizer["Service_MappingNothingChanged"];
             return;
         }
 

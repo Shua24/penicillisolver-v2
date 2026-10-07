@@ -1,11 +1,13 @@
 namespace penicillisolver_v2.Services;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Services;
 using penicillisolver_v2.Domain.ValueObjects;
+using penicillisolver_v2.Resources;
 
 /// <summary>
 /// Serves the current spreadsheet to the pages: the persisted metadata row, the
@@ -28,8 +30,16 @@ using penicillisolver_v2.Domain.ValueObjects;
 public sealed class SpreadsheetQueryService(
     ApplicationDbContext database,
     SpreadsheetStorageService storageService,
-    SpreadsheetDocumentCache cache)
+    SpreadsheetDocumentCache cache,
+    IStringLocalizerFactory localizerFactory)
 {
+    /// <summary>
+    /// The localizer the readers need to build their failure messages. Built
+    /// from the factory because this service is not a Razor component.
+    /// </summary>
+    private readonly IStringLocalizer localizer =
+        localizerFactory.Create(typeof(SharedResource));
+
     /// <summary>
     /// Returns the current upload's metadata row, or null when nothing has been
     /// uploaded.
@@ -185,16 +195,16 @@ public sealed class SpreadsheetQueryService(
     /// <summary>
     /// Reads a stored file with the reader that matches its recorded format.
     /// </summary>
-    private static SpreadsheetImportResult ReadStoredFile(
+    private SpreadsheetImportResult ReadStoredFile(
         string absoluteFilePath,
         Domain.Enums.SpreadsheetFileFormat fileFormat)
     {
         if (fileFormat == Domain.Enums.SpreadsheetFileFormat.Xlsx)
         {
-            return XlsxSpreadsheetReader.Read(absoluteFilePath);
+            return XlsxSpreadsheetReader.Read(absoluteFilePath, localizer);
         }
 
-        return CsvSpreadsheetReader.Read(absoluteFilePath);
+        return CsvSpreadsheetReader.Read(absoluteFilePath, localizer);
     }
 
     /// <summary>

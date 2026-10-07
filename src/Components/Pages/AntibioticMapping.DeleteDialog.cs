@@ -66,7 +66,7 @@ public partial class AntibioticMapping
         if (row.Mapping is null)
         {
             statusSucceeded = false;
-            statusMessage = "That abbreviation has no meaning to remove.";
+            statusMessage = Localizer["Service_MappingNothingToRemove"];
             return;
         }
 

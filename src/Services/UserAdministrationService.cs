@@ -2,11 +2,13 @@ namespace penicillisolver_v2.Services;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Constants;
 using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Enums;
+using penicillisolver_v2.Resources;
 
 /// <summary>
 /// A single account as the settings page needs to display it.
@@ -66,11 +68,27 @@ public sealed record TeamPermissionSummary(
 /// the change up immediately. The service does not attempt to force a live
 /// session to refresh.
 /// </para>
+/// <para>
+/// <b>Localisation boundary.</b> Messages that name a role stay in English on
+/// purpose: role names are display values owned by the UI, and a service layer
+/// that invented its own translated role labels would drift from the pages. All
+/// other user facing messages are localised here, because a message produced by
+/// a refusal must read in the reader's language even though no page authored it.
+/// </para>
 /// </remarks>
 public sealed partial class UserAdministrationService(
     ApplicationDbContext database,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager,
+    IStringLocalizerFactory localizerFactory)
 {
+    /// <summary>
+    /// The localizer for this service's own messages. Built from the factory
+    /// because the service is not a Razor component and cannot receive the
+    /// component localizer.
+    /// </summary>
+    private IStringLocalizer Localizer { get; } =
+        localizerFactory.Create(typeof(SharedResource));
+
     /// <summary>
     /// Lists every account with its role and status, ordered by display name.
     /// </summary>

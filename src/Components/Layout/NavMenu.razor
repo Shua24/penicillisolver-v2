@@ -2,19 +2,19 @@
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
-            <img src="favicon.png" alt="PenicilliSolver logo" width="30" height="30" class="d-inline-block align-top" />
+            <img src="favicon.png" alt="@Localizer["Layout_PenicilliSolverLogoAlt"]" width="30" height="30" class="d-inline-block align-top" />
             PenicilliSolver
         </a>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<input type="checkbox" title="@Localizer["Layout_NavigationMenu"]" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @Localizer["Nav_Home"]
             </NavLink>
         </div>
 
@@ -22,12 +22,12 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="spreadsheet-viewer">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Resistance ranking
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> @Localizer["Nav_ResistanceRanking"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="antibiotic-mappings">
-                        <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span> Abbreviation mappings
+                        <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span> @Localizer["Nav_AbbreviationMappings"]
                     </NavLink>
                 </div>
             </Authorized>
@@ -37,7 +37,7 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="upload">
-                        <span class="bi bi-upload-nav-menu" aria-hidden="true"></span> Upload spreadsheet
+                        <span class="bi bi-upload-nav-menu" aria-hidden="true"></span> @Localizer["Nav_UploadSpreadsheet"]
                     </NavLink>
                 </div>
             </Authorized>
@@ -47,7 +47,7 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="settings/user-roles">
-                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> User and team settings
+                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> @Localizer["Nav_UserAndTeamSettings"]
                     </NavLink>
                 </div>
             </Authorized>
@@ -59,23 +59,26 @@
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="returnUrl" value="Account/Logout" />
-                        <button type="submit" class="nav-link btn btn-link">Log out</button>
+                        <button type="submit" class="nav-link btn btn-link">@Localizer["Nav_LogOut"]</button>
                     </form>
                 </div>
             </Authorized>
             <NotAuthorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Log in
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @Localizer["Nav_LogIn"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
+                        <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @Localizer["Nav_Register"]
                     </NavLink>
                 </div>
             </NotAuthorized>
         </AuthorizeView>
+
+        @* The language choice is offered to signed in and anonymous visitors
+           alike: the sign in and register pages need it just as much. *@
+        <LanguageSwitcher />
     </nav>
 </div>
-

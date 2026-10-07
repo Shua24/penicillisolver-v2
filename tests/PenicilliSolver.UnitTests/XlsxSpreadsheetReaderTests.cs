@@ -18,7 +18,7 @@ public class XlsxSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.XlsxSamplePath();
 
-        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -43,7 +43,7 @@ public class XlsxSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.XlsxSamplePath();
 
-        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -60,7 +60,7 @@ public class XlsxSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.XlsxSamplePath();
 
-        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -77,7 +77,8 @@ public class XlsxSpreadsheetReaderTests
         // The mirror of the csv case: this file names its antibiotics as short
         // codes ("AMK %S"), so the mapping workflow genuinely applies.
         SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(
-            SampleDataLocator.XlsxSamplePath());
+            SampleDataLocator.XlsxSamplePath(),
+            TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -181,7 +182,7 @@ public class XlsxSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.XlsxSamplePath();
 
-        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = XlsxSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 

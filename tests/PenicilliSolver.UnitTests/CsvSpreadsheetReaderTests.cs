@@ -18,7 +18,7 @@ public class CsvSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
-        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -43,7 +43,7 @@ public class CsvSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
-        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -62,7 +62,8 @@ public class CsvSpreadsheetReaderTests
         // "Amoxicillin/Clavulanic acid"), so requirement 8 has nothing to do for
         // this file. Nothing may be presented as awaiting a mapping.
         SpreadsheetImportResult result = CsvSpreadsheetReader.Read(
-            SampleDataLocator.CsvSamplePath());
+            SampleDataLocator.CsvSamplePath(),
+            TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
@@ -188,7 +189,7 @@ public class CsvSpreadsheetReaderTests
 
         try
         {
-            SpreadsheetImportResult result = CsvSpreadsheetReader.Read(temporaryPath);
+            SpreadsheetImportResult result = CsvSpreadsheetReader.Read(temporaryPath, TestLocalizerFactory.Localizer);
 
             Assert.False(result.IsSuccess);
             Assert.Null(result.Document);
@@ -210,7 +211,7 @@ public class CsvSpreadsheetReaderTests
 
         try
         {
-            SpreadsheetImportResult result = CsvSpreadsheetReader.Read(temporaryPath);
+            SpreadsheetImportResult result = CsvSpreadsheetReader.Read(temporaryPath, TestLocalizerFactory.Localizer);
 
             Assert.False(result.IsSuccess);
             Assert.Null(result.Document);
@@ -226,7 +227,7 @@ public class CsvSpreadsheetReaderTests
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
-        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult result = CsvSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(result.IsSuccess, result.ErrorMessage);
 
