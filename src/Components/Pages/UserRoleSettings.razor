@@ -11,36 +11,33 @@
 @inject UserAdministrationService AdministrationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>User and team settings</PageTitle>
+<PageTitle>@Localizer["Settings_Title"]</PageTitle>
 
-<h1>User and team settings</h1>
+<h1>@Localizer["Settings_Heading"]</h1>
 
-<StatusMessage Message="@statusMessage" />
+<StatusMessage Message="@statusMessage" IsError="@statusFailed" />
 
 @if (isLoading)
 {
-    <p><em>Loading accounts…</em></p>
+    <p><em>@Localizer["Settings_Loading"]</em></p>
 }
 else
 {
     <section class="mb-5">
-        <h2>Accounts</h2>
+        <h2>@Localizer["Settings_AccountsHeading"]</h2>
         <p>
-            Activating an account is what moves it out of the pending state. A
-            role or status change applies on that account's next sign-in; a
-            session already open keeps its old claims until it is revalidated
-            (at most thirty minutes).
+            @Localizer["Settings_AccountsHelp"]
         </p>
 
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Set role</th>
-                    <th scope="col">Set status</th>
+                    <th scope="col">@Localizer["Settings_ColumnName"]</th>
+                    <th scope="col">@Localizer["Settings_ColumnEmail"]</th>
+                    <th scope="col">@Localizer["Settings_ColumnRole"]</th>
+                    <th scope="col">@Localizer["Settings_ColumnStatus"]</th>
+                    <th scope="col">@Localizer["Settings_ColumnSetRole"]</th>
+                    <th scope="col">@Localizer["Settings_ColumnSetStatus"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,18 +49,18 @@ else
                         <td>
                             @(string.IsNullOrEmpty(account.RoleName)
                                 ? "—"
-                                : ApplicationRoleDisplayNames.DisplayNameOf(account.RoleName))
+                                : DescribeRole(account.RoleName))
                         </td>
                         <td>@account.AccountStatus</td>
                         <td>
                             <select class="form-select"
                                     @onchange="eventArgs => ChangeRoleAsync(account, eventArgs)">
-                                <option value="">Choose…</option>
+                                <option value="">@Localizer["Settings_ChooseRole"]</option>
                                 @foreach (string roleName in AssignableRoleNames)
                                 {
                                     <option value="@roleName"
                                             selected="@(account.RoleName == roleName)">
-                                        @ApplicationRoleDisplayNames.DisplayNameOf(roleName)
+                                        @DescribeRole(roleName)
                                     </option>
                                 }
                             </select>
@@ -73,27 +70,27 @@ else
                                 <button type="button"
                                         class="btn btn-sm btn-success"
                                         @onclick="() => ChangeStatusAsync(account, AccountStatus.Active)">
-                                    Activate
+                                    @Localizer["Settings_Activate"]
                                 </button>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger"
                                         @onclick="() => ChangeStatusAsync(account, AccountStatus.Disabled)">
-                                    Disable
+                                    @Localizer["Settings_Disable"]
                                 </button>
                                 @if (pendingDeleteUserId == account.UserId)
                                 {
-                                    <span>Delete @account.DisplayName's account? This cannot be undone.</span>
+                                    <span>@Localizer["Settings_DeleteConfirmPrompt", account.DisplayName]</span>
                                     <button type="button"
                                             class="btn btn-sm btn-danger"
                                             disabled="@isDeleting"
                                             @onclick="() => DeleteAccountAsync(account)">
-                                        @(isDeleting ? "Deleting…" : "Confirm delete")
+                                        @(isDeleting ? Localizer["Settings_Deleting"] : Localizer["Settings_ConfirmDelete"])
                                     </button>
                                     <button type="button"
                                             class="btn btn-sm btn-secondary"
                                             disabled="@isDeleting"
                                             @onclick="() => pendingDeleteUserId = null">
-                                        Cancel
+                                        @Localizer["Settings_Cancel"]
                                     </button>
                                 }
                                 else
@@ -102,7 +99,7 @@ else
                                             class="btn btn-sm btn-danger"
                                             disabled="@isDeleting"
                                             @onclick="() => pendingDeleteUserId = account.UserId">
-                                        Delete
+                                        @Localizer["Settings_Delete"]
                                     </button>
                                 }
                             </div>
@@ -114,10 +111,9 @@ else
     </section>
 
     <section>
-        <h2>Team permissions</h2>
+        <h2>@Localizer["Settings_TeamPermissionsHeading"]</h2>
         <p>
-            These apply to the infectious disease control team as a whole, not
-            to a single account. A clinical pathologist always holds both.
+            @Localizer["Settings_TeamPermissionsHelp"]
         </p>
 
         <div class="form-check form-switch mb-2">
@@ -127,7 +123,7 @@ else
                    checked="@teamPermissions.CanUpdateSpreadsheet"
                    @onchange="eventArgs => ToggleTeamPermissionAsync(eventArgs, PermissionToggle.Update)" />
             <label class="form-check-label" for="team-can-update">
-                The team may replace the current spreadsheet
+                @Localizer["Settings_TeamMayUpdate"]
             </label>
         </div>
 
@@ -138,7 +134,7 @@ else
                    checked="@teamPermissions.CanDeleteSpreadsheet"
                    @onchange="eventArgs => ToggleTeamPermissionAsync(eventArgs, PermissionToggle.Delete)" />
             <label class="form-check-label" for="team-can-delete">
-                The team may remove the current spreadsheet
+                @Localizer["Settings_TeamMayDelete"]
             </label>
         </div>
     </section>
@@ -158,6 +154,13 @@ else
         CanUpdateSpreadsheet: false,
         CanDeleteSpreadsheet: false);
     private string? statusMessage;
+
+    /// <summary>
+    /// Whether <see cref="statusMessage"/> describes a failure. Set alongside
+    /// the message so the banner's severity is explicit rather than inferred
+    /// from an "Error" prefix, which cannot survive translation.
+    /// </summary>
+    private bool statusFailed;
     private string? actingUserId;
     private bool isLoading = true;
 
@@ -186,11 +189,36 @@ else
         teamPermissions = await AdministrationService.GetTeamPermissionsAsync();
     }
 
+    /// <summary>
+    /// The localized label for a role token. The token itself stays as the
+    /// option value because it is what the database stores, but what the reader
+    /// sees is translated here at the point of display. The service layer keeps
+    /// its own English mapping; this page is the user facing side.
+    /// </summary>
+    private string DescribeRole(string roleName)
+    {
+        string resourceKey = roleName switch
+        {
+            ApplicationRoleNames.ClinicalPathologist => "Role_ClinicalPathologist",
+            ApplicationRoleNames.OtherDoctor => "Role_OtherDoctor",
+            ApplicationRoleNames.InfectiousDiseaseControlTeam => "Role_InfectiousDiseaseControlTeam",
+            _ => string.Empty,
+        };
+
+        if (resourceKey.Length == 0)
+        {
+            return ApplicationRoleDisplayNames.DisplayNameOf(roleName);
+        }
+
+        return Localizer[resourceKey];
+    }
+
     private async Task ChangeRoleAsync(UserAccountSummary account, ChangeEventArgs eventArgs)
     {
         if (actingUserId is null)
         {
-            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            statusFailed = true;
+            statusMessage = Localizer["Status_SessionExpired"];
             return;
         }
 
@@ -213,7 +241,8 @@ else
     {
         if (actingUserId is null)
         {
-            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            statusFailed = true;
+            statusMessage = Localizer["Status_SessionExpired"];
             return;
         }
 
@@ -229,7 +258,8 @@ else
     {
         if (actingUserId is null)
         {
-            statusMessage = "Error: your session has expired. Sign in again and retry.";
+            statusFailed = true;
+            statusMessage = Localizer["Status_SessionExpired"];
             return;
         }
 
@@ -257,9 +287,11 @@ else
 
     private async Task ApplyResultAsync(AdministrationResult result)
     {
+        statusFailed = !result.IsSuccess;
+
         statusMessage = result.IsSuccess
             ? result.Message
-            : $"Error: {result.Message}";
+            : Localizer["Status_ErrorPrefix"] + result.Message;
 
         await ReloadAsync();
     }

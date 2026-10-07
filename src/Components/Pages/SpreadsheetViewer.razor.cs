@@ -158,7 +158,7 @@ public partial class SpreadsheetViewer
     /// <param name="candidateName">The name the user typed, if any.</param>
     /// <param name="suggestions">Organism names to offer instead.</param>
     /// <returns>The message to display to the reader.</returns>
-    private static string BuildNotFoundMessage(
+    private string BuildNotFoundMessage(
         string? candidateName,
         IReadOnlyList<string> suggestions)
     {
@@ -166,18 +166,17 @@ public partial class SpreadsheetViewer
 
         if (trimmedName.Length == 0)
         {
-            return "Type an organism name, then choose Show ranking.";
+            return Localizer["Ranking_TypeOrganismName"];
         }
 
         if (suggestions.Count == 0)
         {
-            return $"Species not found: '{trimmedName}' is not in this spreadsheet.";
+            return Localizer["Ranking_SpeciesNotFound", trimmedName];
         }
 
         string joinedSuggestions = string.Join(", ", suggestions);
 
-        return $"Species not found: '{trimmedName}' is not in this spreadsheet. "
-            + $"This file contains: {joinedSuggestions}.";
+        return Localizer["Ranking_SpeciesNotFoundWithList", trimmedName, joinedSuggestions];
     }
 
     /// <summary>
@@ -193,7 +192,7 @@ public partial class SpreadsheetViewer
 
         if (string.IsNullOrWhiteSpace(rawValue))
         {
-            topCountError = "Enter a whole number.";
+            topCountError = Localizer["Ranking_TopCountEmpty"];
             return;
         }
 
@@ -205,7 +204,7 @@ public partial class SpreadsheetViewer
 
         if (!isNumber)
         {
-            topCountError = "Enter a whole number, for example 3.";
+            topCountError = Localizer["Ranking_TopCountInvalid"];
             return;
         }
 

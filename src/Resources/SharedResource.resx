@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Neutral (English) fallback resources. EVERY key here MUST also exist in
+    SharedResource.id.resx and vice versa: a key present only in the Indonesian
+    file has no neutral fallback, and a key present only here leaves the
+    Indonesian interface showing English.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigation and layout -->
+  <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Nav_ResistanceRanking" xml:space="preserve"><value>Resistance ranking</value></data>
+  <data name="Nav_AbbreviationMappings" xml:space="preserve"><value>Abbreviation mappings</value></data>
+  <data name="Nav_UploadSpreadsheet" xml:space="preserve"><value>Upload spreadsheet</value></data>
+  <data name="Nav_UserAndTeamSettings" xml:space="preserve"><value>User and team settings</value></data>
+  <data name="Nav_LogOut" xml:space="preserve"><value>Log out</value></data>
+  <data name="Nav_LogIn" xml:space="preserve"><value>Log in</value></data>
+  <data name="Nav_Register" xml:space="preserve"><value>Register</value></data>
+  <data name="Layout_NavigationMenu" xml:space="preserve"><value>Navigation menu</value></data>
+  <data name="Layout_PenicilliSolverLogoAlt" xml:space="preserve"><value>PenicilliSolver logo</value></data>
+  <data name="Layout_UnhandledError" xml:space="preserve"><value>An unhandled error has occurred.</value></data>
+  <data name="Layout_Reload" xml:space="preserve"><value>Reload</value></data>
+  <data name="Layout_Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+
+  <!-- Language switcher -->
+  <data name="Language_Label" xml:space="preserve"><value>Language</value></data>
+  <data name="Language_Indonesian" xml:space="preserve"><value>Bahasa Indonesia</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+
+  <!-- Shared status and error styling -->
+  <data name="Status_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
+  <data name="Status_SessionExpired" xml:space="preserve"><value>Error: your session has expired. Sign in again and retry.</value></data>
+
+  <!-- Home page -->
+  <data name="Home_Intro" xml:space="preserve"><value>Antimicrobial resistance data for the laboratory, shared from one reference spreadsheet. Every reader sees the same file.</value></data>
+  <data name="Home_SignInHeading" xml:space="preserve"><value>Sign in to continue</value></data>
+  <data name="Home_SignInBody" xml:space="preserve"><value>This application is restricted to laboratory and clinical staff. Accounts are created by registration and activated by a clinical pathologist before they can read anything.</value></data>
+  <data name="Home_SignedInAs" xml:space="preserve"><value>Signed in as</value></data>
+  <data name="Home_SignedInBadge" xml:space="preserve"><value>Signed In</value></data>
+  <data name="Home_DeleteMyAccount" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="Home_AuthenticatedUser" xml:space="preserve"><value>Authenticated User</value></data>
+  <data name="Home_ClinicalToolsHeading" xml:space="preserve"><value>Clinical Tools</value></data>
+  <data name="Home_ResistanceRankingTitle" xml:space="preserve"><value>Resistance Ranking</value></data>
+  <data name="Home_ResistanceRankingBody" xml:space="preserve"><value>Analyze organism susceptibility and view the top resistant antibiotics from the reference spreadsheet.</value></data>
+  <data name="Home_OpenRanking" xml:space="preserve"><value>Open Ranking</value></data>
+  <data name="Home_AbbreviationMappingsTitle" xml:space="preserve"><value>Abbreviation Mappings</value></data>
+  <data name="Home_AbbreviationMappingsBody" xml:space="preserve"><value>Look up and manage definitions for antibiotic codes and abbreviations used across laboratory reports.</value></data>
+  <data name="Home_OpenMappings" xml:space="preserve"><value>Open Mappings</value></data>
+  <data name="Home_LaboratoryAdministrationHeading" xml:space="preserve"><value>Laboratory Administration</value></data>
+  <data name="Home_UploadSpreadsheetTitle" xml:space="preserve"><value>Upload Spreadsheet</value></data>
+  <data name="Home_UploadSpreadsheetBody" xml:space="preserve"><value>Replace or update the active reference AMR spreadsheet (CSV or XLSX) for all clinicians and laboratory staff.</value></data>
+  <data name="Home_UploadPage" xml:space="preserve"><value>Upload Page</value></data>
+  <data name="Home_UserAndTeamSettingsTitle" xml:space="preserve"><value>User &amp; Team Settings</value></data>
+  <data name="Home_UserAndTeamSettingsBody" xml:space="preserve"><value>Activate registered accounts, assign roles, and grant permissions to the Infectious Disease Control Team.</value></data>
+  <data name="Home_ManageUsers" xml:space="preserve"><value>Manage Users</value></data>
+  <data name="Home_AwaitingActivationHeading" xml:space="preserve"><value>Awaiting Account Activation</value></data>
+  <data name="Home_AwaitingActivationBody" xml:space="preserve"><value>Your account is registered but has not yet been assigned a clinical role. A clinical pathologist has to assign it a role before you can read the spreadsheet. Nothing is wrong with your sign-in: this is the deliberate gate that keeps registration from granting access on its own.</value></data>
+  <data name="Home_AwaitingActivationFooter" xml:space="preserve"><value>If you need access, please contact a clinical pathologist to activate your account.</value></data>
+
+  <!-- Not found, error, access denied, invalid user, log out -->
+  <data name="NotFound_Title" xml:space="preserve"><value>Not Found</value></data>
+  <data name="NotFound_Body" xml:space="preserve"><value>Sorry, the content you are looking for does not exist.</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>Error</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>Error.</value></data>
+  <data name="Error_Occurred" xml:space="preserve"><value>An error occurred while processing your request.</value></data>
+  <data name="Error_RequestId" xml:space="preserve"><value>Request ID:</value></data>
+  <data name="Error_DevelopmentModeHeading" xml:space="preserve"><value>Development Mode</value></data>
+  <data name="Error_DevelopmentModeBody" xml:space="preserve"><value>Swapping to the Development environment will display more detailed information about the error that occurred.</value></data>
+  <data name="Error_DevelopmentWarning" xml:space="preserve"><value>The Development environment shouldn't be enabled for deployed applications.</value></data>
+  <data name="Error_DevelopmentHint" xml:space="preserve"><value>It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the Development environment by setting the ASPNETCORE_ENVIRONMENT environment variable to Development and restarting the app.</value></data>
+  <data name="AccessDenied_Title" xml:space="preserve"><value>Access denied</value></data>
+  <data name="AccessDenied_Heading" xml:space="preserve"><value>Access denied</value></data>
+  <data name="AccessDenied_Body" xml:space="preserve"><value>You do not have access to this resource.</value></data>
+  <data name="InvalidUser_Title" xml:space="preserve"><value>Invalid user</value></data>
+  <data name="InvalidUser_Heading" xml:space="preserve"><value>Error</value></data>
+  <data name="InvalidUser_Body" xml:space="preserve"><value>Unable to load the signed in user.</value></data>
+  <data name="Logout_Title" xml:space="preserve"><value>Log out</value></data>
+  <data name="Logout_Heading" xml:space="preserve"><value>Log out</value></data>
+  <data name="Logout_Body" xml:space="preserve"><value>You have successfully logged out of the application.</value></data>
+
+  <!-- Reconnect modal -->
+  <data name="Reconnect_Rejoining" xml:space="preserve"><value>Rejoining the server...</value></data>
+  <data name="Reconnect_RetryingIn" xml:space="preserve"><value>Rejoin failed... trying again in</value></data>
+  <data name="Reconnect_Seconds" xml:space="preserve"><value>seconds.</value></data>
+  <data name="Reconnect_Failed" xml:space="preserve"><value>Failed to rejoin.</value></data>
+  <data name="Reconnect_RetryOrReload" xml:space="preserve"><value>Please retry or reload the page.</value></data>
+  <data name="Reconnect_Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Reconnect_SessionPaused" xml:space="preserve"><value>The session has been paused by the server.</value></data>
+  <data name="Reconnect_ResumeFailed" xml:space="preserve"><value>Failed to resume the session.</value></data>
+  <data name="Reconnect_Resume" xml:space="preserve"><value>Resume</value></data>
+
+  <!-- Login -->
+  <data name="Login_Title" xml:space="preserve"><value>Log in</value></data>
+  <data name="Login_Heading" xml:space="preserve"><value>Log in</value></data>
+  <data name="Login_SubHeading" xml:space="preserve"><value>Use a local account to log in.</value></data>
+  <data name="Login_EmailLabel" xml:space="preserve"><value>Email</value></data>
+  <data name="Login_EmailPlaceholder" xml:space="preserve"><value>name@example.com</value></data>
+  <data name="Login_PasswordLabel" xml:space="preserve"><value>Password</value></data>
+  <data name="Login_PasswordPlaceholder" xml:space="preserve"><value>password</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>Remember me</value></data>
+  <data name="Login_RememberMeDisplay" xml:space="preserve"><value>Remember me?</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Log in</value></data>
+  <data name="Login_RegisterLink" xml:space="preserve"><value>Register as a new user</value></data>
+  <data name="Login_InvalidAttempt" xml:space="preserve"><value>Error: Invalid login attempt.</value></data>
+
+  <!-- Register -->
+  <data name="Register_Title" xml:space="preserve"><value>Register</value></data>
+  <data name="Register_Heading" xml:space="preserve"><value>Register</value></data>
+  <data name="Register_SubHeading" xml:space="preserve"><value>Create a new account.</value></data>
+  <data name="Register_PendingNotice" xml:space="preserve"><value>New accounts are created as pending. A clinical pathologist must activate your account before you can use the application.</value></data>
+  <data name="Register_DisplayNameLabel" xml:space="preserve"><value>Display name</value></data>
+  <data name="Register_DisplayNamePlaceholder" xml:space="preserve"><value>Your name</value></data>
+  <data name="Register_EmailLabel" xml:space="preserve"><value>Email</value></data>
+  <data name="Register_EmailPlaceholder" xml:space="preserve"><value>name@example.com</value></data>
+  <data name="Register_RequestedRoleLabel" xml:space="preserve"><value>Requested role</value></data>
+  <data name="Register_PasswordLabel" xml:space="preserve"><value>Password</value></data>
+  <data name="Register_PasswordPlaceholder" xml:space="preserve"><value>password</value></data>
+  <data name="Register_ConfirmPasswordLabel" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Register_Submit" xml:space="preserve"><value>Register</value></data>
+  <data name="Register_CreatedAwaitingActivation" xml:space="preserve"><value>Your account has been created and is awaiting activation by a clinical pathologist.</value></data>
+  <data name="Register_DisplayNameMaxLength" xml:space="preserve"><value>The {0} must be at most {1} characters long.</value></data>
+  <data name="Register_PasswordLength" xml:space="preserve"><value>The {0} must be at least {2} and at max {1} characters long.</value></data>
+  <data name="Register_PasswordsDoNotMatch" xml:space="preserve"><value>The password and confirmation password do not match.</value></data>
+
+  <!-- Delete my account -->
+  <data name="DeleteAccount_Title" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="DeleteAccount_Heading" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="DeleteAccount_SubHeading" xml:space="preserve"><value>Permanently delete this account.</value></data>
+  <data name="DeleteAccount_NotSignedInHeading" xml:space="preserve"><value>Not signed in.</value></data>
+  <data name="DeleteAccount_NotSignedInBody" xml:space="preserve"><value>This page only deletes the account you are signed in as, so log in first and try again.</value></data>
+  <data name="DeleteAccount_Warning" xml:space="preserve"><value>This removes {0} ({1}) and the role it holds. The account can not be reactivated; a clinical pathologist would have to register it again from scratch.</value></data>
+  <data name="DeleteAccount_ConfirmationLabel" xml:space="preserve"><value>Type I am sure to confirm</value></data>
+  <data name="DeleteAccount_ConfirmationPlaceholder" xml:space="preserve"><value>I am sure</value></data>
+  <data name="DeleteAccount_ConfirmationHint" xml:space="preserve"><value>Type the exact phrase shown above to confirm.</value></data>
+  <data name="DeleteAccount_Submit" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="DeleteAccount_Deleted" xml:space="preserve"><value>Your account has been deleted.</value></data>
+
+  <!-- Upload -->
+  <data name="Upload_Title" xml:space="preserve"><value>Upload spreadsheet</value></data>
+  <data name="Upload_Heading" xml:space="preserve"><value>Upload spreadsheet</value></data>
+  <data name="Upload_Intro" xml:space="preserve"><value>There is a single reference spreadsheet. Uploading a new file replaces it for everyone, so you are asked to confirm before an existing file is replaced.</value></data>
+  <data name="Upload_CurrentSpreadsheetHeading" xml:space="preserve"><value>Current spreadsheet</value></data>
+  <data name="Upload_FieldFileName" xml:space="preserve"><value>File name</value></data>
+  <data name="Upload_FieldUploaded" xml:space="preserve"><value>Uploaded</value></data>
+  <data name="Upload_FieldFormat" xml:space="preserve"><value>Format</value></data>
+  <data name="Upload_FieldOrganisms" xml:space="preserve"><value>Organisms</value></data>
+  <data name="Upload_FieldAntibiotics" xml:space="preserve"><value>Antibiotics</value></data>
+  <data name="Upload_AntibioticsInFileHeading" xml:space="preserve"><value>Antibiotics in this file</value></data>
+  <data name="Upload_AntibioticsInFileBody" xml:space="preserve"><value>Each abbreviation is shown with the meaning a pathologist has mapped for it. An abbreviation marked (unmapped) has no meaning yet — add one on the abbreviation mappings page.</value></data>
+  <data name="Upload_NoSpreadsheet" xml:space="preserve"><value>No spreadsheet has been uploaded yet.</value></data>
+  <data name="Upload_ChooseFile" xml:space="preserve"><value>Choose a file</value></data>
+  <data name="Upload_ReplaceFile" xml:space="preserve"><value>Replace the file</value></data>
+  <data name="Upload_AcceptedFormats" xml:space="preserve"><value>Accepted formats: .csv and .xlsx, up to 10 MB.</value></data>
+  <data name="Upload_Selected" xml:space="preserve"><value>Selected:</value></data>
+  <data name="Upload_Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Upload_ConfirmReplace" xml:space="preserve"><value>A spreadsheet is already uploaded. Uploading {0} will replace the current reference file for everyone.</value></data>
+  <data name="Upload_ConfirmReplaceButton" xml:space="preserve"><value>Replace the current spreadsheet</value></data>
+  <data name="Upload_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Upload_Uploading" xml:space="preserve"><value>Uploading and checking the file…</value></data>
+  <data name="Upload_ChooseExactlyOneFile" xml:space="preserve"><value>Error: choose exactly one file. Multiple files are not supported.</value></data>
+  <data name="Upload_FileTooLargeForPicker" xml:space="preserve"><value>Error: the file is larger than the permitted 10 MB limit.</value></data>
+
+  <!-- Resistance ranking -->
+  <data name="Ranking_Title" xml:space="preserve"><value>Resistance ranking</value></data>
+  <data name="Ranking_Heading" xml:space="preserve"><value>Resistance ranking</value></data>
+  <data name="Ranking_Loading" xml:space="preserve"><value>Loading the current spreadsheet…</value></data>
+  <data name="Ranking_NoSpreadsheet" xml:space="preserve"><value>No spreadsheet has been uploaded yet. A clinical pathologist can upload one from the upload page.</value></data>
+  <data name="Ranking_FieldFileName" xml:space="preserve"><value>File name</value></data>
+  <data name="Ranking_FieldUploaded" xml:space="preserve"><value>Uploaded</value></data>
+  <data name="Ranking_FieldOrganisms" xml:space="preserve"><value>Organisms</value></data>
+  <data name="Ranking_FieldAntibiotics" xml:space="preserve"><value>Antibiotics</value></data>
+  <data name="Ranking_OrganismLabel" xml:space="preserve"><value>Which organism are you treating?</value></data>
+  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>The ranking is per organism: it lists what that one species is least susceptible to, most resistant first. Drugs this report never tested against the organism carry no percentage and are listed after the measured ones. Type any part of the name — "aureus" finds every Staphylococcus aureus — then choose it from the list.</value></data>
+  <data name="Ranking_OrganismPlaceholder" xml:space="preserve"><value>Start typing an organism name</value></data>
+  <data name="Ranking_ShowWholeList" xml:space="preserve"><value>Show the whole list</value></data>
+  <data name="Ranking_ShowRanking" xml:space="preserve"><value>Show ranking</value></data>
+  <data name="Ranking_NoOrganismMatch" xml:space="preserve"><value>No organism in this file matches "{0}".</value></data>
+  <data name="Ranking_OrganismCount" xml:space="preserve"><value>{0} of {1} organisms available.</value></data>
+  <data name="Ranking_SeveralMatch" xml:space="preserve"><value>Several organisms match. Choose the one you meant:</value></data>
+  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>How many of the most resistant antibiotics to show</value></data>
+  <data name="Ranking_TopCountHelp" xml:space="preserve"><value>Between 1 and {0}. Defaults to 3.</value></data>
+  <data name="Ranking_TopCountEmpty" xml:space="preserve"><value>Enter a whole number.</value></data>
+  <data name="Ranking_TopCountInvalid" xml:space="preserve"><value>Enter a whole number, for example 3.</value></data>
+  <data name="Ranking_TopHeading" xml:space="preserve"><value>Top {0} most resistant for {1}</value></data>
+  <data name="Ranking_RankColumn" xml:space="preserve"><value>Rank</value></data>
+  <data name="Ranking_AntibioticColumn" xml:space="preserve"><value>Antibiotic</value></data>
+  <data name="Ranking_SusceptibleColumn" xml:space="preserve"><value>% susceptible</value></data>
+  <data name="Ranking_TypeOrganismName" xml:space="preserve"><value>Type an organism name, then choose Show ranking.</value></data>
+  <data name="Ranking_SpeciesNotFound" xml:space="preserve"><value>Species not found: "{0}" is not in this spreadsheet.</value></data>
+  <data name="Ranking_SpeciesNotFoundWithList" xml:space="preserve"><value>Species not found: "{0}" is not in this spreadsheet. This file contains: {1}.</value></data>
+
+  <!-- Antibiotic mapping display component -->
+  <data name="AntibioticName_UnmappedTooltip" xml:space="preserve"><value>No meaning has been mapped for this abbreviation yet</value></data>
+  <data name="AntibioticName_Unmapped" xml:space="preserve"><value>(unmapped)</value></data>
+
+  <!-- Antibiotic mappings page -->
+  <data name="Mappings_Title" xml:space="preserve"><value>Antibiotic abbreviations</value></data>
+  <data name="Mappings_Heading" xml:space="preserve"><value>Antibiotic abbreviations</value></data>
+  <data name="Mappings_IntroFirst" xml:space="preserve"><value>Each antibiotic abbreviation this file uses is listed below, in the order the file lists it. Fill in the meaning next to the names that need one and save them all at once. Nothing is pre-decided: the meanings are recorded by the pathologists, and they belong to this file alone. The same abbreviation can mean a different drug in a different file.</value></data>
+  <data name="Mappings_IntroSecond" xml:space="preserve"><value>A file that already spells its antibiotics out in full needs no mapping at all, and this page will say so rather than asking for work that is not required.</value></data>
+  <data name="Mappings_Loading" xml:space="preserve"><value>Loading the current spreadsheet …</value></data>
+  <data name="Mappings_NoSpreadsheetHeading" xml:space="preserve"><value>No spreadsheet has been uploaded yet.</value></data>
+  <data name="Mappings_NoSpreadsheetBody" xml:space="preserve"><value>Mappings attach to an uploaded file, so there is nothing to map until one exists. Upload a spreadsheet first, then return to this page.</value></data>
+  <data name="Mappings_CurrentFile" xml:space="preserve"><value>Current file:</value></data>
+  <data name="Mappings_DetectedAbbreviations" xml:space="preserve"><value>{0} detected abbreviations, with {1} mapped.</value></data>
+  <data name="Mappings_NotApplicableHeading" xml:space="preserve"><value>No mapping is needed for this file.</value></data>
+  <data name="Mappings_NotApplicableBody" xml:space="preserve"><value>Every antibiotic in it is already listed under its full name, so there is no abbreviation for a pathologist to interpret. This page only has work to do when a file names its antibiotics in short form, such as AMK %S.</value></data>
+  <data name="Mappings_WorksheetAriaLabel" xml:space="preserve"><value>Abbreviation worksheet</value></data>
+  <data name="Mappings_WorksheetHeading" xml:space="preserve"><value>Abbreviation worksheet</value></data>
+  <data name="Mappings_EditorHelp" xml:space="preserve"><value>Fill in any empty box with the full drug name, then press Save mappings. A meaning you want to remove is removed with its Remove button, not by clearing the box.</value></data>
+  <data name="Mappings_ReaderHelp" xml:space="preserve"><value>You can view the mappings, but only a clinical pathologist may add, edit, or remove them.</value></data>
+  <data name="Mappings_NoAbbreviations" xml:space="preserve"><value>This file lists no abbreviations that need a meaning.</value></data>
+  <data name="Mappings_ColumnAbbreviation" xml:space="preserve"><value>Abbreviation</value></data>
+  <data name="Mappings_ColumnFullName" xml:space="preserve"><value>Full name</value></data>
+  <data name="Mappings_ColumnLastModified" xml:space="preserve"><value>Last modified</value></data>
+  <data name="Mappings_ColumnActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Mappings_FullDrugNamePlaceholder" xml:space="preserve"><value>Full drug name</value></data>
+  <data name="Mappings_Save" xml:space="preserve"><value>Save mappings</value></data>
+  <data name="Mappings_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Mappings_RemoveDialogTitle" xml:space="preserve"><value>Remove mapping</value></data>
+  <data name="Mappings_RemoveDialogBody" xml:space="preserve"><value>Remove the meaning of {0} — the abbreviation will show as unmapped.</value></data>
+  <data name="Mappings_RemoveDialogBodyCurrent" xml:space="preserve"><value>Remove the meaning of {0} (currently {1}) — the abbreviation will show as unmapped.</value></data>
+  <data name="Mappings_RemoveDialogConfirm" xml:space="preserve"><value>Yes, remove it</value></data>
+  <data name="Mappings_RemoveDialogCancel" xml:space="preserve"><value>Cancel</value></data>
+
+  <!-- User and team settings page -->
+  <data name="Settings_Title" xml:space="preserve"><value>User and team settings</value></data>
+  <data name="Settings_Heading" xml:space="preserve"><value>User and team settings</value></data>
+  <data name="Settings_Loading" xml:space="preserve"><value>Loading accounts…</value></data>
+  <data name="Settings_AccountsHeading" xml:space="preserve"><value>Accounts</value></data>
+  <data name="Settings_AccountsHelp" xml:space="preserve"><value>Activating an account is what moves it out of the pending state. A role or status change applies on that account's next sign-in; a session already open keeps its old claims until it is revalidated (at most thirty minutes).</value></data>
+  <data name="Settings_ColumnName" xml:space="preserve"><value>Name</value></data>
+  <data name="Settings_ColumnEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="Settings_ColumnRole" xml:space="preserve"><value>Role</value></data>
+  <data name="Settings_ColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Settings_ColumnSetRole" xml:space="preserve"><value>Set role</value></data>
+  <data name="Settings_ColumnSetStatus" xml:space="preserve"><value>Set status</value></data>
+  <data name="Settings_ChooseRole" xml:space="preserve"><value>Choose…</value></data>
+  <data name="Settings_Activate" xml:space="preserve"><value>Activate</value></data>
+  <data name="Settings_Disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="Settings_DeleteConfirmPrompt" xml:space="preserve"><value>Delete {0}'s account? This cannot be undone.</value></data>
+  <data name="Settings_Deleting" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="Settings_ConfirmDelete" xml:space="preserve"><value>Confirm delete</value></data>
+  <data name="Settings_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Settings_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Settings_TeamPermissionsHeading" xml:space="preserve"><value>Team permissions</value></data>
+  <data name="Settings_TeamPermissionsHelp" xml:space="preserve"><value>These apply to the infectious disease control team as a whole, not to a single account. A clinical pathologist always holds both.</value></data>
+  <data name="Settings_TeamMayUpdate" xml:space="preserve"><value>The team may replace the current spreadsheet</value></data>
+  <data name="Settings_TeamMayDelete" xml:space="preserve"><value>The team may remove the current spreadsheet</value></data>
+
+  <!-- Role display names (display only; role tokens stay English in the database) -->
+  <data name="Role_ClinicalPathologist" xml:space="preserve"><value>Clinical Pathologist</value></data>
+  <data name="Role_OtherDoctor" xml:space="preserve"><value>Doctor</value></data>
+  <data name="Role_InfectiousDiseaseControlTeam" xml:space="preserve"><value>Infectious Disease Control Team</value></data>
+
+  <!-- Service layer: antibiotic abbreviation mappings -->
+  <data name="Service_MappingEnterAbbreviation" xml:space="preserve"><value>Enter the abbreviation to map.</value></data>
+  <data name="Service_MappingEnterFullName" xml:space="preserve"><value>Enter the full name the abbreviation stands for.</value></data>
+  <data name="Service_MappingAbbreviationNotInSpreadsheet" xml:space="preserve"><value>'{0}' does not appear in the current spreadsheet, so it cannot be mapped.</value></data>
+  <data name="Service_MappingAlreadyMapped" xml:space="preserve"><value>'{0}' is already mapped for this spreadsheet. Edit that mapping instead of adding a second one.</value></data>
+  <data name="Service_MappingCouldNotBeSaved" xml:space="preserve"><value>The mapping could not be saved. Please try again.</value></data>
+  <data name="Service_MappingCreated" xml:space="preserve"><value>Mapped '{0}' to '{1}'.</value></data>
+  <data name="Service_MappingNoLongerExists" xml:space="preserve"><value>That mapping no longer exists.</value></data>
+  <data name="Service_MappingUpdated" xml:space="preserve"><value>Updated '{0}' to '{1}'.</value></data>
+  <data name="Service_MappingCouldNotBeRemoved" xml:space="preserve"><value>The mapping could not be removed. Please try again.</value></data>
+  <data name="Service_MappingRemoved" xml:space="preserve"><value>Removed the mapping for '{0}'.</value></data>
+  <data name="Service_MappingNothingChanged" xml:space="preserve"><value>Nothing has changed since the last save.</value></data>
+  <data name="Service_MappingNothingToRemove" xml:space="preserve"><value>That abbreviation has no meaning to remove.</value></data>
+
+  <!-- Service layer: user administration (translatable, role-free sentences) -->
+  <data name="Service_AccountNoLongerExists" xml:space="preserve"><value>That account no longer exists.</value></data>
+  <data name="Service_RoleNotRecognised" xml:space="preserve"><value>'{0}' is not a recognised role.</value></data>
+  <data name="Service_CannotReturnToPending" xml:space="preserve"><value>An account cannot be returned to the pending state.</value></data>
+  <data name="Service_ChangeAppliesOnNextSignIn" xml:space="preserve"><value>The change applies on that account's next sign-in.</value></data>
+  <data name="Service_TeamPermissionsUpdated" xml:space="preserve"><value>Team permissions updated. The change applies to the team's next request.</value></data>
+  <data name="Service_DeleteOnlyOwnAccount" xml:space="preserve"><value>You may only delete your own account from this path.</value></data>
+  <data name="Service_AccountDeleted" xml:space="preserve"><value>{0}'s account has been deleted.</value></data>
+  <data name="Service_Authorized" xml:space="preserve"><value>Authorized.</value></data>
+  <data name="Service_YourAccountNotFound" xml:space="preserve"><value>Your account could not be found.</value></data>
+  <data name="Service_YourAccountNotActive" xml:space="preserve"><value>Your account is not active.</value></data>
+  <data name="Service_AccountHeldNoRole" xml:space="preserve"><value>The account held no role.</value></data>
+  <data name="Service_RoleRemoved" xml:space="preserve"><value>Role removed.</value></data>
+  <data name="Service_IdentityFailuresPrefix" xml:space="preserve"><value>The change could not be saved: {0}.</value></data>
+  <data name="Service_UnableToLoadUser" xml:space="preserve"><value>Error: Unable to load user with ID '{0}'.</value></data>
+
+  <!-- Service layer: spreadsheet upload and readers -->
+  <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' is not a supported spreadsheet. Upload a .csv or .xlsx file.</value></data>
+  <data name="Service_FileCouldNotBeSaved" xml:space="preserve"><value>The file '{0}' could not be saved: {1}</value></data>
+  <data name="Service_UploadSucceeded" xml:space="preserve"><value>Uploaded '{0}' ({1} organisms, {2} antibiotics). It is now the current spreadsheet.</value></data>
+  <data name="Service_FileTooLarge" xml:space="preserve"><value>The file is {0} MB, which exceeds the maximum upload size of {1} MB.</value></data>
+  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>The file '{0}' could not be read: {1}</value></data>
+  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>The file '{0}' could not be opened: {1}</value></data>
+  <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>The file '{0}' does not contain an organism header row and data rows.</value></data>
+  <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>The file '{0}' does not name any organism in its header row.</value></data>
+  <data name="Service_XlsxWorksheetEmpty" xml:space="preserve"><value>The worksheet '{0}' in '{1}' is empty.</value></data>
+  <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any organism in its header row.</value></data>
+  <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any antibiotic in its header row.</value></data>
+  <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>The worksheet '{0}' in '{1}' could not be interpreted as either a row oriented or a column oriented table.</value></data>
+  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>The file '{0}' contains a malformed line: {1}</value></data>
+  <data name="Service_FileContainsNoRows" xml:space="preserve"><value>The file '{0}' contains no rows.</value></data>
+  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>The file '{0}' is not a valid xlsx workbook: {1}</value></data>
+  <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>The workbook '{0}' contains no worksheet.</value></data>
+  <data name="Service_CellValueNotANumber" xml:space="preserve"><value>The value '{0}' at {1} is not a number.</value></data>
+  <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>The value '{0}' at {1} is outside the permitted range of 0 to 100.</value></data>
+</root>

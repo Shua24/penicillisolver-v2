@@ -14,22 +14,19 @@
 <h1>PenicilliSolver</h1>
 
 <p>
-    Antimicrobial resistance data for the laboratory, shared from one reference
-    spreadsheet. Every reader sees the same file.
+    @Localizer["Home_Intro"]
 </p>
 
 <AuthorizeView Context="signedInState">
     <NotAuthorized>
         <section class="mb-4">
-            <h2>Sign in to continue</h2>
+            <h2>@Localizer["Home_SignInHeading"]</h2>
             <p>
-                This application is restricted to laboratory and clinical staff.
-                Accounts are created by registration and activated by a clinical
-                pathologist before they can read anything.
+                @Localizer["Home_SignInBody"]
             </p>
             <p>
-                <a class="btn btn-primary" href="Account/Login">Log in</a>
-                <a class="btn btn-secondary" href="Account/Register">Register</a>
+                <a class="btn btn-primary" href="Account/Login">@Localizer["Nav_LogIn"]</a>
+                <a class="btn btn-secondary" href="Account/Register">@Localizer["Nav_Register"]</a>
             </p>
         </section>
     </NotAuthorized>
@@ -37,13 +34,13 @@
     <Authorized>
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
             <div>
-                <span class="text-body-secondary">Signed in as</span>
+                <span class="text-body-secondary">@Localizer["Home_SignedInAs"]</span>
                 <strong>@signedInAs</strong>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-secondary">Signed In</span>
+                <span class="badge bg-secondary">@Localizer["Home_SignedInBadge"]</span>
                 <a class="btn btn-link btn-sm text-body-secondary p-0" href="Account/Delete">
-                    Delete my account
+                    @Localizer["Home_DeleteMyAccount"]
                 </a>
             </div>
         </div>
@@ -55,17 +52,16 @@
             <Authorized>
                 <!-- Clinical Tools -->
                 <section class="mb-4">
-                    <h2 class="h4 mb-3">Clinical Tools</h2>
+                    <h2 class="h4 mb-3">@Localizer["Home_ClinicalToolsHeading"]</h2>
                     <div class="row row-cols-1 row-cols-md-2 g-3">
                         <div class="col">
                             <div class="card h-100">
                                 <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">Resistance Ranking</h5>
+                                    <h5 class="card-title">@Localizer["Home_ResistanceRankingTitle"]</h5>
                                     <p class="card-text text-body-secondary flex-grow-1">
-                                        Analyze organism susceptibility and view the top resistant antibiotics
-                                        from the reference spreadsheet.
+                                        @Localizer["Home_ResistanceRankingBody"]
                                     </p>
-                                    <a href="spreadsheet-viewer" class="btn btn-primary mt-2">Open Ranking</a>
+                                    <a href="spreadsheet-viewer" class="btn btn-primary mt-2">@Localizer["Home_OpenRanking"]</a>
                                 </div>
                             </div>
                         </div>
@@ -73,12 +69,11 @@
                         <div class="col">
                             <div class="card h-100">
                                 <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">Abbreviation Mappings</h5>
+                                    <h5 class="card-title">@Localizer["Home_AbbreviationMappingsTitle"]</h5>
                                     <p class="card-text text-body-secondary flex-grow-1">
-                                        Look up and manage definitions for antibiotic codes and abbreviations
-                                        used across laboratory reports.
+                                        @Localizer["Home_AbbreviationMappingsBody"]
                                     </p>
-                                    <a href="antibiotic-mappings" class="btn btn-outline-primary mt-2">Open Mappings</a>
+                                    <a href="antibiotic-mappings" class="btn btn-outline-primary mt-2">@Localizer["Home_OpenMappings"]</a>
                                 </div>
                             </div>
                         </div>
@@ -89,17 +84,16 @@
                 <AuthorizeView Policy="@AuthorizationPolicyNames.CanManageSpreadsheet" Context="manageSpreadsheetState">
                     <Authorized>
                         <section class="mb-4">
-                            <h2 class="h4 mb-3">Laboratory Administration</h2>
+                            <h2 class="h4 mb-3">@Localizer["Home_LaboratoryAdministrationHeading"]</h2>
                             <div class="row row-cols-1 row-cols-md-2 g-3">
                                 <div class="col">
                                     <div class="card h-100">
                                         <div class="card-body d-flex flex-column">
-                                            <h5 class="card-title">Upload Spreadsheet</h5>
+                                            <h5 class="card-title">@Localizer["Home_UploadSpreadsheetTitle"]</h5>
                                             <p class="card-text text-body-secondary flex-grow-1">
-                                                Replace or update the active reference AMR spreadsheet (CSV or XLSX)
-                                                for all clinicians and laboratory staff.
+                                                @Localizer["Home_UploadSpreadsheetBody"]
                                             </p>
-                                            <a href="upload" class="btn btn-outline-secondary mt-2">Upload Page</a>
+                                            <a href="upload" class="btn btn-outline-secondary mt-2">@Localizer["Home_UploadPage"]</a>
                                         </div>
                                     </div>
                                 </div>
@@ -109,12 +103,11 @@
                                         <div class="col">
                                             <div class="card h-100">
                                                 <div class="card-body d-flex flex-column">
-                                                    <h5 class="card-title">User &amp; Team Settings</h5>
+                                                    <h5 class="card-title">@Localizer["Home_UserAndTeamSettingsTitle"]</h5>
                                                     <p class="card-text text-body-secondary flex-grow-1">
-                                                        Activate registered accounts, assign roles, and grant permissions
-                                                        to the Infectious Disease Control Team.
+                                                        @Localizer["Home_UserAndTeamSettingsBody"]
                                                     </p>
-                                                    <a href="settings/user-roles" class="btn btn-outline-secondary mt-2">Manage Users</a>
+                                                    <a href="settings/user-roles" class="btn btn-outline-secondary mt-2">@Localizer["Home_ManageUsers"]</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -128,16 +121,13 @@
 
             <NotAuthorized>
                 <div class="alert alert-warning mt-3" role="alert">
-                    <h4 class="alert-heading">Awaiting Account Activation</h4>
+                    <h4 class="alert-heading">@Localizer["Home_AwaitingActivationHeading"]</h4>
                     <p class="mb-2">
-                        Your account is registered but has not yet been assigned a clinical role.
-                        A clinical pathologist has to assign it a role before you can read the spreadsheet.
-                        Nothing is wrong with your sign-in: this is the deliberate gate that keeps registration
-                        from granting access on its own.
+                        @Localizer["Home_AwaitingActivationBody"]
                     </p>
                     <hr />
                     <p class="mb-0 text-body-secondary small">
-                        If you need access, please contact a clinical pathologist to activate your account.
+                        @Localizer["Home_AwaitingActivationFooter"]
                     </p>
                 </div>
             </NotAuthorized>
@@ -151,7 +141,15 @@
     /// own name, not the email the account was made with, so the display name
     /// is preferred; the email and a generic label cover the fallbacks.
     /// </summary>
-    private string signedInAs = "Authenticated User";
+    private string signedInAs = string.Empty;
+
+    /// <summary>
+    /// True until a display name or email has been found. A separate flag is
+    /// used instead of comparing <see cref="signedInAs"/> against its own
+    /// placeholder, because that placeholder is a translated string and a
+    /// translated string is not a stable comparison target.
+    /// </summary>
+    private bool isUsingPlaceholderName = true;
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
@@ -169,6 +167,7 @@
             if (user is not null && user.DisplayName.Length > 0)
             {
                 signedInAs = user.DisplayName;
+                isUsingPlaceholderName = false;
             }
         }
 
@@ -177,10 +176,15 @@
         // the generic label.
         string? emailFallback = authenticationState.User.FindFirstValue(ClaimTypes.Email);
 
-        if (signedInAs == "Authenticated User"
-            && !string.IsNullOrEmpty(emailFallback))
+        if (isUsingPlaceholderName && !string.IsNullOrEmpty(emailFallback))
         {
             signedInAs = emailFallback;
+            isUsingPlaceholderName = false;
+        }
+
+        if (isUsingPlaceholderName)
+        {
+            signedInAs = Localizer["Home_AuthenticatedUser"];
         }
     }
 }

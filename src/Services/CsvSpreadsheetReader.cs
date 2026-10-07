@@ -1,6 +1,7 @@
 namespace penicillisolver_v2.Services;
 
 using System.Globalization;
+using Microsoft.Extensions.Localization;
 using Microsoft.VisualBasic.FileIO;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.Services;
@@ -25,7 +26,7 @@ public static partial class CsvSpreadsheetReader
     /// </summary>
     /// <param name="originalFileName">The file name exactly as the uploader supplied it.</param>
     /// <returns>A result that either carries the document or explains the failure.</returns>
-    public static SpreadsheetImportResult Read(string originalFileName)
+    public static SpreadsheetImportResult Read(string originalFileName, IStringLocalizer localizer)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(originalFileName);
 
@@ -38,23 +39,23 @@ public static partial class CsvSpreadsheetReader
         catch (IOException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' could not be read: {exception.Message}");
+                localizer["Service_FileCouldNotBeRead", originalFileName, exception.Message]);
         }
         catch (UnauthorizedAccessException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' could not be opened: {exception.Message}");
+                localizer["Service_FileCouldNotBeOpened", originalFileName, exception.Message]);
         }
         catch (MalformedLineException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' contains a malformed line: {exception.Message}");
+                localizer["Service_CsvMalformedLine", originalFileName, exception.Message]);
         }
 
         if (dataRows.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' contains no rows.");
+                localizer["Service_FileContainsNoRows", originalFileName]);
         }
 
         List<string> headerCells = new List<string>(dataRows[0]);
@@ -63,10 +64,10 @@ public static partial class CsvSpreadsheetReader
 
         if (orientation == SpreadsheetOrientation.AntibioticsAsColumns)
         {
-            return ParseColumnOriented(originalFileName, dataRows, orientation);
+            return ParseColumnOriented(originalFileName, dataRows, orientation, localizer);
         }
 
-        return ParseRowOriented(originalFileName, dataRows, orientation);
+        return ParseRowOriented(originalFileName, dataRows, orientation, localizer);
     }
 
     /// <summary>

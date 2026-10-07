@@ -39,8 +39,7 @@ public sealed partial class UserAdministrationService
 
             if (!isTheSameAccount)
             {
-                return AdministrationResult.Failure(
-                    "You may only delete your own account from this path.");
+                return AdministrationResult.Failure(Localizer["Service_DeleteOnlyOwnAccount"]);
             }
         }
         else
@@ -57,7 +56,7 @@ public sealed partial class UserAdministrationService
 
         if (targetUser is null)
         {
-            return AdministrationResult.Failure("That account no longer exists.");
+            return AdministrationResult.Failure(Localizer["Service_AccountNoLongerExists"]);
         }
 
         if (!isSelfDelete)
@@ -86,7 +85,7 @@ public sealed partial class UserAdministrationService
         // The audit columns on spreadsheet uploads and abbreviation mappings hold
         // this user's identifier as a plain string (not a foreign key), so the
         // delete simply orphans those references; their history is preserved.
-        string successMessage = $"{targetName}'s account has been deleted.";
+        string successMessage = Localizer["Service_AccountDeleted", targetName];
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 

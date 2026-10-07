@@ -1,7 +1,10 @@
 @using penicillisolver_v2.Services
 @if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    string statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
+    @* The severity is passed in explicitly rather than inferred from the text.
+       Inferring it from an "Error" prefix broke the moment the prefix became a
+       translated string: every failure would have rendered as a success. *@
+    string statusMessageClass = IsError ? "danger" : "success";
     <div class="alert alert-@statusMessageClass" role="alert">
         @DisplayMessage
     </div>
@@ -12,6 +15,14 @@
 
     [Parameter]
     public string? Message { get; set; }
+
+    /// <summary>
+    /// Whether <see cref="Message"/> describes a failure. Callers that produce a
+    /// failure set this; it replaces the old convention of sniffing for an
+    /// "Error" prefix, which could not survive translation.
+    /// </summary>
+    [Parameter]
+    public bool IsError { get; set; }
 
     /// <summary>
     /// The current HTTP context, when there is one.

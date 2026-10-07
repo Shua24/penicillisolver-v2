@@ -1,5 +1,10 @@
 ﻿@inherits LayoutComponentBase
 
+@* Mounted here so every page, interactive or not, pins the culture the language
+   switcher stored. See CultureProvider.razor.cs for why the request pipeline
+   alone is not enough for an interactive circuit. *@
+<CultureProvider />
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -17,7 +22,7 @@
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    @Localizer["Layout_UnhandledError"]
+    <a href="." class="reload">@Localizer["Layout_Reload"]</a>
     <span class="dismiss">🗙</span>
 </div>

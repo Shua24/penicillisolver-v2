@@ -6,6 +6,16 @@ namespace penicillisolver_v2.Domain.Constants;
 /// stored in the database, carried in authentication claims, and used as
 /// configuration keys; only what a person reads in the UI is mapped here.
 /// </summary>
+/// <remarks>
+/// <b>This mapping is deliberately English and is NOT localised.</b> It lives in
+/// the service layer, where the messages that name a role are also kept in
+/// English on purpose (see the localisation boundary note on
+/// <c>UserAdministrationService</c>): role names are a display concern owned by
+/// the pages, and a service layer that translated them itself would drift from
+/// what the Razor components show. The user facing translations live in the
+/// <c>Role_*</c> resource keys and are resolved at the point of display, in the
+/// components that actually render a role to a reader.
+/// </remarks>
 public static class ApplicationRoleDisplayNames
 {
     /// <summary>

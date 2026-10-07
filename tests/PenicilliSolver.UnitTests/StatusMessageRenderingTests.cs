@@ -1,6 +1,7 @@
 using Bunit;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 using penicillisolver_v2.Components.Account.Shared;
 
@@ -27,13 +28,25 @@ namespace PenicilliSolver.UnitTests;
 /// </remarks>
 public sealed class StatusMessageRenderingTests : TestContext
 {
+    /// <summary>Registers the shared localizer required to render the status component.</summary>
+    public StatusMessageRenderingTests()
+    {
+        // The component is rendered through _Imports, which injects the shared
+        // localizer, so the test container has to provide it.
+        Services.AddLocalization();
+        Services.AddSingleton(TestLocalizerFactory.ClosedLocalizer);
+    }
+
+    /// <summary>Verifies that an explicit message renders without a cascading HTTP context.</summary>
     [Fact]
     public void Renders_without_an_http_context_when_a_message_is_supplied()
     {
         // This is the reported failure: the upload page renders this component
         // inside a circuit, passing Message directly, with no HttpContext.
         IRenderedComponent<StatusMessage> component = RenderComponent<StatusMessage>(
-            parameters => parameters.Add(parameter => parameter.Message, "Error: upload rejected."));
+            parameters => parameters
+                .Add(parameter => parameter.Message, "Error: upload rejected.")
+                .Add(parameter => parameter.IsError, true));
 
         string renderedMarkup = component.Markup;
 
@@ -52,22 +65,47 @@ public sealed class StatusMessageRenderingTests : TestContext
         Assert.DoesNotContain("alert", renderedMarkup, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that an explicitly marked error receives the danger alert class.</summary>
     [Fact]
     public void Applies_the_danger_class_to_an_error_message()
     {
+        // Severity is now an explicit parameter rather than something inferred
+        // from an "Error" prefix, because the prefix is a translated string and
+        // could no longer be used as a control-flow signal.
         IRenderedComponent<StatusMessage> component = RenderComponent<StatusMessage>(
-            parameters => parameters.Add(parameter => parameter.Message, "Error: bad file."));
+            parameters => parameters
+                .Add(parameter => parameter.Message, "Error: bad file.")
+                .Add(parameter => parameter.IsError, true));
 
         Assert.Contains("alert-danger", component.Markup, StringComparison.Ordinal);
     }
 
+    /// <summary>Verifies that a message marked as successful receives the success alert class.</summary>
     [Fact]
     public void Applies_the_success_class_to_a_non_error_message()
     {
         IRenderedComponent<StatusMessage> component = RenderComponent<StatusMessage>(
-            parameters => parameters.Add(parameter => parameter.Message, "Upload accepted."));
+            parameters => parameters
+                .Add(parameter => parameter.Message, "Upload accepted.")
+                .Add(parameter => parameter.IsError, false));
 
         Assert.Contains("alert-success", component.Markup, StringComparison.Ordinal);
+    }
+
+    /// <summary>Verifies that an error-like text prefix does not override explicit success severity.</summary>
+    [Fact]
+    public void A_message_beginning_with_the_error_word_is_not_assumed_to_be_an_error()
+    {
+        // The regression guard: a message whose text happens to start with
+        // "Error" but which the caller did NOT mark as a failure must render as
+        // a success. This is what text sniffing used to get wrong.
+        IRenderedComponent<StatusMessage> component = RenderComponent<StatusMessage>(
+            parameters => parameters
+                .Add(parameter => parameter.Message, "Error handling was improved.")
+                .Add(parameter => parameter.IsError, false));
+
+        Assert.Contains("alert-success", component.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("alert-danger", component.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

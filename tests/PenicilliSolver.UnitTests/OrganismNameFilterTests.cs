@@ -151,7 +151,7 @@ public class OrganismNameFilterTests
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
-        SpreadsheetImportResult importResult = CsvSpreadsheetReader.Read(samplePath);
+        SpreadsheetImportResult importResult = CsvSpreadsheetReader.Read(samplePath, TestLocalizerFactory.Localizer);
 
         Assert.True(importResult.IsSuccess, importResult.ErrorMessage);
 

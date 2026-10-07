@@ -15,34 +15,27 @@
 
 <script type="module" src="@Assets["Components/Pages/AntibioticMapping.razor.js"]"></script>
 
-<PageTitle>Antibiotic abbreviations</PageTitle>
+<PageTitle>@Localizer["Mappings_Title"]</PageTitle>
 
-<h1>Antibiotic abbreviations</h1>
+<h1>@Localizer["Mappings_Heading"]</h1>
 
 <p>
-    Each antibiotic abbreviation this file uses is listed below, in the order
-    the file lists it. Fill in the meaning next to the names that need one and
-    save them all at once. Nothing is pre-decided: the meanings are recorded
-    by the pathologists, and they belong to this file alone. The same
-    abbreviation can mean a different drug in a different file.
+    @Localizer["Mappings_IntroFirst"]
 </p>
 
 <p>
-    A file that already spells its antibiotics out in full needs no mapping at
-    all, and this page will say so rather than asking for work that is not
-    required.
+    @Localizer["Mappings_IntroSecond"]
 </p>
 
 @if (isLoading)
 {
-    <p><em>Loading the current spreadsheet &hellip;</em></p>
+    <p><em>@Localizer["Mappings_Loading"]</em></p>
 }
 else if (currentDocument is null)
 {
     <div class="alert alert-warning" role="alert">
-        <strong>No spreadsheet has been uploaded yet.</strong>
-        Mappings attach to an uploaded file, so there is nothing to map until one
-        exists. Upload a spreadsheet first, then return to this page.
+        <strong>@Localizer["Mappings_NoSpreadsheetHeading"]</strong>
+        @Localizer["Mappings_NoSpreadsheetBody"]
     </div>
 }
 else
@@ -55,59 +48,50 @@ else
     }
 
     <p>
-        Current file: <strong>@currentUpload!.OriginalFileName</strong>
-        &mdash; @mappingRows.Count detected abbreviation
-        @(mappingRows.Count == 1 ? "" : "s"),
-        with @mappedRowCount mapped.
+        @Localizer["Mappings_CurrentFile"] <strong>@currentUpload!.OriginalFileName</strong>
+        &mdash; @Localizer["Mappings_DetectedAbbreviations", mappingRows.Count, mappedRowCount]
     </p>
 
     @if (mappingIsNotApplicable)
     {
         <div class="alert alert-info" role="alert">
-            <strong>No mapping is needed for this file.</strong>
-            Every antibiotic in it is already listed under its full name, so
-            there is no abbreviation for a pathologist to interpret. This page
-            only has work to do when a file names its antibiotics in short form,
-            such as <code>AMK %S</code>.
+            <strong>@Localizer["Mappings_NotApplicableHeading"]</strong>
+            @Localizer["Mappings_NotApplicableBody"]
         </div>
     }
     else
     {
-        <section aria-label="Abbreviation worksheet">
-            <h2>Abbreviation worksheet</h2>
+        <section aria-label="@Localizer["Mappings_WorksheetAriaLabel"]">
+            <h2>@Localizer["Mappings_WorksheetHeading"]</h2>
 
             @if (canManageMappings)
             {
                 <p class="text-muted">
-                    Fill in any empty box with the full drug name, then press
-                    <em>Save mappings</em>. A meaning you want to remove is
-                    removed with its <em>Remove</em> button, not by clearing the
-                    box.
+                    @Localizer["Mappings_EditorHelp"]
                 </p>
             }
             else
             {
                 <p class="text-muted">
-                    You can view the mappings, but only a clinical pathologist may
-                    add, edit, or remove them.
+                    @Localizer["Mappings_ReaderHelp"]
                 </p>
             }
 
             @if (mappingRows.Count == 0)
             {
-                <p><em>This file lists no abbreviations that need a meaning.</em></p>
+                <p><em>@Localizer["Mappings_NoAbbreviations"]</em></p>
             }
             else
             {
                 <table class="table align-middle">
                     <thead>
                         <tr>
-                            <th scope="col" class="col-auto">Abbreviation</th>
-                            <th scope="col">Full name</th>
-                            <th scope="col">Last modified</th>
+                            <th scope="col" class="col-auto">@Localizer["Mappings_ColumnAbbreviation"]</th>
+                            <th scope="col">@Localizer["Mappings_ColumnFullName"]</th>
+                            <th scope="col">@Localizer["Mappings_ColumnLastModified"]</th>
                             @if (canManageMappings)
                             {
-                                <th scope="col" class="col-auto">Actions</th>
+                                <th scope="col" class="col-auto">@Localizer["Mappings_ColumnActions"]</th>
                             }
                         </tr>
                     </thead>
@@ -120,14 +104,14 @@ else
                                     @if (canManageMappings)
                                     {
                                         <InputText class="form-control"
-                                                   placeholder="Full drug name"
+                                                   placeholder="@Localizer["Mappings_FullDrugNamePlaceholder"]"
                                                    @bind-Value="row.WorkingFullName" />
                                     }
                                     else
                                     {
                                         @if (string.IsNullOrEmpty(row.StoredFullName))
                                         {
-                                            <em>unmapped</em>
+                                            <em>@Localizer["AntibioticName_Unmapped"]</em>
                                         }
                                         else
                                         {
@@ -148,7 +132,7 @@ else
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-danger"
                                                     @onclick="() => RequestDelete(row)">
-                                                Remove
+                                                @Localizer["Mappings_Remove"]
                                             </button>
                                         }
                                         else
@@ -167,7 +151,7 @@ else
                     <button type="button"
                             class="btn btn-primary"
                             @onclick="SaveMappingsAsync">
-                        Save mappings
+                        @Localizer["Mappings_Save"]
                     </button>
                 }
             }
@@ -179,24 +163,26 @@ else
         class="antibiotic-mapping-delete-dialog"
         aria-labelledby="antibiotic-mapping-delete-title">
     <div class="antibiotic-mapping-delete-card">
-        <h3 id="antibiotic-mapping-delete-title">Remove mapping</h3>
+        <h3 id="antibiotic-mapping-delete-title">@Localizer["Mappings_RemoveDialogTitle"]</h3>
         <p>
-            Remove the meaning of <code>@pendingDelete?.Abbreviation</code>
             @if (pendingDelete is not null
                 && !string.IsNullOrEmpty(pendingDelete.StoredFullName))
             {
-                <text>&nbsp;(currently <em>@pendingDelete.StoredFullName</em>)</text>
+                @Localizer["Mappings_RemoveDialogBodyCurrent", pendingDelete.Abbreviation, pendingDelete.StoredFullName]
             }
-            &mdash; the abbreviation will show as unmapped.
+            else
+            {
+                @Localizer["Mappings_RemoveDialogBody", pendingDelete?.Abbreviation ?? string.Empty]
+            }
         </p>
         <div class="antibiotic-mapping-delete-actions">
             <button id="antibiotic-mapping-delete-confirm"
                     type="button" class="btn btn-danger" @onclick="() => ConfirmDeleteAsync()">
-                Yes, remove it
+                @Localizer["Mappings_RemoveDialogConfirm"]
             </button>
             <button id="antibiotic-mapping-delete-cancel"
                     type="button" class="btn btn-secondary" @onclick="() => CancelDelete()">
-                Cancel
+                @Localizer["Mappings_RemoveDialogCancel"]
             </button>
         </div>
     </div>

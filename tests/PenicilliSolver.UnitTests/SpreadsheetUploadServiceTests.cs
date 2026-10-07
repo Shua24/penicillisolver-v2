@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
@@ -47,15 +48,19 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
 
         storageService = new SpreadsheetStorageService(environment, configuration);
 
+        IStringLocalizerFactory localizerFactory = TestLocalizerFactory.Create();
+
         AntibioticAbbreviationService abbreviationService = new(
             database,
-            new StubAuthorizationService());
+            new StubAuthorizationService(),
+            localizerFactory);
 
         uploadService = new SpreadsheetUploadService(
             database,
             storageService,
             abbreviationService,
-            configuration);
+            configuration,
+            localizerFactory);
     }
 
     /// <inheritdoc />

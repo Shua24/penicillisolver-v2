@@ -33,6 +33,10 @@ public sealed partial class UserAdministrationService
         {
             // The account is not an active pathologist, so its removal from
             // that pool cannot change the count.
+            //
+            // This message and the two below are deliberately NOT localised:
+            // each one names a role, and role names are a UI display concern.
+            // See the localisation boundary note on UserAdministrationService.
             AdministrationResult permittedResult =
                 AdministrationResult.Success("The change does not affect the last pathologist.");
 
@@ -46,11 +50,14 @@ public sealed partial class UserAdministrationService
 
         if (survivingPathologistCount == 0)
         {
+            // Deliberately English: this sentence names a role. See the
+            // localisation boundary note on UserAdministrationService.
             return AdministrationResult.Failure(
                 "This is the last active clinical pathologist. Disabling or changing this " +
                 "account's role would leave nobody able to manage users or the spreadsheet.");
         }
 
+        // Deliberately English: names a role.
         AdministrationResult allowedResult =
             AdministrationResult.Success("Another active pathologist remains.");
 
@@ -109,12 +116,12 @@ public sealed partial class UserAdministrationService
 
         if (actingUser is null)
         {
-            return AdministrationResult.Failure("Your account could not be found.");
+            return AdministrationResult.Failure(Localizer["Service_YourAccountNotFound"]);
         }
 
         if (actingUser.AccountStatus != AccountStatus.Active)
         {
-            return AdministrationResult.Failure("Your account is not active.");
+            return AdministrationResult.Failure(Localizer["Service_YourAccountNotActive"]);
         }
 
         bool holdsPathologistRole = await userManager.IsInRoleAsync(
@@ -123,12 +130,13 @@ public sealed partial class UserAdministrationService
 
         if (!holdsPathologistRole)
         {
+            // Deliberately English: names a role.
             return AdministrationResult.Failure(
                 "Only a clinical pathologist may change roles, account states or team permissions.");
         }
 
         AdministrationResult authorizedResult =
-            AdministrationResult.Success("Authorized.");
+            AdministrationResult.Success(Localizer["Service_Authorized"]);
 
         return authorizedResult;
     }
@@ -143,7 +151,7 @@ public sealed partial class UserAdministrationService
         if (string.IsNullOrWhiteSpace(currentRoleName))
         {
             AdministrationResult nothingToRemove =
-                AdministrationResult.Success("The account held no role.");
+                AdministrationResult.Success(Localizer["Service_AccountHeldNoRole"]);
 
             return nothingToRemove;
         }
@@ -157,7 +165,7 @@ public sealed partial class UserAdministrationService
             return AdministrationResult.Failure(DescribeIdentityFailures(removeResult));
         }
 
-        AdministrationResult removedResult = AdministrationResult.Success("Role removed.");
+        AdministrationResult removedResult = AdministrationResult.Success(Localizer["Service_RoleRemoved"]);
 
         return removedResult;
     }
@@ -227,15 +235,17 @@ public sealed partial class UserAdministrationService
     }
 
     /// <summary>
-    /// Flattens identity failures into one user facing sentence.
+    /// Flattens identity failures into one user facing sentence. The prefix is
+    /// localised; the identity error descriptions themselves come from the
+    /// framework and are not localisable here.
     /// </summary>
-    private static string DescribeIdentityFailures(IdentityResult identityResult)
+    private string DescribeIdentityFailures(IdentityResult identityResult)
     {
         IEnumerable<string> descriptions =
             identityResult.Errors.Select(error => error.Description);
 
         string joinedDescriptions = string.Join("; ", descriptions);
 
-        return $"The change could not be saved: {joinedDescriptions}.";
+        return Localizer["Service_IdentityFailuresPrefix", joinedDescriptions];
     }
 }

@@ -24,7 +24,25 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.12" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
+
+  <!--
+    The .resx files under Resources/ are compiled into satellite assemblies by
+    the SDK's default resource handling. Listed explicitly so the generated
+    resources class name matches SharedResource and so the neutral file is
+    embedded alongside its Indonesian counterpart.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\SharedResource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SharedResource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SharedResource.id.resx">
+      <DependentUpon>SharedResource.resx</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+
 
 </Project>

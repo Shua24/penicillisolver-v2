@@ -1,12 +1,18 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+
+using System.Globalization;
 
 using penicillisolver_v2.Data;
+using penicillisolver_v2.Domain.Constants;
 
 namespace PenicilliSolver.IntegrationTests;
 
@@ -80,6 +86,22 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(heldConnection));
+
+            // The application defaults to Indonesian, but these tests assert on
+            // English page text. Rather than translate every assertion, the test
+            // host is pinned to English, so the tests keep testing behaviour
+            // instead of copy. A test that wants Indonesian sets the culture
+            // cookie explicitly.
+            services.AddSingleton<IConfigureOptions<RequestLocalizationOptions>>(
+                new ConfigureOptions<RequestLocalizationOptions>(options =>
+                {
+                    CultureInfo englishCulture = new(SupportedLanguages.English);
+                    CultureInfo indonesianCulture = new(SupportedLanguages.Indonesian);
+
+                    options.DefaultRequestCulture = new RequestCulture(SupportedLanguages.English);
+                    options.SupportedCultures = [englishCulture, indonesianCulture];
+                    options.SupportedUICultures = [englishCulture, indonesianCulture];
+                }));
         });
     }
 

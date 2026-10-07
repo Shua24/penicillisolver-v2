@@ -1,11 +1,15 @@
 namespace penicillisolver_v2.Services;
 
+using System.Globalization;
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
+using penicillisolver_v2.Resources;
 
 /// <summary>
 /// Orchestrates the acceptance of one uploaded spreadsheet: format check, size
@@ -47,10 +51,18 @@ public sealed class SpreadsheetUploadService(
     ApplicationDbContext database,
     SpreadsheetStorageService storageService,
     AntibioticAbbreviationService abbreviationService,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    IStringLocalizerFactory localizerFactory)
 {
     /// <summary>The configuration key holding the maximum accepted file size in bytes.</summary>
     public const string MaximumFileSizeConfigurationKey = "SpreadsheetStorage:MaximumFileSizeBytes";
+
+    /// <summary>
+    /// The localizer for this service's own messages. Built from the factory
+    /// because the service is not a Razor component.
+    /// </summary>
+    private readonly IStringLocalizer localizer =
+        localizerFactory.Create(typeof(SharedResource));
 
     /// <summary>The default maximum accepted file size, in bytes (10 MB).</summary>
     public const long DefaultMaximumFileSizeBytes = 10L * 1024 * 1024;
@@ -79,8 +91,7 @@ public sealed class SpreadsheetUploadService(
         if (resolvedFormat is null)
         {
             return SpreadsheetUploadResult.Failure(
-                $"'{originalFileName}' is not a supported spreadsheet. " +
-                "Upload a .csv or .xlsx file.");
+                localizer["Service_UnsupportedSpreadsheet", originalFileName]);
         }
 
         SpreadsheetFileFormat fileFormat = resolvedFormat.Value;
@@ -106,7 +117,7 @@ public sealed class SpreadsheetUploadService(
         catch (IOException exception)
         {
             return SpreadsheetUploadResult.Failure(
-                $"The file '{originalFileName}' could not be saved: {exception.Message}");
+                localizer["Service_FileCouldNotBeSaved", originalFileName, exception.Message]);
         }
 
         SpreadsheetImportResult importResult = ReadStagedFile(stagingResult.StoredFilePath, fileFormat);
@@ -132,9 +143,10 @@ public sealed class SpreadsheetUploadService(
             stagingResult,
             uploadedByUserId);
 
-        string successMessage =
-            $"Uploaded '{originalFileName}' ({document.OrganismNames.Count} organisms, " +
-            $"{document.AntibioticNames.Count} antibiotics). It is now the current spreadsheet.";
+        string successMessage = localizer["Service_UploadSucceeded",
+            originalFileName,
+            document.OrganismNames.Count,
+            document.AntibioticNames.Count];
 
         SpreadsheetUploadResult successResult = SpreadsheetUploadResult.Success(
             document,
@@ -147,16 +159,16 @@ public sealed class SpreadsheetUploadService(
     /// <summary>
     /// Reads a staged file with the reader that matches its format.
     /// </summary>
-    private static SpreadsheetImportResult ReadStagedFile(
+    private SpreadsheetImportResult ReadStagedFile(
         string stagedFilePath,
         SpreadsheetFileFormat fileFormat)
     {
         if (fileFormat == SpreadsheetFileFormat.Xlsx)
         {
-            return XlsxSpreadsheetReader.Read(stagedFilePath);
+            return XlsxSpreadsheetReader.Read(stagedFilePath, localizer);
         }
 
-        return CsvSpreadsheetReader.Read(stagedFilePath);
+        return CsvSpreadsheetReader.Read(stagedFilePath, localizer);
     }
 
     /// <summary>
@@ -248,9 +260,17 @@ public sealed class SpreadsheetUploadService(
 
         double maximumMegabytes = maximumByteCount / 1024d / 1024d;
 
-        string message =
-            $"The file is {actualByteCount / 1024d / 1024d:F1} MB, which exceeds the " +
-            $"maximum upload size of {maximumMegabytes:F0} MB.";
+        // The numeric figures are formatted invariantly so "12.5 MB" stays
+        // readable in every locale; only the surrounding sentence is localised.
+        string actualMegabytes = (actualByteCount / 1024d / 1024d)
+            .ToString("F1", CultureInfo.InvariantCulture);
+        string maximumMegabytesText = maximumMegabytes
+            .ToString("F0", CultureInfo.InvariantCulture);
+
+        string message = localizer[
+            "Service_FileTooLarge",
+            actualMegabytes,
+            maximumMegabytesText];
 
         return message;
     }

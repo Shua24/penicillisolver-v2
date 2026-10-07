@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
@@ -47,7 +48,11 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
 
         SpreadsheetDocumentCache cache = new();
 
-        queryService = new SpreadsheetQueryService(database, storageService, cache);
+        queryService = new SpreadsheetQueryService(
+            database,
+            storageService,
+            cache,
+            TestLocalizerFactory.Create());
     }
 
     /// <inheritdoc />
@@ -192,7 +197,7 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
             sampleStream,
             SpreadsheetFileFormat.Csv);
 
-        SpreadsheetImportResult importResult = CsvSpreadsheetReader.Read(storageResult.StoredFilePath);
+        SpreadsheetImportResult importResult = CsvSpreadsheetReader.Read(storageResult.StoredFilePath, TestLocalizerFactory.Localizer);
 
         Assert.True(importResult.IsSuccess, importResult.ErrorMessage);
 

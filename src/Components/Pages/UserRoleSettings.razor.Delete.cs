@@ -7,6 +7,10 @@ public partial class UserRoleSettings
     private string? pendingDeleteUserId;
     private bool isDeleting;
 
+    /// <summary>
+    /// Deletes the account pending confirmation through the administration
+    /// service, displays the result, and clears the pending deletion state.
+    /// </summary>
     private async Task DeleteAccountAsync(UserAccountSummary account)
     {
         if (isDeleting || pendingDeleteUserId != account.UserId)
@@ -20,7 +24,8 @@ public partial class UserRoleSettings
         {
             if (actingUserId is null)
             {
-                statusMessage = "Error: your session has expired. Sign in again and retry.";
+                statusFailed = true;
+                statusMessage = Localizer["Status_SessionExpired"];
                 return;
             }
 

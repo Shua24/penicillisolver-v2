@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Indonesian (id-ID) resources.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Navigasi dan tata letak -->
+  <data name="Nav_Home" xml:space="preserve"><value>Beranda</value></data>
+  <data name="Nav_ResistanceRanking" xml:space="preserve"><value>Peringkat resistensi</value></data>
+  <data name="Nav_AbbreviationMappings" xml:space="preserve"><value>Pemetaan singkatan</value></data>
+  <data name="Nav_UploadSpreadsheet" xml:space="preserve"><value>Unggah tabel</value></data>
+  <data name="Nav_UserAndTeamSettings" xml:space="preserve"><value>Pengaturan tim</value></data>
+  <data name="Nav_LogOut" xml:space="preserve"><value>Keluar</value></data>
+  <data name="Nav_LogIn" xml:space="preserve"><value>Masuk</value></data>
+  <data name="Nav_Register" xml:space="preserve"><value>Daftar</value></data>
+  <data name="Layout_NavigationMenu" xml:space="preserve"><value>Menu navigasi</value></data>
+  <data name="Layout_PenicilliSolverLogoAlt" xml:space="preserve"><value>Logo PenicilliSolver</value></data>
+  <data name="Layout_UnhandledError" xml:space="preserve"><value>Terjadi kesalahan yang tidak tertangani.</value></data>
+  <data name="Layout_Reload" xml:space="preserve"><value>Muat ulang</value></data>
+  <data name="Layout_Dismiss" xml:space="preserve"><value>Tutup</value></data>
+
+  <!-- Pemilih bahasa -->
+  <data name="Language_Label" xml:space="preserve"><value>Bahasa</value></data>
+  <data name="Language_Indonesian" xml:space="preserve"><value>Bahasa Indonesia</value></data>
+  <data name="Language_English" xml:space="preserve"><value>English</value></data>
+
+  <!-- Status dan gaya _error_ (galat) bersama -->
+  <data name="Status_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
+  <data name="Status_SessionExpired" xml:space="preserve"><value>Error: sesi Anda telah berakhir. Masuk kembali lalu coba lagi.</value></data>
+
+  <!-- Halaman beranda -->
+  <data name="Home_Intro" xml:space="preserve"><value>Data antibiogram untuk laboratorium, dibagikan dari satu tabel acuan. Setiap pembaca melihat berkas yang sama.</value></data>
+  <data name="Home_SignInHeading" xml:space="preserve"><value>Masuk untuk melanjutkan</value></data>
+  <data name="Home_SignInBody" xml:space="preserve"><value>Aplikasi ini terbatas untuk staf laboratorium dan klinis. Akun dibuat melalui pendaftaran dan diaktifkan oleh dokter spesialis patologi klinik sebelum dapat membaca apa pun.</value></data>
+  <data name="Home_SignedInAs" xml:space="preserve"><value>Masuk sebagai</value></data>
+  <data name="Home_SignedInBadge" xml:space="preserve"><value>Sudah masuk</value></data>
+  <data name="Home_DeleteMyAccount" xml:space="preserve"><value>Hapus akun saya</value></data>
+  <data name="Home_AuthenticatedUser" xml:space="preserve"><value>Pengguna Terautentikasi</value></data>
+  <data name="Home_ClinicalToolsHeading" xml:space="preserve"><value>Alat Klinis</value></data>
+  <data name="Home_ResistanceRankingTitle" xml:space="preserve"><value>Peringkat Resistensi</value></data>
+  <data name="Home_ResistanceRankingBody" xml:space="preserve"><value>Analisis kerentanan organisme dan lihat antibiotik paling resisten dari tabel acuan.</value></data>
+  <data name="Home_OpenRanking" xml:space="preserve"><value>Buka Peringkat</value></data>
+  <data name="Home_AbbreviationMappingsTitle" xml:space="preserve"><value>Pemetaan Singkatan</value></data>
+  <data name="Home_AbbreviationMappingsBody" xml:space="preserve"><value>Cari dan kelola definisi untuk kode dan singkatan antibiotik yang digunakan di seluruh laporan laboratorium.</value></data>
+  <data name="Home_OpenMappings" xml:space="preserve"><value>Buka Pemetaan</value></data>
+  <data name="Home_LaboratoryAdministrationHeading" xml:space="preserve"><value>Administrasi Laboratorium</value></data>
+  <data name="Home_UploadSpreadsheetTitle" xml:space="preserve"><value>Unggah Tabel</value></data>
+  <data name="Home_UploadSpreadsheetBody" xml:space="preserve"><value>Ganti atau perbarui tabel acuan antibiogram yang aktif (CSV atau XLSX) untuk semua dokter dan staf laboratorium.</value></data>
+  <data name="Home_UploadPage" xml:space="preserve"><value>Halaman Unggah</value></data>
+  <data name="Home_UserAndTeamSettingsTitle" xml:space="preserve"><value>Pengaturan Tim</value></data>
+  <data name="Home_UserAndTeamSettingsBody" xml:space="preserve"><value>Aktifkan akun terdaftar, tetapkan peran, dan berikan izin kepada Tim Pengendalian Penyakit Infeksi.</value></data>
+  <data name="Home_ManageUsers" xml:space="preserve"><value>Kelola Pengguna</value></data>
+  <data name="Home_AwaitingActivationHeading" xml:space="preserve"><value>Menunggu Aktivasi Akun</value></data>
+  <data name="Home_AwaitingActivationBody" xml:space="preserve"><value>Akun Anda sudah terdaftar tetapi belum diberi peran klinis. Dokter spesialis patologi klinik harus menetapkan peran sebelum Anda dapat membaca tabel. Tidak ada yang salah dengan proses masuk Anda: ini adalah pembatas yang disengaja agar pendaftaran tidak dengan sendirinya memberikan akses.</value></data>
+  <data name="Home_AwaitingActivationFooter" xml:space="preserve"><value>Jika Anda memerlukan akses, silakan hubungi dokter spesialis patologi klinik untuk mengaktifkan akun Anda.</value></data>
+
+  <!-- Tidak ditemukan, kesalahan, akses ditolak, pengguna tidak valid, keluar -->
+  <data name="NotFound_Title" xml:space="preserve"><value>Tidak Ditemukan</value></data>
+  <data name="NotFound_Body" xml:space="preserve"><value>Maaf, konten yang Anda cari tidak ada.</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>Error</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>Error.</value></data>
+  <data name="Error_Occurred" xml:space="preserve"><value>Terjadi kesalahan saat memproses permintaan Anda.</value></data>
+  <data name="Error_RequestId" xml:space="preserve"><value>ID Permintaan:</value></data>
+  <data name="Error_DevelopmentModeHeading" xml:space="preserve"><value>Mode Pengembangan</value></data>
+  <data name="Error_DevelopmentModeBody" xml:space="preserve"><value>Beralih ke lingkungan Development akan menampilkan informasi yang lebih rinci tentang kesalahan yang terjadi.</value></data>
+  <data name="Error_DevelopmentWarning" xml:space="preserve"><value>Lingkungan Development tidak boleh diaktifkan untuk aplikasi yang sudah diterapkan.</value></data>
+  <data name="Error_DevelopmentHint" xml:space="preserve"><value>Hal ini dapat menyebabkan informasi sensitif dari pengecualian ditampilkan kepada pengguna akhir. Untuk penelusuran masalah secara lokal, aktifkan lingkungan Development dengan mengatur variabel lingkungan ASPNETCORE_ENVIRONMENT ke Development lalu memulai ulang aplikasi.</value></data>
+  <data name="AccessDenied_Title" xml:space="preserve"><value>Akses ditolak</value></data>
+  <data name="AccessDenied_Heading" xml:space="preserve"><value>Akses ditolak</value></data>
+  <data name="AccessDenied_Body" xml:space="preserve"><value>Anda tidak memiliki akses ke sumber daya ini.</value></data>
+  <data name="InvalidUser_Title" xml:space="preserve"><value>Pengguna tidak valid</value></data>
+  <data name="InvalidUser_Heading" xml:space="preserve"><value>Error</value></data>
+  <data name="InvalidUser_Body" xml:space="preserve"><value>Tidak dapat memuat pengguna yang sedang masuk.</value></data>
+  <data name="Logout_Title" xml:space="preserve"><value>Keluar</value></data>
+  <data name="Logout_Heading" xml:space="preserve"><value>Keluar</value></data>
+  <data name="Logout_Body" xml:space="preserve"><value>Anda telah berhasil keluar dari aplikasi.</value></data>
+
+  <!-- Modal sambung ulang -->
+  <data name="Reconnect_Rejoining" xml:space="preserve"><value>Menyambung ulang ke server...</value></data>
+  <data name="Reconnect_RetryingIn" xml:space="preserve"><value>Gagal menyambung ulang... mencoba lagi dalam</value></data>
+  <data name="Reconnect_Seconds" xml:space="preserve"><value>detik.</value></data>
+  <data name="Reconnect_Failed" xml:space="preserve"><value>Gagal menyambung ulang.</value></data>
+  <data name="Reconnect_RetryOrReload" xml:space="preserve"><value>Silakan coba lagi atau muat ulang halaman.</value></data>
+  <data name="Reconnect_Retry" xml:space="preserve"><value>Coba lagi</value></data>
+  <data name="Reconnect_SessionPaused" xml:space="preserve"><value>Sesi telah dijeda oleh server.</value></data>
+  <data name="Reconnect_ResumeFailed" xml:space="preserve"><value>Gagal melanjutkan sesi.</value></data>
+  <data name="Reconnect_Resume" xml:space="preserve"><value>Lanjutkan</value></data>
+
+  <!-- Masuk -->
+  <data name="Login_Title" xml:space="preserve"><value>Masuk</value></data>
+  <data name="Login_Heading" xml:space="preserve"><value>Masuk</value></data>
+  <data name="Login_SubHeading" xml:space="preserve"><value>Gunakan akun lokal untuk masuk.</value></data>
+  <data name="Login_EmailLabel" xml:space="preserve"><value>Surel</value></data>
+  <data name="Login_EmailPlaceholder" xml:space="preserve"><value>nama@contoh.com</value></data>
+  <data name="Login_PasswordLabel" xml:space="preserve"><value>Kata sandi</value></data>
+  <data name="Login_PasswordPlaceholder" xml:space="preserve"><value>kata sandi</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>Ingat saya</value></data>
+  <data name="Login_RememberMeDisplay" xml:space="preserve"><value>Ingat saya?</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Masuk</value></data>
+  <data name="Login_RegisterLink" xml:space="preserve"><value>Daftar sebagai pengguna baru</value></data>
+  <data name="Login_InvalidAttempt" xml:space="preserve"><value>Error: Percobaan masuk tidak valid.</value></data>
+
+  <!-- Daftar -->
+  <data name="Register_Title" xml:space="preserve"><value>Daftar</value></data>
+  <data name="Register_Heading" xml:space="preserve"><value>Daftar</value></data>
+  <data name="Register_SubHeading" xml:space="preserve"><value>Buat akun baru.</value></data>
+  <data name="Register_PendingNotice" xml:space="preserve"><value>Akun baru dibuat dalam status menunggu. Dokter spesialis patologi klinik harus mengaktifkan akun Anda sebelum Anda dapat menggunakan aplikasi.</value></data>
+  <data name="Register_DisplayNameLabel" xml:space="preserve"><value>Nama tampilan</value></data>
+  <data name="Register_DisplayNamePlaceholder" xml:space="preserve"><value>Nama Anda</value></data>
+  <data name="Register_EmailLabel" xml:space="preserve"><value>Surel</value></data>
+  <data name="Register_EmailPlaceholder" xml:space="preserve"><value>nama@contoh.com</value></data>
+  <data name="Register_RequestedRoleLabel" xml:space="preserve"><value>Peran yang diminta</value></data>
+  <data name="Register_PasswordLabel" xml:space="preserve"><value>Kata sandi</value></data>
+  <data name="Register_PasswordPlaceholder" xml:space="preserve"><value>kata sandi</value></data>
+  <data name="Register_ConfirmPasswordLabel" xml:space="preserve"><value>Konfirmasi kata sandi</value></data>
+  <data name="Register_Submit" xml:space="preserve"><value>Daftar</value></data>
+  <data name="Register_CreatedAwaitingActivation" xml:space="preserve"><value>Akun Anda telah dibuat dan menunggu aktivasi oleh dokter spesialis patologi klinik.</value></data>
+  <data name="Register_DisplayNameMaxLength" xml:space="preserve"><value>{0} harus paling banyak {1} karakter.</value></data>
+  <data name="Register_PasswordLength" xml:space="preserve"><value>{0} harus antara {2} hingga {1} karakter.</value></data>
+  <data name="Register_PasswordsDoNotMatch" xml:space="preserve"><value>Kata sandi dan konfirmasi kata sandi tidak cocok.</value></data>
+
+  <!-- Hapus akun saya -->
+  <data name="DeleteAccount_Title" xml:space="preserve"><value>Hapus akun saya</value></data>
+  <data name="DeleteAccount_Heading" xml:space="preserve"><value>Hapus akun saya</value></data>
+  <data name="DeleteAccount_SubHeading" xml:space="preserve"><value>Hapus akun ini secara permanen.</value></data>
+  <data name="DeleteAccount_NotSignedInHeading" xml:space="preserve"><value>Belum masuk.</value></data>
+  <data name="DeleteAccount_NotSignedInBody" xml:space="preserve"><value>Halaman ini hanya menghapus akun yang sedang Anda gunakan untuk masuk, jadi masuk terlebih dahulu lalu coba lagi.</value></data>
+  <data name="DeleteAccount_Warning" xml:space="preserve"><value>Tindakan ini menghapus {0} ({1}) beserta peran yang dipegangnya. Akun tidak dapat diaktifkan kembali; dokter spesialis patologi klinik harus mendaftarkannya lagi dari awal.</value></data>
+  <data name="DeleteAccount_ConfirmationLabel" xml:space="preserve"><value>Ketik Saya yakin untuk mengonfirmasi</value></data>
+  <data name="DeleteAccount_ConfirmationPlaceholder" xml:space="preserve"><value>Saya yakin</value></data>
+  <data name="DeleteAccount_ConfirmationHint" xml:space="preserve"><value>Ketik frasa yang ditampilkan di atas dengan tepat untuk mengonfirmasi.</value></data>
+  <data name="DeleteAccount_Submit" xml:space="preserve"><value>Hapus akun saya</value></data>
+  <data name="DeleteAccount_Deleted" xml:space="preserve"><value>Akun Anda telah dihapus.</value></data>
+
+  <!-- Unggah -->
+  <data name="Upload_Title" xml:space="preserve"><value>Unggah tabel</value></data>
+  <data name="Upload_Heading" xml:space="preserve"><value>Unggah tabel</value></data>
+  <data name="Upload_Intro" xml:space="preserve"><value>Hanya ada satu tabel acuan. Mengunggah berkas baru akan menggantikannya untuk semua orang, jadi Anda diminta mengonfirmasi sebelum berkas yang ada diganti.</value></data>
+  <data name="Upload_CurrentSpreadsheetHeading" xml:space="preserve"><value>tabel saat ini</value></data>
+  <data name="Upload_FieldFileName" xml:space="preserve"><value>Nama berkas</value></data>
+  <data name="Upload_FieldUploaded" xml:space="preserve"><value>Diunggah</value></data>
+  <data name="Upload_FieldFormat" xml:space="preserve"><value>Format</value></data>
+  <data name="Upload_FieldOrganisms" xml:space="preserve"><value>Organisme</value></data>
+  <data name="Upload_FieldAntibiotics" xml:space="preserve"><value>Antibiotik</value></data>
+  <data name="Upload_AntibioticsInFileHeading" xml:space="preserve"><value>Antibiotik dalam berkas ini</value></data>
+  <data name="Upload_AntibioticsInFileBody" xml:space="preserve"><value>Setiap singkatan ditampilkan bersama nama antibiotik yang telah dipetakan oleh dokter patologi. Singkatan yang ditandai (belum dipetakan) belum memiliki nama antibiotik — tambahkan di halaman pemetaan singkatan.</value></data>
+  <data name="Upload_NoSpreadsheet" xml:space="preserve"><value>Belum ada tabel yang diunggah.</value></data>
+  <data name="Upload_ChooseFile" xml:space="preserve"><value>Pilih berkas</value></data>
+  <data name="Upload_ReplaceFile" xml:space="preserve"><value>Ganti berkas</value></data>
+  <data name="Upload_AcceptedFormats" xml:space="preserve"><value>Format yang diterima: .csv dan .xlsx, hingga 10 MB.</value></data>
+  <data name="Upload_Selected" xml:space="preserve"><value>Dipilih:</value></data>
+  <data name="Upload_Clear" xml:space="preserve"><value>Bersihkan</value></data>
+  <data name="Upload_ConfirmReplace" xml:space="preserve"><value>tabel sudah diunggah. Mengunggah {0} akan menggantikan berkas acuan saat ini untuk semua orang.</value></data>
+  <data name="Upload_ConfirmReplaceButton" xml:space="preserve"><value>Ganti tabel saat ini</value></data>
+  <data name="Upload_Cancel" xml:space="preserve"><value>Batal</value></data>
+  <data name="Upload_Uploading" xml:space="preserve"><value>Mengunggah dan memeriksa berkas…</value></data>
+  <data name="Upload_ChooseExactlyOneFile" xml:space="preserve"><value>Error: pilih tepat satu berkas. Beberapa berkas tidak didukung.</value></data>
+  <data name="Upload_FileTooLargeForPicker" xml:space="preserve"><value>Error: berkas melebihi batas 10 MB yang diizinkan.</value></data>
+
+  <!-- Peringkat resistensi -->
+  <data name="Ranking_Title" xml:space="preserve"><value>Peringkat resistensi</value></data>
+  <data name="Ranking_Heading" xml:space="preserve"><value>Peringkat resistensi</value></data>
+  <data name="Ranking_Loading" xml:space="preserve"><value>Memuat tabel saat ini…</value></data>
+  <data name="Ranking_NoSpreadsheet" xml:space="preserve"><value>Belum ada tabel yang diunggah. Dokter spesialis patologi klinik dapat mengunggahnya dari halaman unggah.</value></data>
+  <data name="Ranking_FieldFileName" xml:space="preserve"><value>Nama berkas</value></data>
+  <data name="Ranking_FieldUploaded" xml:space="preserve"><value>Diunggah</value></data>
+  <data name="Ranking_FieldOrganisms" xml:space="preserve"><value>Organisme</value></data>
+  <data name="Ranking_FieldAntibiotics" xml:space="preserve"><value>Antibiotik</value></data>
+  <data name="Ranking_OrganismLabel" xml:space="preserve"><value>Organisme apa yang sedang Anda tangani?</value></data>
+  <data name="Ranking_OrganismHelp" xml:space="preserve"><value>Peringkat dihitung per organisme: daftar ini menampilkan antibiotik yang paling tidak rentan terhadap spesies tersebut, dimulai dari yang paling resisten. Obat yang tidak pernah diuji laporan ini terhadap organisme tersebut tidak memiliki persentase dan dicantumkan setelah yang terukur. Ketik sebagian nama — "aureus" menemukan setiap Staphylococcus aureus — lalu pilih dari daftar.</value></data>
+  <data name="Ranking_OrganismPlaceholder" xml:space="preserve"><value>Mulai ketik nama organisme</value></data>
+  <data name="Ranking_ShowWholeList" xml:space="preserve"><value>Tampilkan seluruh daftar</value></data>
+  <data name="Ranking_ShowRanking" xml:space="preserve"><value>Tampilkan peringkat</value></data>
+  <data name="Ranking_NoOrganismMatch" xml:space="preserve"><value>Tidak ada organisme dalam berkas ini yang cocok dengan "{0}".</value></data>
+  <data name="Ranking_OrganismCount" xml:space="preserve"><value>{0} dari {1} organisme tersedia.</value></data>
+  <data name="Ranking_SeveralMatch" xml:space="preserve"><value>Beberapa organisme cocok. Pilih yang Anda maksud:</value></data>
+  <data name="Ranking_TopCountLabel" xml:space="preserve"><value>Berapa banyak antibiotik paling resisten yang ditampilkan</value></data>
+  <data name="Ranking_TopCountHelp" xml:space="preserve"><value>Antara 1 dan {0}. Bawaan 3.</value></data>
+  <data name="Ranking_TopCountEmpty" xml:space="preserve"><value>Masukkan bilangan bulat.</value></data>
+  <data name="Ranking_TopCountInvalid" xml:space="preserve"><value>Masukkan bilangan bulat, misalnya 3.</value></data>
+  <data name="Ranking_TopHeading" xml:space="preserve"><value>{0} teratas paling resisten untuk {1}</value></data>
+  <data name="Ranking_RankColumn" xml:space="preserve"><value>Peringkat</value></data>
+  <data name="Ranking_AntibioticColumn" xml:space="preserve"><value>Antibiotik</value></data>
+  <data name="Ranking_SusceptibleColumn" xml:space="preserve"><value>% suseptibilitas</value></data>
+  <data name="Ranking_TypeOrganismName" xml:space="preserve"><value>Ketik nama organisme, lalu pilih Tampilkan peringkat.</value></data>
+  <data name="Ranking_SpeciesNotFound" xml:space="preserve"><value>Spesies tidak ditemukan: "{0}" tidak ada dalam tabel ini.</value></data>
+  <data name="Ranking_SpeciesNotFoundWithList" xml:space="preserve"><value>Spesies tidak ditemukan: "{0}" tidak ada dalam tabel ini. Berkas ini memuat: {1}.</value></data>
+
+  <!-- Komponen tampilan nama antibiotik -->
+  <data name="AntibioticName_UnmappedTooltip" xml:space="preserve"><value>Belum ada nama antibiotik yang dipetakan untuk singkatan ini</value></data>
+  <data name="AntibioticName_Unmapped" xml:space="preserve"><value>(belum dipetakan)</value></data>
+
+  <!-- Halaman pemetaan antibiotik -->
+  <data name="Mappings_Title" xml:space="preserve"><value>Singkatan antibiotik</value></data>
+  <data name="Mappings_Heading" xml:space="preserve"><value>Singkatan antibiotik</value></data>
+  <data name="Mappings_IntroFirst" xml:space="preserve"><value>Setiap singkatan antibiotik yang digunakan berkas ini tercantum di bawah, sesuai urutan berkas. Isi nama antibiotik di samping nama yang memerlukannya lalu simpan semuanya sekaligus. Tidak ada yang ditentukan sebelumnya: nama antibiotik dicatat oleh dokter patologi, dan hanya berlaku untuk berkas ini. Singkatan yang sama dapat berarti obat berbeda pada berkas yang berbeda.</value></data>
+  <data name="Mappings_IntroSecond" xml:space="preserve"><value>Berkas yang sudah menuliskan antibiotiknya secara lengkap tidak memerlukan pemetaan sama sekali, dan halaman ini akan menyatakannya daripada meminta pekerjaan yang tidak diperlukan.</value></data>
+  <data name="Mappings_Loading" xml:space="preserve"><value>Memuat tabel saat ini …</value></data>
+  <data name="Mappings_NoSpreadsheetHeading" xml:space="preserve"><value>Belum ada tabel yang diunggah.</value></data>
+  <data name="Mappings_NoSpreadsheetBody" xml:space="preserve"><value>Pemetaan terikat pada berkas yang diunggah, jadi belum ada yang dapat dipetakan sampai berkas ada. Unggah tabel terlebih dahulu, lalu kembali ke halaman ini.</value></data>
+  <data name="Mappings_CurrentFile" xml:space="preserve"><value>Berkas saat ini:</value></data>
+  <data name="Mappings_DetectedAbbreviations" xml:space="preserve"><value>{0} singkatan terdeteksi, dengan {1} telah dipetakan.</value></data>
+  <data name="Mappings_NotApplicableHeading" xml:space="preserve"><value>Tidak ada pemetaan yang diperlukan untuk berkas ini.</value></data>
+  <data name="Mappings_NotApplicableBody" xml:space="preserve"><value>Semua antibiotik di dalamnya sudah tercantum dengan nama lengkapnya, jadi tidak ada singkatan yang perlu ditafsirkan oleh dokter patologi. Halaman ini hanya punya pekerjaan ketika sebuah berkas menamai antibiotiknya dalam bentuk singkat, seperti AMK %S.</value></data>
+  <data name="Mappings_WorksheetAriaLabel" xml:space="preserve"><value>tabel singkatan</value></data>
+  <data name="Mappings_WorksheetHeading" xml:space="preserve"><value>tabel singkatan</value></data>
+  <data name="Mappings_EditorHelp" xml:space="preserve"><value>Isi setiap kotak yang kosong dengan nama lengkap antibiotik, lalu tekan Simpan pemetaan. Makna yang ingin Anda hapus dihapus melalui tombol Hapus miliknya, bukan dengan mengosongkan kotak.</value></data>
+  <data name="Mappings_ReaderHelp" xml:space="preserve"><value>Anda dapat melihat pemetaan, tetapi hanya dokter spesialis patologi klinik yang boleh menambah, mengubah, atau menghapusnya.</value></data>
+  <data name="Mappings_NoAbbreviations" xml:space="preserve"><value>Berkas ini tidak mencantumkan singkatan yang memerlukan nama antibiotik.</value></data>
+  <data name="Mappings_ColumnAbbreviation" xml:space="preserve"><value>Singkatan</value></data>
+  <data name="Mappings_ColumnFullName" xml:space="preserve"><value>Nama lengkap</value></data>
+  <data name="Mappings_ColumnLastModified" xml:space="preserve"><value>Terakhir diubah</value></data>
+  <data name="Mappings_ColumnActions" xml:space="preserve"><value>Tindakan</value></data>
+  <data name="Mappings_FullDrugNamePlaceholder" xml:space="preserve"><value>Nama lengkap antibiotik</value></data>
+  <data name="Mappings_Save" xml:space="preserve"><value>Simpan pemetaan</value></data>
+  <data name="Mappings_Remove" xml:space="preserve"><value>Hapus</value></data>
+  <data name="Mappings_RemoveDialogTitle" xml:space="preserve"><value>Hapus pemetaan</value></data>
+  <data name="Mappings_RemoveDialogBody" xml:space="preserve"><value>Hapus nama antibiotik dari {0} — singkatan akan ditampilkan sebagai belum dipetakan.</value></data>
+  <data name="Mappings_RemoveDialogBodyCurrent" xml:space="preserve"><value>Hapus nama antibiotik dari {0} (saat ini {1}) — singkatan akan ditampilkan sebagai belum dipetakan.</value></data>
+  <data name="Mappings_RemoveDialogConfirm" xml:space="preserve"><value>Ya, hapus</value></data>
+  <data name="Mappings_RemoveDialogCancel" xml:space="preserve"><value>Batal</value></data>
+
+  <!-- Halaman pengaturan tim -->
+  <data name="Settings_Title" xml:space="preserve"><value>Pengaturan tim</value></data>
+  <data name="Settings_Heading" xml:space="preserve"><value>Pengaturan tim</value></data>
+  <data name="Settings_Loading" xml:space="preserve"><value>Memuat akun…</value></data>
+  <data name="Settings_AccountsHeading" xml:space="preserve"><value>Akun</value></data>
+  <data name="Settings_AccountsHelp" xml:space="preserve"><value>Mengaktifkan akun adalah yang memindahkannya keluar dari status menunggu. Perubahan peran atau status berlaku pada saat akun tersebut masuk kembali; sesi yang sudah terbuka mempertahankan klaim lamanya hingga divalidasi ulang (paling lama tiga puluh menit).</value></data>
+  <data name="Settings_ColumnName" xml:space="preserve"><value>Nama</value></data>
+  <data name="Settings_ColumnEmail" xml:space="preserve"><value>Surel</value></data>
+  <data name="Settings_ColumnRole" xml:space="preserve"><value>Peran</value></data>
+  <data name="Settings_ColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Settings_ColumnSetRole" xml:space="preserve"><value>Tetapkan peran</value></data>
+  <data name="Settings_ColumnSetStatus" xml:space="preserve"><value>Tetapkan status</value></data>
+  <data name="Settings_ChooseRole" xml:space="preserve"><value>Pilih…</value></data>
+  <data name="Settings_Activate" xml:space="preserve"><value>Aktifkan</value></data>
+  <data name="Settings_Disable" xml:space="preserve"><value>Nonaktifkan</value></data>
+  <data name="Settings_DeleteConfirmPrompt" xml:space="preserve"><value>Hapus akun {0}? Tindakan ini tidak dapat dibatalkan.</value></data>
+  <data name="Settings_Deleting" xml:space="preserve"><value>Menghapus…</value></data>
+  <data name="Settings_ConfirmDelete" xml:space="preserve"><value>Konfirmasi hapus</value></data>
+  <data name="Settings_Cancel" xml:space="preserve"><value>Batal</value></data>
+  <data name="Settings_Delete" xml:space="preserve"><value>Hapus</value></data>
+  <data name="Settings_TeamPermissionsHeading" xml:space="preserve"><value>Izin tim</value></data>
+  <data name="Settings_TeamPermissionsHelp" xml:space="preserve"><value>Izin ini berlaku untuk tim pengendalian penyakit infeksi secara keseluruhan, bukan untuk satu akun. Dokter spesialis patologi klinik selalu memegang keduanya.</value></data>
+  <data name="Settings_TeamMayUpdate" xml:space="preserve"><value>Tim boleh mengganti tabel saat ini</value></data>
+  <data name="Settings_TeamMayDelete" xml:space="preserve"><value>Tim boleh menghapus tabel saat ini</value></data>
+
+  <!-- Nama peran (hanya tampilan; token peran tetap bahasa Inggris di basis data) -->
+  <data name="Role_ClinicalPathologist" xml:space="preserve"><value>Dokter Spesialis Patologi Klinik</value></data>
+  <data name="Role_OtherDoctor" xml:space="preserve"><value>Dokter</value></data>
+  <data name="Role_InfectiousDiseaseControlTeam" xml:space="preserve"><value>Tim Pengendalian Penyakit Infeksi</value></data>
+
+  <!-- Lapisan layanan: pemetaan singkatan antibiotik -->
+  <data name="Service_MappingEnterAbbreviation" xml:space="preserve"><value>Masukkan singkatan yang akan dipetakan.</value></data>
+  <data name="Service_MappingEnterFullName" xml:space="preserve"><value>Masukkan nama lengkap yang diwakili singkatan tersebut.</value></data>
+  <data name="Service_MappingAbbreviationNotInSpreadsheet" xml:space="preserve"><value>'{0}' tidak muncul dalam tabel saat ini, sehingga tidak dapat dipetakan.</value></data>
+  <data name="Service_MappingAlreadyMapped" xml:space="preserve"><value>'{0}' sudah dipetakan untuk tabel ini. Ubah pemetaan tersebut daripada menambahkan yang kedua.</value></data>
+  <data name="Service_MappingCouldNotBeSaved" xml:space="preserve"><value>Pemetaan tidak dapat disimpan. Silakan coba lagi.</value></data>
+  <data name="Service_MappingCreated" xml:space="preserve"><value>Memetakan '{0}' ke '{1}'.</value></data>
+  <data name="Service_MappingNoLongerExists" xml:space="preserve"><value>Pemetaan tersebut sudah tidak ada.</value></data>
+  <data name="Service_MappingUpdated" xml:space="preserve"><value>Memperbarui '{0}' menjadi '{1}'.</value></data>
+  <data name="Service_MappingCouldNotBeRemoved" xml:space="preserve"><value>Pemetaan tidak dapat dihapus. Silakan coba lagi.</value></data>
+  <data name="Service_MappingRemoved" xml:space="preserve"><value>Menghapus pemetaan untuk '{0}'.</value></data>
+  <data name="Service_MappingNothingChanged" xml:space="preserve"><value>Tidak ada yang berubah sejak penyimpanan terakhir.</value></data>
+  <data name="Service_MappingNothingToRemove" xml:space="preserve"><value>Singkatan tersebut tidak memiliki nama antibiotik untuk dihapus.</value></data>
+
+  <!-- Lapisan layanan: administrasi pengguna (kalimat tanpa peran) -->
+  <data name="Service_AccountNoLongerExists" xml:space="preserve"><value>Akun tersebut sudah tidak ada.</value></data>
+  <data name="Service_RoleNotRecognised" xml:space="preserve"><value>'{0}' bukan peran yang dikenali.</value></data>
+  <data name="Service_CannotReturnToPending" xml:space="preserve"><value>Akun tidak dapat dikembalikan ke status menunggu.</value></data>
+  <data name="Service_ChangeAppliesOnNextSignIn" xml:space="preserve"><value>Perubahan berlaku pada saat akun tersebut masuk kembali.</value></data>
+  <data name="Service_TeamPermissionsUpdated" xml:space="preserve"><value>Izin tim diperbarui. Perubahan berlaku pada permintaan tim kembali.</value></data>
+  <data name="Service_DeleteOnlyOwnAccount" xml:space="preserve"><value>Anda hanya dapat menghapus akun Anda sendiri melalui jalur ini.</value></data>
+  <data name="Service_AccountDeleted" xml:space="preserve"><value>Akun {0} telah dihapus.</value></data>
+  <data name="Service_Authorized" xml:space="preserve"><value>Terotorisasi.</value></data>
+  <data name="Service_YourAccountNotFound" xml:space="preserve"><value>Akun Anda tidak dapat ditemukan.</value></data>
+  <data name="Service_YourAccountNotActive" xml:space="preserve"><value>Akun Anda tidak aktif.</value></data>
+  <data name="Service_AccountHeldNoRole" xml:space="preserve"><value>Akun tersebut tidak memegang peran apa pun.</value></data>
+  <data name="Service_RoleRemoved" xml:space="preserve"><value>Peran dihapus.</value></data>
+  <data name="Service_IdentityFailuresPrefix" xml:space="preserve"><value>Perubahan tidak dapat disimpan: {0}.</value></data>
+  <data name="Service_UnableToLoadUser" xml:space="preserve"><value>Error: Tidak dapat memuat pengguna dengan ID '{0}'.</value></data>
+
+  <!-- Lapisan layanan: unggahan tabel dan pembaca berkas -->
+  <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .xlsx.</value></data>
+  <data name="Service_FileCouldNotBeSaved" xml:space="preserve"><value>Berkas '{0}' tidak dapat disimpan: {1}</value></data>
+  <data name="Service_UploadSucceeded" xml:space="preserve"><value>Mengunggah '{0}' ({1} organisme, {2} antibiotik). Berkas ini kini menjadi tabel saat ini.</value></data>
+  <data name="Service_FileTooLarge" xml:space="preserve"><value>Berkas berukuran {0} MB, melebihi ukuran unggahan maksimum {1} MB.</value></data>
+  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibaca: {1}</value></data>
+  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibuka: {1}</value></data>
+  <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris tajuk organisme dan baris data.</value></data>
+  <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>Berkas '{0}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
+  <data name="Service_XlsxWorksheetEmpty" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' kosong.</value></data>
+  <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
+  <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai antibiotik apa pun di baris tajuknya.</value></data>
+  <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak dapat ditafsirkan sebagai tabel berorientasi baris maupun berorientasi kolom.</value></data>
+  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>Berkas '{0}' memuat baris yang rusak: {1}</value></data>
+  <data name="Service_FileContainsNoRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris apa pun.</value></data>
+  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>Berkas '{0}' bukan tabel Excel yang valid: {1}</value></data>
+  <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>Buku kerja (workbook) '{0}' tidak memuat lembar apa pun.</value></data>
+  <data name="Service_CellValueNotANumber" xml:space="preserve"><value>Nilai '{0}' pada {1} bukan angka.</value></data>
+  <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>Nilai '{0}' pada {1} berada di luar rentang yang diizinkan, yaitu 0 hingga 100.</value></data>
+</root>

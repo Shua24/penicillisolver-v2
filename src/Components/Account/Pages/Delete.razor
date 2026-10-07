@@ -12,51 +12,52 @@
 @inject ILogger<Delete> Logger
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Delete my account</PageTitle>
+<PageTitle>@Localizer["DeleteAccount_Title"]</PageTitle>
 
-<h1>Delete my account</h1>
+<h1>@Localizer["DeleteAccount_Heading"]</h1>
 <div class="row">
     <div class="col-lg-6">
-        <StatusMessage Message="@Message" />
+        <StatusMessage Message="@Message" IsError="@(Message is not null)" />
 
         @if (CurrentUser is null)
         {
             <div class="alert alert-warning" role="alert">
-                <strong>Not signed in.</strong>
-                This page only deletes the account you are signed in as, so log
-                in first and try again.
-                <a class="btn btn-primary mt-2" href="Account/Login">Log in</a>
+                <strong>@Localizer["DeleteAccount_NotSignedInHeading"]</strong>
+                @Localizer["DeleteAccount_NotSignedInBody"]
+                <a class="btn btn-primary mt-2" href="Account/Login">@Localizer["Nav_LogIn"]</a>
             </div>
         }
         else
         {
             <EditForm Model="Input" method="post" OnValidSubmit="DeleteAccountAsync" FormName="delete-account">
                 <DataAnnotationsValidator />
-                <h2>Permanently delete this account.</h2>
+                <h2>@Localizer["DeleteAccount_SubHeading"]</h2>
                 <hr />
                 <p class="text-muted">
-                    This removes <strong>@CurrentUser.DisplayName</strong>
-                    (@CurrentUser.Email) and the role it holds. The account can
-                    not be reactivated; a clinical pathologist would have to
-                    register it again from scratch.
+                    @Localizer["DeleteAccount_Warning", CurrentUser.DisplayName, CurrentUser.Email ?? string.Empty]
                 </p>
                 <div class="form-floating mb-3">
                     <InputText @bind-Value="Input.ConfirmationText"
                                id="Input.ConfirmationText"
                                class="form-control"
-                               placeholder="I am sure" />
-                    <label for="Input.ConfirmationText">Type I am sure to confirm</label>
+                               placeholder="@Localizer["DeleteAccount_ConfirmationPlaceholder"]" />
+                    <label for="Input.ConfirmationText">@Localizer["DeleteAccount_ConfirmationLabel"]</label>
                     <ValidationMessage For="() => Input.ConfirmationText" class="text-danger" />
                 </div>
-                <button type="submit" class="w-100 btn btn-lg btn-danger">Delete my account</button>
+                <button type="submit" class="w-100 btn btn-lg btn-danger">@Localizer["DeleteAccount_Submit"]</button>
             </EditForm>
         }
     </div>
 </div>
 
 @code {
-    /// <summary>The phrase a user must type to arm the delete button.</summary>
-    private const string ConfirmationPhrase = "I am sure";
+    /// <summary>
+    /// The phrase a user must type to arm the delete button. It is localized, so
+    /// an Indonesian reader types the Indonesian phrase; the regular expression
+    /// below is anchored to whatever this resolves to, which keeps the check and
+    /// the instruction on screen in agreement.
+    /// </summary>
+    private string ConfirmationPhrase => Localizer["DeleteAccount_ConfirmationPlaceholder"];
 
     /// <summary>The account about to be deleted, or null when not signed in.</summary>
     private ApplicationUser? CurrentUser;
@@ -91,6 +92,17 @@
             return;
         }
 
+        // The confirmation phrase is compared here rather than through a
+        // validation attribute, because the expected value depends on the
+        // request culture and an attribute cannot read the localizer.
+        string typedConfirmation = (Input.ConfirmationText ?? string.Empty).Trim();
+
+        if (!string.Equals(typedConfirmation, ConfirmationPhrase, StringComparison.OrdinalIgnoreCase))
+        {
+            Message = Localizer["Status_ErrorPrefix"] + Localizer["DeleteAccount_ConfirmationHint"];
+            return;
+        }
+
         string actingUserId = CurrentUser.Id;
 
         // The voluntary self-delete path: it is exempt from the last-active
@@ -104,7 +116,7 @@
 
         if (!result.IsSuccess)
         {
-            Message = $"Error: {result.Message}";
+            Message = Localizer["Status_ErrorPrefix"] + result.Message;
             return;
         }
 
@@ -114,17 +126,13 @@
 
         RedirectManager.RedirectToWithStatus(
             "Account/Login",
-            "Your account has been deleted.",
+            Localizer["DeleteAccount_Deleted"],
             HttpContext);
     }
 
     private sealed class InputModel
     {
         [Required]
-        [RegularExpression(
-            $@"^{ConfirmationPhrase}$",
-            ErrorMessage = "Type the exact phrase shown above to confirm.")]
-        [Display(Name = "Confirmation")]
         public string ConfirmationText { get; set; } = "";
     }
 }

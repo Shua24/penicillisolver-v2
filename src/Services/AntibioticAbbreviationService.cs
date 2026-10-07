@@ -2,11 +2,13 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Constants;
 using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.ValueObjects;
+using penicillisolver_v2.Resources;
 
 namespace penicillisolver_v2.Services;
 
@@ -31,16 +33,25 @@ public sealed partial class AntibioticAbbreviationService
     private readonly ApplicationDbContext database;
     private readonly IAuthorizationService authorizationService;
 
+    /// <summary>
+    /// The localizer for this service's own messages. Built from the factory
+    /// because the service is not a Razor component.
+    /// </summary>
+    private readonly IStringLocalizer localizer;
+
     /// <summary>Creates the service over the application database.</summary>
     public AntibioticAbbreviationService(
         ApplicationDbContext database,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        IStringLocalizerFactory localizerFactory)
     {
         ArgumentNullException.ThrowIfNull(database);
         ArgumentNullException.ThrowIfNull(authorizationService);
+        ArgumentNullException.ThrowIfNull(localizerFactory);
 
         this.database = database;
         this.authorizationService = authorizationService;
+        this.localizer = localizerFactory.Create(typeof(SharedResource));
     }
 
     /// <summary>
@@ -70,12 +81,12 @@ public sealed partial class AntibioticAbbreviationService
 
         if (trimmedAbbreviation.Length == 0)
         {
-            return WriteResult.Failure("Enter the abbreviation to map.");
+            return WriteResult.Failure(localizer["Service_MappingEnterAbbreviation"]);
         }
 
         if (trimmedFullName.Length == 0)
         {
-            return WriteResult.Failure("Enter the full name the abbreviation stands for.");
+            return WriteResult.Failure(localizer["Service_MappingEnterFullName"]);
         }
 
         bool abbreviationExists = document.AntibioticNames.Any(name =>
@@ -84,8 +95,7 @@ public sealed partial class AntibioticAbbreviationService
         if (!abbreviationExists)
         {
             return WriteResult.Failure(
-                $"'{trimmedAbbreviation}' does not appear in the current spreadsheet, " +
-                "so it cannot be mapped.");
+                localizer["Service_MappingAbbreviationNotInSpreadsheet", trimmedAbbreviation]);
         }
 
         bool alreadyMapped = await database.AntibioticAbbreviations
@@ -97,8 +107,7 @@ public sealed partial class AntibioticAbbreviationService
         if (alreadyMapped)
         {
             return WriteResult.Failure(
-                $"'{trimmedAbbreviation}' is already mapped for this spreadsheet. " +
-                "Edit that mapping instead of adding a second one.");
+                localizer["Service_MappingAlreadyMapped", trimmedAbbreviation]);
         }
 
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
@@ -119,11 +128,11 @@ public sealed partial class AntibioticAbbreviationService
 
         if (writtenRowCount == 0)
         {
-            return WriteResult.Failure("The mapping could not be saved. Please try again.");
+            return WriteResult.Failure(localizer["Service_MappingCouldNotBeSaved"]);
         }
 
         return WriteResult.Success(
-            $"Mapped '{trimmedAbbreviation}' to '{trimmedFullName}'.",
+            localizer["Service_MappingCreated", trimmedAbbreviation, trimmedFullName],
             mapping.Id);
     }
 
@@ -146,7 +155,7 @@ public sealed partial class AntibioticAbbreviationService
 
         if (trimmedFullName.Length == 0)
         {
-            return WriteResult.Failure("Enter the full name the abbreviation stands for.");
+            return WriteResult.Failure(localizer["Service_MappingEnterFullName"]);
         }
 
         AntibioticAbbreviation? mapping = await database.AntibioticAbbreviations
@@ -154,7 +163,7 @@ public sealed partial class AntibioticAbbreviationService
 
         if (mapping is null)
         {
-            return WriteResult.Failure("That mapping no longer exists.");
+            return WriteResult.Failure(localizer["Service_MappingNoLongerExists"]);
         }
 
         mapping.FullName = trimmedFullName;
@@ -165,11 +174,11 @@ public sealed partial class AntibioticAbbreviationService
 
         if (writtenRowCount == 0)
         {
-            return WriteResult.Failure("The mapping could not be saved. Please try again.");
+            return WriteResult.Failure(localizer["Service_MappingCouldNotBeSaved"]);
         }
 
         return WriteResult.Success(
-            $"Updated '{mapping.Abbreviation}' to '{trimmedFullName}'.",
+            localizer["Service_MappingUpdated", mapping.Abbreviation, trimmedFullName],
             mapping.Id);
     }
 
@@ -192,7 +201,7 @@ public sealed partial class AntibioticAbbreviationService
 
         if (mapping is null)
         {
-            return WriteResult.Failure("That mapping no longer exists.");
+            return WriteResult.Failure(localizer["Service_MappingNoLongerExists"]);
         }
 
         string abbreviation = mapping.Abbreviation;
@@ -202,10 +211,10 @@ public sealed partial class AntibioticAbbreviationService
 
         if (writtenRowCount == 0)
         {
-            return WriteResult.Failure("The mapping could not be removed. Please try again.");
+            return WriteResult.Failure(localizer["Service_MappingCouldNotBeRemoved"]);
         }
 
-        return WriteResult.Success($"Removed the mapping for '{abbreviation}'.");
+        return WriteResult.Success(localizer["Service_MappingRemoved", abbreviation]);
     }
 
     /// <summary>
@@ -225,6 +234,8 @@ public sealed partial class AntibioticAbbreviationService
             return WriteResult.Success("Allowed.");
         }
 
+        // Deliberately English: names a role. Role names are a UI display
+        // concern, localised at the Razor call site, not here.
         return WriteResult.Failure(
             "Only a clinical pathologist may create, edit, or delete antibiotic mappings.");
     }

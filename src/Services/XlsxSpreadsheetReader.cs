@@ -1,6 +1,7 @@
 namespace penicillisolver_v2.Services;
 
 using System.Globalization;
+using Microsoft.Extensions.Localization;
 using OfficeOpenXml;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.Services;
@@ -30,7 +31,7 @@ public static partial class XlsxSpreadsheetReader
     /// </summary>
     /// <param name="originalFileName">The file name exactly as the uploader supplied it.</param>
     /// <returns>A result that either carries the document or explains the failure.</returns>
-    public static SpreadsheetImportResult Read(string originalFileName)
+    public static SpreadsheetImportResult Read(string originalFileName, IStringLocalizer localizer)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(originalFileName);
 
@@ -42,22 +43,22 @@ public static partial class XlsxSpreadsheetReader
 
             using ExcelPackage package = new ExcelPackage(packageFile);
 
-            return ReadFirstWorksheet(package, originalFileName);
+            return ReadFirstWorksheet(package, originalFileName, localizer);
         }
         catch (IOException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' could not be read: {exception.Message}");
+                localizer["Service_FileCouldNotBeRead", originalFileName, exception.Message]);
         }
         catch (UnauthorizedAccessException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' could not be opened: {exception.Message}");
+                localizer["Service_FileCouldNotBeOpened", originalFileName, exception.Message]);
         }
         catch (InvalidDataException exception)
         {
             return SpreadsheetImportResult.Failure(
-                $"The file '{originalFileName}' is not a valid xlsx workbook: {exception.Message}");
+                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
         }
     }
 
@@ -66,12 +67,13 @@ public static partial class XlsxSpreadsheetReader
     /// </summary>
     private static SpreadsheetImportResult ReadFirstWorksheet(
         ExcelPackage package,
-        string originalFileName)
+        string originalFileName,
+        IStringLocalizer localizer)
     {
         if (package.Workbook.Worksheets.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
-                $"The workbook '{originalFileName}' contains no worksheet.");
+                localizer["Service_WorkbookContainsNoWorksheet", originalFileName]);
         }
 
         ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
@@ -79,7 +81,7 @@ public static partial class XlsxSpreadsheetReader
         if (worksheet.Dimension is null)
         {
             return SpreadsheetImportResult.Failure(
-                $"The worksheet '{worksheet.Name}' in '{originalFileName}' is empty.");
+                localizer["Service_XlsxWorksheetEmpty", worksheet.Name, originalFileName]);
         }
 
         int rowCount = worksheet.Dimension.End.Row;
@@ -97,7 +99,8 @@ public static partial class XlsxSpreadsheetReader
                 orientation,
                 rowCount,
                 columnCount,
-                headerCells);
+                headerCells,
+                localizer);
         }
 
         return ParseRowOriented(
@@ -106,7 +109,8 @@ public static partial class XlsxSpreadsheetReader
             orientation,
             rowCount,
             columnCount,
-            headerCells);
+            headerCells,
+            localizer);
     }
 
     /// <summary>

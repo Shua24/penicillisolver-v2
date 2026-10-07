@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Constants;
@@ -51,13 +52,24 @@ public abstract class UserAdministrationTestFixture : IAsyncLifetime
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
+        // The service under test now resolves its user facing messages through
+        // a localizer, so the container has to provide the localization
+        // services even though no message is asserted here.
+        services.AddLocalization();
+
         serviceProvider = services.BuildServiceProvider();
 
         Database = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
         UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        AdministrationService = new UserAdministrationService(Database, UserManager);
+        IStringLocalizerFactory localizerFactory =
+            serviceProvider.GetRequiredService<IStringLocalizerFactory>();
+
+        AdministrationService = new UserAdministrationService(
+            Database,
+            UserManager,
+            localizerFactory);
 
         await SeedRolesAsync();
     }
