@@ -71,16 +71,15 @@ public partial class AntibioticMapping
     }
 
     /// <inheritdoc />
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Register the .NET reference so the scoped module can relay a
-            // native close (Esc / backdrop) back into the component.
-            DotNetObjectReference<AntibioticMapping> reference =
-                DotNetObjectReference.Create(this);
-            return JSRuntime.InvokeVoidAsync(
-                "antibioticMappingDeleteDialog.init", reference).AsTask();
+            // Load the dialog's collocated module before anything calls into
+            // it. The awaited import is what brings its functions into scope;
+            // a <script> tag would depend on document load order instead.
+            await InitialiseDeleteDialogAsync();
+            return;
         }
 
         // Open only AFTER the render has flushed the pending row into the
@@ -88,10 +87,8 @@ public partial class AntibioticMapping
         // still showing the previous pending abbreviation.
         if (deleteDialogOpen)
         {
-            return JSRuntime.InvokeVoidAsync("antibioticMappingDeleteDialog.open").AsTask();
+            await OpenDeleteDialogAsync();
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>

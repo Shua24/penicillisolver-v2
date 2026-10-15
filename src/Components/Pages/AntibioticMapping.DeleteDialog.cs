@@ -12,10 +12,52 @@ namespace penicillisolver_v2.Components.Pages;
 /// machine, which the main page partial triggers through <c>deleteDialogOpen</c>
 /// and the scoped module relays back through <c>SyncNativeDialogClose</c>.
 /// </summary>
-public partial class AntibioticMapping
+public partial class AntibioticMapping : IAsyncDisposable
 {
     private AntibioticMappingRow? pendingDelete;
     private bool deleteDialogOpen;
+
+    private IJSObjectReference? deleteDialogModule;
+    private DotNetObjectReference<AntibioticMapping>? deleteDialogReference;
+
+    /// <summary>
+    /// Loads the page's collocated dialog module with an awaited dynamic
+    /// import, then hands it the .NET reference it uses to relay native
+    /// dialog closes back into C#. The await is the point: unlike a
+    /// <c>&lt;script&gt;</c> tag, it guarantees the module's functions are in
+    /// scope before the first call, whatever the document load order was.
+    /// </summary>
+    private async Task InitialiseDeleteDialogAsync()
+    {
+        deleteDialogModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./Components/Pages/AntibioticMapping.razor.js");
+
+        deleteDialogReference = DotNetObjectReference.Create(this);
+
+        await deleteDialogModule.InvokeVoidAsync("init", deleteDialogReference);
+    }
+
+    /// <summary>
+    /// Opens the confirmation dialog for the pending row.
+    /// </summary>
+    private async Task OpenDeleteDialogAsync()
+    {
+        if (deleteDialogModule is not null)
+        {
+            await deleteDialogModule.InvokeVoidAsync("open");
+        }
+    }
+
+    /// <summary>
+    /// Closes the confirmation dialog.
+    /// </summary>
+    private async Task CloseDeleteDialogAsync()
+    {
+        if (deleteDialogModule is not null)
+        {
+            await deleteDialogModule.InvokeVoidAsync("close");
+        }
+    }
 
     /// <summary>
     /// Begins the delete flow for a row: remembers it as pending and opens the
@@ -41,7 +83,7 @@ public partial class AntibioticMapping
         pendingDelete = null;
         deleteDialogOpen = false;
 
-        _ = JSRuntime.InvokeVoidAsync("antibioticMappingDeleteDialog.close");
+        _ = CloseDeleteDialogAsync();
     }
 
     /// <summary>
@@ -73,7 +115,7 @@ public partial class AntibioticMapping
         pendingDelete = null;
         deleteDialogOpen = false;
 
-        _ = JSRuntime.InvokeVoidAsync("antibioticMappingDeleteDialog.close");
+        _ = CloseDeleteDialogAsync();
 
         if (row.Mapping is null)
         {
@@ -95,6 +137,29 @@ public partial class AntibioticMapping
         if (result.Succeeded)
         {
             await ReloadMappingRowsAsync();
+        }
+    }
+
+    /// <summary>
+    /// Releases the .NET reference and the JS module reference the page holds
+    /// for the dialog.
+    /// </summary>
+    /// <returns>A task that completes once both references are released.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        deleteDialogReference?.Dispose();
+
+        if (deleteDialogModule is not null)
+        {
+            try
+            {
+                await deleteDialogModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The circuit is already gone; there is nothing left to
+                // release on the server.
+            }
         }
     }
 }

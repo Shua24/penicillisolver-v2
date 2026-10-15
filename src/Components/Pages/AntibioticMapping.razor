@@ -13,7 +13,9 @@
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<script type="module" src="@Assets["Components/Pages/AntibioticMapping.razor.js"]"></script>
+@* The delete-confirmation module for this page is loaded with an awaited
+   dynamic import from AntibioticMapping.DeleteDialog.cs - no <script> tag
+   here, so no document load order can leave its functions out of scope. *@
 
 <PageTitle>@Localizer["Mappings_Title"]</PageTitle>
 
