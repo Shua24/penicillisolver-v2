@@ -131,7 +131,7 @@ the quoted figures are real outputs, not guesses.
 ### Prerequisites
 
 - **.NET 10 SDK** — the repo targets `net10.0` and builds with SDK
-  `10.0.112` (confirmed via `dotnet --version`).
+  `10.0.402` (confirmed via `dotnet --version`).
 - **PostgreSQL** (production only). Development uses SQLite and needs
   nothing installed.
 - The EF tooling is a local .NET tool pinned in `dotnet-tools.json`
@@ -144,13 +144,13 @@ the quoted figures are real outputs, not guesses.
 | Task | Command | Verified result |
 |---|---|---|
 | Build the whole solution | `dotnet build` | `Build succeeded.` · `0 Warning(s)` · `0 Error(s)` |
-| Run all tests | `dotnet test` | `137` unit + `31` integration = **168 passed, 0 failed** |
-| Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.112-dev`) |
+| Run all tests | `dotnet test` | `147` unit + `44` integration = **191 passed, 0 failed** |
+| Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.402`) |
 
 The two test projects are xunit and both live under `tests/`:
 
-- `tests/PenicilliSolver.UnitTests` — 137 tests.
-- `tests/PenicilliSolver.IntegrationTests` — 31 tests. They bind the real
+- `tests/PenicilliSolver.UnitTests` — 147 tests.
+- `tests/PenicilliSolver.IntegrationTests` — 44 tests. They bind the real
   host via `WebApplicationFactory` and redirect the spreadsheet storage
   directory to a temp folder, so a test run writes nothing into
   `src/App_Data`.
@@ -158,6 +158,28 @@ The two test projects are xunit and both live under `tests/`:
 Run the app with the default (development) environment;
 `dotnet run --project src/penicillisolver-v2.csproj` works, and the
 `.vscode/launch.json` opens the browser at the listening URL.
+
+### Dependency security
+
+NuGet's audit runs on every restore and reports known-vulnerable packages as
+`NU1902` (moderate) or `NU1903` (high) warnings. To check the graph on demand,
+from the repo root:
+
+```bash
+dotnet list src/penicillisolver-v2.csproj package --vulnerable --include-transitive
+```
+
+If it reports anything, do not silence the warning — find which reference pulls
+the package (`dotnet nuget why src/penicillisolver-v2.csproj <PackageId>`), then
+move that reference to a version whose dependency is patched, or pin the
+package explicitly to the patched version. Both `NU1902` and `NU1903` are
+build warnings rather than errors, so a vulnerable build still succeeds and
+will otherwise go unnoticed.
+
+The `System.Security.Cryptography.Pkcs` and `System.Security.Cryptography.Xml`
+warnings this repo used to show came from `EPPlus` 8.7.1, which depended on
+version `10.0.10` of both. `EPPlus` 8.7.2 depends on `10.0.13`, where the
+advisories are patched.
 
 ### Database: what happens on first run
 
@@ -198,8 +220,8 @@ src/
   Services/                  application services: upload, storage, query,
                              abbreviation mapping, user administration
 tests/
-  PenicilliSolver.UnitTests/         137 xunit tests
-  PenicilliSolver.IntegrationTests/  31 xunit tests (real host, temp storage dir)
+  PenicilliSolver.UnitTests/         147 xunit tests
+  PenicilliSolver.IntegrationTests/  44 xunit tests (real host, temp storage dir)
 excel-samples/                   amr.csv + amr.xlsx reference uploads
 ```
 
@@ -233,7 +255,7 @@ These are hard rules for anyone modifying the code — read them before a PR:
 cd /home/aulus/Sources/penicillisolver-v2
 dotnet tool restore          # once: restores dotnet-ef 10.0.12
 dotnet build                 # whole solution
-dotnet test                  # unit + integration, expect 168 passed
+dotnet test                  # unit + integration, expect 191 passed
 ```
 
 > On a fresh clone the first `dotnet build` / `dotnet test` will restore
