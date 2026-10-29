@@ -29,6 +29,18 @@ namespace PenicilliSolver.IntegrationTests;
 /// </remarks>
 public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
 {
+    /// <summary>The password every seeded test account starts with.</summary>
+    public const string SeedAccountPassword = "IntegrationTest1!";
+
+    /// <summary>The seed account email for the clinical pathologist role.</summary>
+    public const string SeedPathologistEmail = "test.pathologist@example.test";
+
+    /// <summary>The seed account email for the other doctor role.</summary>
+    public const string SeedOtherDoctorEmail = "test.otherdoctor@example.test";
+
+    /// <summary>The seed account email for the infection control team role.</summary>
+    public const string SeedTeamEmail = "test.team@example.test";
+
     private readonly string databaseFilePath =
         Path.Combine(Path.GetTempPath(), $"penicillisolver-tests-{Guid.NewGuid():N}.db");
 
@@ -61,6 +73,17 @@ public class PenicilliSolverApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting(
             "SpreadsheetStorage:Directory",
             storageDirectoryPath);
+
+        // The seeder refuses to start without an active clinical pathologist and
+        // no longer generates accounts of its own, so the test host supplies a
+        // seed configuration. These are throwaway credentials for a private
+        // temporary database, never production ones.
+        builder.UseSetting("SeedAccounts:ClinicalPathologist:Email", SeedPathologistEmail);
+        builder.UseSetting("SeedAccounts:ClinicalPathologist:Password", SeedAccountPassword);
+        builder.UseSetting("SeedAccounts:OtherDoctor:Email", SeedOtherDoctorEmail);
+        builder.UseSetting("SeedAccounts:OtherDoctor:Password", SeedAccountPassword);
+        builder.UseSetting("SeedAccounts:InfectiousDiseaseControlTeam:Email", SeedTeamEmail);
+        builder.UseSetting("SeedAccounts:InfectiousDiseaseControlTeam:Password", SeedAccountPassword);
 
         builder.ConfigureServices(services =>
         {

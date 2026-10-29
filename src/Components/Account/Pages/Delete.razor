@@ -105,10 +105,10 @@
 
         string actingUserId = CurrentUser.Id;
 
-        // The voluntary self-delete path: it is exempt from the last-active
-        // pathologist guard by design, because it is the escape hatch. If it
-        // empties the pathologist pool, the bootstrap seeder repairs it on next
-        // startup.
+        // The voluntary self-delete path. It is subject to the same
+        // last-active-pathologist lockout guard as an administrator delete, so
+        // the sole pathologist is refused rather than locking the application
+        // out of every administration action.
         AdministrationResult result = await AdministrationService.DeleteUserAsync(
             actingUserId,
             actingUserId,

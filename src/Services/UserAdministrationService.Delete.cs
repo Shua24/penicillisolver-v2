@@ -8,17 +8,16 @@ using penicillisolver_v2.Domain.Entities;
 /// The account-deletion operation of <see cref="UserAdministrationService"/>.
 /// It serves two callers: a clinical pathologist deleting another account from
 /// the user and team settings page, and any user voluntarily deleting their own
-/// account. The two paths differ only in who may invoke them and whether the
-/// last-active-pathologist lockout guard applies.
+/// account. The two paths differ only in who may invoke them; the
+/// last-active-pathologist lockout guard applies to both.
 /// </summary>
 public sealed partial class UserAdministrationService
 {
     /// <summary>
-    /// Deletes an account. In administrator mode (<paramref name="isSelfDelete"/>)
-    /// is false the caller must be an active clinical pathologist and deleting the
-    /// last active pathologist is refused. In self mode it is exempt from that
-    /// guard, because it is the escape hatch: if it leaves no active pathologist,
-    /// the bootstrap seeder repairs the pool on the next startup.
+    /// Deletes an account. In administrator mode (<paramref name="isSelfDelete"/>
+    /// is false) the caller must be an active clinical pathologist. In both modes
+    /// deleting the last active pathologist is refused, because activation is the
+    /// only way an account gains a role and an empty pool is a permanent lockout.
     /// </summary>
     /// <param name="actingUserId">The identifier of the account performing the delete.</param>
     /// <param name="targetUserId">The identifier of the account being deleted.</param>
@@ -59,18 +58,18 @@ public sealed partial class UserAdministrationService
             return AdministrationResult.Failure(Localizer["Service_AccountNoLongerExists"]);
         }
 
-        if (!isSelfDelete)
+        // The lockout guard runs for self-delete too. It used to be skipped
+        // there because the bootstrap seeder rebuilt the pool on the next
+        // startup, and that account generator no longer exists.
+        AdministrationResult guardResult = await GuardLastActivePathologistAsync(targetUser.Id);
+
+        if (!guardResult.IsSuccess)
         {
-            AdministrationResult guardResult = await GuardLastActivePathologistAsync(targetUser.Id);
+            AdministrationResult refusalResult = AdministrationResult.Failure(
+                "This is the last active clinical pathologist. Deleting this account " +
+                "would leave nobody able to manage users or the spreadsheet.");
 
-            if (!guardResult.IsSuccess)
-            {
-                AdministrationResult refusalResult = AdministrationResult.Failure(
-                    "This is the last active clinical pathologist. Deleting this account " +
-                    "would leave nobody able to manage users or the spreadsheet.");
-
-                return refusalResult;
-            }
+            return refusalResult;
         }
 
         string targetName = DisplayNameOf(targetUser);

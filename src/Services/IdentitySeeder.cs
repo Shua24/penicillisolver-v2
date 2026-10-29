@@ -10,10 +10,9 @@ namespace penicillisolver_v2.Services;
 
 /// <summary>
 /// Creates the three application roles and one seed account per role on
-/// startup, and guarantees that at least one active clinical pathologist
-/// exists. Seeding is tolerant by design: a missing email or password is
-/// logged as an error and that account is skipped, because an incomplete
-/// development configuration must not stop the application from starting.
+/// startup, then refuses to start when seeding left no active clinical
+/// pathologist behind. A missing email or password is logged as an error and
+/// that account is skipped; the invariant check decides whether to continue.
 /// </summary>
 public static partial class IdentitySeeder
 {
@@ -43,10 +42,10 @@ public static partial class IdentitySeeder
         ApplicationDbContext database =
             scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // TODO(prod-secrets): how the production seed credentials are supplied is
-        // deliberately undecided. Do not invent a mechanism here; agree on one
-        // (user secrets, environment variables, or a one-off provisioning step)
-        // with the owner before production deployment.
+        // Seed credentials come from configuration, never from source: user
+        // secrets in development, SeedAccounts__* environment variables in
+        // production. Nothing is generated here, so a host given no credentials
+        // seeds nothing and fails the invariant check.
         string[] roleNames =
         [
             ApplicationRoleNames.ClinicalPathologist,
@@ -64,7 +63,7 @@ public static partial class IdentitySeeder
             await SeedAccountForRoleAsync(userManager, configuration, logger, roleName);
         }
 
-        await EnsureBootstrapClinicalPathologistAsync(userManager, logger);
+        await EnsureAnActiveClinicalPathologistExistsAsync(userManager);
 
         await EnsureTeamPermissionRowExistsAsync(database, logger);
     }
