@@ -284,7 +284,7 @@ These are hard rules for anyone modifying the code — read them before a PR:
 cd /home/aulus/Sources/penicillisolver-v2
 dotnet tool restore          # once: restores dotnet-ef 10.0.12
 dotnet build                 # whole solution
-dotnet test                  # unit + integration, expect 191 passed
+dotnet test                  # unit + integration, expect 189 passed
 ```
 
 > On a fresh clone the first `dotnet build` / `dotnet test` will restore

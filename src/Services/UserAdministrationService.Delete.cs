@@ -21,7 +21,12 @@ public sealed partial class UserAdministrationService
     /// </summary>
     /// <param name="actingUserId">The identifier of the account performing the delete.</param>
     /// <param name="targetUserId">The identifier of the account being deleted.</param>
-    /// <param name="isSelfDelete">When true, the caller deletes their own account and the lockout guard is skipped.</param>
+    /// <param name="isSelfDelete">
+    /// When true, the caller deletes their own account, and <paramref name="actingUserId"/>
+    /// must equal <paramref name="targetUserId"/>. When false, the caller must itself be
+    /// an active clinical pathologist; no equality is required. Either way the
+    /// last-active-pathologist lockout guard applies.
+    /// </param>
     /// <returns>Success, or a refusal message.</returns>
     public async Task<AdministrationResult> DeleteUserAsync(
         string actingUserId,
