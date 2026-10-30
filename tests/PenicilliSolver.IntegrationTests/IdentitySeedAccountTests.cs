@@ -14,15 +14,13 @@ using penicillisolver_v2.Services;
 namespace PenicilliSolver.IntegrationTests;
 
 /// <summary>
-/// Guards the invariant the seeder enforces on every startup: at least one
-/// active clinical pathologist always exists, whichever seed configuration
-/// the host started with.
+/// Guards the seeding contract: a configured seed account becomes an active
+/// account holding its role, and a host that ends up with no active clinical
+/// pathologist refuses to continue instead of starting in a locked-out state.
 /// </summary>
-public class ClinicalPathologistBootstrapTests
+public class IdentitySeedAccountTests
 {
-    private const string BootstrapPathologistEmail = "bootstrap.clinicalpathologist@localhost.invalid";
-
-    /// <summary>Asserts the invariant on the development test host.</summary>
+    /// <summary>Asserts the behaviour of a host with a configured seed.</summary>
     public sealed class WithSeedConfiguration : IClassFixture<PenicilliSolverApplicationFactory>
     {
         private readonly PenicilliSolverApplicationFactory factory;
@@ -35,27 +33,37 @@ public class ClinicalPathologistBootstrapTests
         }
 
         [Fact]
-        public async Task After_startup_an_active_clinical_pathologist_exists()
+        public async Task The_configured_seed_account_is_created_active_with_its_role()
         {
             await factory.InitialiseDatabaseAsync();
 
-            int activePathologistCount = await CountActivePathologistsAsync(factory);
+            ApplicationUser? pathologist = await FindUserByEmailAsync(
+                factory,
+                PenicilliSolverApplicationFactory.SeedPathologistEmail);
 
-            Assert.True(activePathologistCount >= 1);
+            Assert.NotNull(pathologist);
+            Assert.Equal(AccountStatus.Active, pathologist!.AccountStatus);
+
+            bool isPathologistRole = await IsInRoleAsync(
+                factory,
+                pathologist,
+                ApplicationRoleNames.ClinicalPathologist);
+
+            Assert.True(isPathologistRole);
         }
 
         [Fact]
-        public async Task A_second_seeding_pass_does_not_add_another_bootstrap_account()
+        public async Task A_second_seeding_pass_does_not_add_another_pathologist()
         {
             await factory.InitialiseDatabaseAsync();
 
-            int activePathologistCountBefore = await CountActivePathologistsAsync(factory);
+            int pathologistCountBefore = await CountPathologistsAsync(factory);
 
-            await RunSeederAsync(factory);
+            await RunSeederAsync(factory, factory.Services.GetRequiredService<IConfiguration>());
 
-            int activePathologistCountAfter = await CountActivePathologistsAsync(factory);
+            int pathologistCountAfter = await CountPathologistsAsync(factory);
 
-            Assert.Equal(activePathologistCountBefore, activePathologistCountAfter);
+            Assert.Equal(pathologistCountBefore, pathologistCountAfter);
         }
 
         [Fact]
@@ -138,12 +146,12 @@ public class ClinicalPathologistBootstrapTests
         }
     }
 
-    /// <summary>Asserts the pure bootstrap branch on a host with no seed config.</summary>
-    public sealed class WithoutSeedConfiguration : IClassFixture<NoSeedAccountsApplicationFactory>
+    /// <summary>Asserts the startup refusal when no active pathologist survives.</summary>
+    public sealed class WithoutConfiguredSeed : IClassFixture<PenicilliSolverApplicationFactory>
     {
-        private readonly NoSeedAccountsApplicationFactory factory;
+        private readonly PenicilliSolverApplicationFactory factory;
 
-        public WithoutSeedConfiguration(NoSeedAccountsApplicationFactory factory)
+        public WithoutConfiguredSeed(PenicilliSolverApplicationFactory factory)
         {
             ArgumentNullException.ThrowIfNull(factory);
 
@@ -151,47 +159,25 @@ public class ClinicalPathologistBootstrapTests
         }
 
         [Fact]
-        public async Task Startup_creates_the_bootstrap_clinical_pathologist()
+        public async Task Seeding_throws_when_no_active_clinical_pathologist_exists()
         {
             await factory.InitialiseDatabaseAsync();
 
-            ApplicationUser? pathologist =
-                await FindUserByEmailAsync(factory, BootstrapPathologistEmail);
+            await DisableEveryPathologistAsync(factory);
 
-            Assert.NotNull(pathologist);
-            Assert.Equal(AccountStatus.Active, pathologist!.AccountStatus);
+            IConfiguration configurationWithoutSeeds = new ConfigurationBuilder().Build();
 
-            bool isPathologistRole = await IsInRoleAsync(
-                factory,
-                pathologist,
-                ApplicationRoleNames.ClinicalPathologist);
-
-            Assert.True(isPathologistRole);
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                RunSeederAsync(factory, configurationWithoutSeeds));
         }
 
-        [Fact]
-        public async Task A_second_seeding_pass_does_not_stack_a_duplicate_bootstrap_account()
+        private static async Task DisableEveryPathologistAsync(
+            PenicilliSolverApplicationFactory factory)
         {
-            await factory.InitialiseDatabaseAsync();
-
-            int bootstrapUserCountBefore = await CountBootstrapUsersAsync(factory);
-
-            await RunSeederAsync(factory);
-
-            int bootstrapUserCountAfter = await CountBootstrapUsersAsync(factory);
-
-            Assert.Equal(bootstrapUserCountBefore, bootstrapUserCountAfter);
-        }
-
-        [Fact]
-        public async Task Disabling_every_pathologist_is_repaired_on_the_next_seeding_pass()
-        {
-            await factory.InitialiseDatabaseAsync();
-
-            using IServiceScope disableScope = factory.Services.CreateScope();
+            using IServiceScope scope = factory.Services.CreateScope();
 
             UserManager<ApplicationUser> userManager =
-                disableScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             IList<ApplicationUser> pathologists =
                 await userManager.GetUsersInRoleAsync(ApplicationRoleNames.ClinicalPathologist);
@@ -206,27 +192,22 @@ public class ClinicalPathologistBootstrapTests
 
                 Assert.True(disableResult.Succeeded);
             }
-
-            await RunSeederAsync(factory);
-
-            int activePathologistCount = await CountActivePathologistsAsync(factory);
-
-            Assert.True(activePathologistCount >= 1);
         }
     }
 
     /// <summary>Runs one full seeding pass over the host's services.</summary>
-    private static async Task RunSeederAsync(PenicilliSolverApplicationFactory factory)
+    private static async Task RunSeederAsync(
+        PenicilliSolverApplicationFactory factory,
+        IConfiguration configuration)
     {
-        IConfiguration configuration =
-            factory.Services.GetRequiredService<IConfiguration>();
         ILogger seederLogger =
             factory.Services.GetRequiredService<ILoggerFactory>().CreateLogger("test");
 
         await IdentitySeeder.SeedAsync(factory.Services, configuration, seederLogger);
     }
 
-    private static async Task<int> CountActivePathologistsAsync(PenicilliSolverApplicationFactory factory)
+    private static async Task<int> CountPathologistsAsync(
+        PenicilliSolverApplicationFactory factory)
     {
         using IServiceScope scope = factory.Services.CreateScope();
 
@@ -236,26 +217,9 @@ public class ClinicalPathologistBootstrapTests
         IList<ApplicationUser> pathologists =
             await userManager.GetUsersInRoleAsync(ApplicationRoleNames.ClinicalPathologist);
 
-        int activePathologistCount = pathologists.Count(user =>
-            user.AccountStatus == AccountStatus.Active);
+        int pathologistCount = pathologists.Count;
 
-        return activePathologistCount;
-    }
-
-    private static async Task<int> CountBootstrapUsersAsync(NoSeedAccountsApplicationFactory factory)
-    {
-        using IServiceScope scope = factory.Services.CreateScope();
-
-        UserManager<ApplicationUser> userManager =
-            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        IList<ApplicationUser> pathologists =
-            await userManager.GetUsersInRoleAsync(ApplicationRoleNames.ClinicalPathologist);
-
-        int bootstrapUserCount = pathologists.Count(user =>
-            user.Email == BootstrapPathologistEmail);
-
-        return bootstrapUserCount;
+        return pathologistCount;
     }
 
     private static async Task<ApplicationUser?> FindUserByEmailAsync(

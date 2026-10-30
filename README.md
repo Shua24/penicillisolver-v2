@@ -144,13 +144,13 @@ the quoted figures are real outputs, not guesses.
 | Task | Command | Verified result |
 |---|---|---|
 | Build the whole solution | `dotnet build` | `Build succeeded.` · `0 Warning(s)` · `0 Error(s)` |
-| Run all tests | `dotnet test` | `147` unit + `44` integration = **191 passed, 0 failed** |
+| Run all tests | `dotnet test` | `147` unit + `42` integration = **189 passed, 0 failed** |
 | Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.402`) |
 
 The two test projects are xunit and both live under `tests/`:
 
 - `tests/PenicilliSolver.UnitTests` — 147 tests.
-- `tests/PenicilliSolver.IntegrationTests` — 44 tests. They bind the real
+- `tests/PenicilliSolver.IntegrationTests` — 42 tests. They bind the real
   host via `WebApplicationFactory` and redirect the spreadsheet storage
   directory to a temp folder, so a test run writes nothing into
   `src/App_Data`.
@@ -195,17 +195,46 @@ On every start the host runs EF Core migrations and then the identity seeder
   at startup**, so a production deploy must supply `DefaultConnection` (via
   `appsettings`, the environment, or user secrets) or the app will not start.
   Development (`appsettings.Development.json`) points at a relative
-  `Data Source=penicillisolver.db`, so a fresh checkout just works out of the
-  box with no setup.
+  `Data Source=penicillisolver.db`, so the database itself needs no setup — but
+  the host still refuses to start until seed credentials are set (next
+  section).
 
-- **Seeding**: creates the three roles, one optional seed account per role
-  (credentials from `SeedAccounts:<Role>:Email` / `:Password` — empty by
-  default, so each is skipped with a logged error, which never blocks
-  startup), the team-permission row (update and delete both denied by
-  default), and a guaranteed **bootstrap clinical pathologist**
-  (`bootstrap.clinicalpathologist@localhost.invalid`). That last account is
-  created with a random 24-character password that is **printed to the log
-  exactly once** — grab it from the startup output, then change it.
+- **Seeding**: creates the three roles, one seed account per role (credentials
+  from `SeedAccounts:<Role>:Email` / `:Password` — empty by default, so each is
+  skipped with a logged error), and the team-permission row (update and delete
+  both denied by default). No account is ever generated: **you supply the
+  credentials.** A seeded account is created `Active` and given its role
+  immediately, so it can sign in without waiting for activation.
+
+- **The startup refusal**: after seeding, the host requires at least one
+  *active clinical pathologist* and **throws** when there is none. This is not
+  a warning you can ignore — activation by a clinical pathologist is the only
+  way an account ever gains a role, so an empty pool is a permanent lockout.
+  A fresh clone with no seed credentials therefore refuses to start until you
+  set them.
+
+### Setting the seed credentials
+
+Credentials come from configuration, never from source. In development, user
+secrets are the intended store (they live outside the repo, in
+`~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`):
+
+```bash
+# Run from the repository root (the folder that contains src/).
+dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Email" "you@example.test" --project src/penicillisolver-v2.csproj
+dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Password" "<a password>" --project src/penicillisolver-v2.csproj
+```
+
+The password must satisfy Identity's default complexity rule — at least one
+lowercase letter, one uppercase letter, one digit, and **one non-alphanumeric
+character** — or seeding fails with `PasswordRequiresNonAlphanumeric` and the
+host then refuses to start. Setting the other two roles is optional; only the
+clinical pathologist is required.
+
+In production, supply the same keys as environment variables
+(`SeedAccounts__ClinicalPathologist__Email` and
+`SeedAccounts__ClinicalPathologist__Password`). User secrets are read in the
+Development environment only.
 
 ### Code layout, at a glance
 
@@ -221,7 +250,7 @@ src/
                              abbreviation mapping, user administration
 tests/
   PenicilliSolver.UnitTests/         147 xunit tests
-  PenicilliSolver.IntegrationTests/  44 xunit tests (real host, temp storage dir)
+  PenicilliSolver.IntegrationTests/  42 xunit tests (real host, temp storage dir)
 excel-samples/                   amr.csv + amr.xlsx reference uploads
 ```
 
@@ -255,7 +284,7 @@ These are hard rules for anyone modifying the code — read them before a PR:
 cd /home/aulus/Sources/penicillisolver-v2
 dotnet tool restore          # once: restores dotnet-ef 10.0.12
 dotnet build                 # whole solution
-dotnet test                  # unit + integration, expect 191 passed
+dotnet test                  # unit + integration, expect 189 passed
 ```
 
 > On a fresh clone the first `dotnet build` / `dotnet test` will restore

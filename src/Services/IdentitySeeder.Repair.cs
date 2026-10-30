@@ -9,7 +9,7 @@ namespace penicillisolver_v2.Services;
 /// Repairs data that an older version of the application wrote in a shape the
 /// current code no longer produces. Kept in its own partial so the one-time
 /// fixes stay apart from the steady-state seeding in <see cref="IdentitySeeder"/>
-/// and from the bootstrap guarantee in <see cref="IdentitySeeder"/>.
+/// and from the pathologist invariant check in <see cref="IdentitySeeder"/>.
 /// </summary>
 public static partial class IdentitySeeder
 {

@@ -253,12 +253,11 @@ public sealed class UserAdministrationServiceTests : UserAdministrationTestFixtu
     }
 
     [Fact]
-    public async Task Self_delete_is_exempt_from_the_last_active_pathologist_guard()
+    public async Task Self_delete_of_the_last_active_pathologist_is_refused()
     {
-        // The sole active pathologist deletes their own account. This is the
-        // escape hatch the design asked for, so the guard must not stop it:
-        // if it empties the pool, the bootstrap seeder repairs it on the next
-        // startup.
+        // The sole active pathologist tries to delete their own account. The
+        // lockout guard refuses it: activation is the only way an account gains
+        // a role, so an empty pool would be a permanent lockout.
         ApplicationUser solePathologist = await CreatePathologistAsync(
             "sole.pathologist@example.test",
             AccountStatus.Active);
@@ -270,11 +269,11 @@ public sealed class UserAdministrationServiceTests : UserAdministrationTestFixtu
             solePathologistId,
             isSelfDelete: true);
 
-        Assert.True(result.IsSuccess);
+        Assert.False(result.IsSuccess);
 
         ApplicationUser? remainingAccount = await UserManager.FindByIdAsync(solePathologistId);
 
-        Assert.Null(remainingAccount);
+        Assert.NotNull(remainingAccount);
     }
 
     [Fact]
