@@ -220,7 +220,7 @@ secrets are the intended store (they live outside the repo, in
 `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`):
 
 ```bash
-cd /home/aulus/Sources/penicillisolver-v2
+# Run from the repository root (the folder that contains src/).
 dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Email" "you@example.test" --project src/penicillisolver-v2.csproj
 dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Password" "<a password>" --project src/penicillisolver-v2.csproj
 ```
