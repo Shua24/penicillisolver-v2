@@ -360,4 +360,29 @@
   <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>The workbook '{0}' contains no worksheet.</value></data>
   <data name="Service_CellValueNotANumber" xml:space="preserve"><value>The value '{0}' at {1} is not a number.</value></data>
   <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>The value '{0}' at {1} is outside the permitted range of 0 to 100.</value></data>
+  <data name="ChangePassword_Title" xml:space="preserve"><value>Change password</value></data>
+  <data name="ChangePassword_Heading" xml:space="preserve"><value>Change password</value></data>
+  <data name="ChangePassword_SubHeading" xml:space="preserve"><value>Choose a new password</value></data>
+  <data name="ChangePassword_ForcedNotice" xml:space="preserve"><value>Your password was reset by a clinical pathologist. Choose a new one before you can use the application.</value></data>
+  <data name="ChangePassword_CurrentPasswordLabel" xml:space="preserve"><value>Current password</value></data>
+  <data name="ChangePassword_CurrentPasswordPlaceholder" xml:space="preserve"><value>Current password</value></data>
+  <data name="ChangePassword_NewPasswordLabel" xml:space="preserve"><value>New password</value></data>
+  <data name="ChangePassword_NewPasswordPlaceholder" xml:space="preserve"><value>New password</value></data>
+  <data name="ChangePassword_ConfirmPasswordLabel" xml:space="preserve"><value>Confirm new password</value></data>
+  <data name="ChangePassword_ConfirmPasswordPlaceholder" xml:space="preserve"><value>Confirm new password</value></data>
+  <data name="ChangePassword_Submit" xml:space="preserve"><value>Change password</value></data>
+  <data name="ChangePassword_Changed" xml:space="preserve"><value>Your password has been changed.</value></data>
+  <data name="Settings_ResetPassword" xml:space="preserve"><value>Reset password</value></data>
+  <data name="Settings_ResetPasswordPrompt" xml:space="preserve"><value>Set a temporary password for {0}. Hand it over in person; they must change it at their next sign-in.</value></data>
+  <data name="Settings_ResetPasswordPlaceholder" xml:space="preserve"><value>Temporary password</value></data>
+  <data name="Settings_ResetPasswordRequired" xml:space="preserve"><value>Enter a temporary password first.</value></data>
+  <data name="Settings_ConfirmReset" xml:space="preserve"><value>Set password</value></data>
+  <data name="Settings_Resetting" xml:space="preserve"><value>Setting…</value></data>
+  <data name="Settings_LastResetBy" xml:space="preserve"><value>Password reset by {0} on {1}</value></data>
+  <data name="Settings_LastResetByOperator" xml:space="preserve"><value>Password reset from the server on {0}</value></data>
+  <data name="Service_ResetDisabledAccount" xml:space="preserve"><value>That account is disabled, so a new password would not let it sign in. Activate the account first, then reset the password.</value></data>
+  <data name="Service_PasswordReset" xml:space="preserve"><value>{0}'s password has been reset. They must change it at their next sign-in.</value></data>
+  <data name="Lockout_Title" xml:space="preserve"><value>Account locked</value></data>
+  <data name="Lockout_Heading" xml:space="preserve"><value>Account locked</value></data>
+  <data name="Lockout_Body" xml:space="preserve"><value>This account is temporarily locked after too many failed sign-in attempts. Wait a few minutes and try again, or ask a clinical pathologist to reset the password.</value></data>
 </root>

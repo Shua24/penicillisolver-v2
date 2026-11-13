@@ -87,13 +87,15 @@
             return;
         }
 
-        // This does not count login failures towards account lockout.
-        // To enable password failures to trigger account lockout, pass lockoutOnFailure: true.
+        // Password failures count towards account lockout: five failed attempts
+        // lock the account for five minutes (Identity's defaults). The lockout
+        // page tells the user to wait, and a pathologist can reset the password
+        // if it was genuinely forgotten.
         SignInResult signInResult = await SignInManager.PasswordSignInAsync(
             Input.Email,
             Input.Password,
             Input.RememberMe,
-            lockoutOnFailure: false);
+            lockoutOnFailure: true);
 
         if (signInResult.Succeeded)
         {

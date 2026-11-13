@@ -1,9 +1,15 @@
 ﻿@inherits LayoutComponentBase
 
+@using penicillisolver_v2.Components.Account.Shared
+
 @* Mounted here so every page, interactive or not, pins the culture the language
    switcher stored. See CultureProvider.razor.cs for why the request pipeline
    alone is not enough for an interactive circuit. *@
 <CultureProvider />
+
+@* The interactive half of the must-change gate: a circuit opened before the
+   password was reset must not keep rendering the page it was opened on. *@
+<RedirectToChangePassword />
 
 <div class="page">
     <div class="sidebar">

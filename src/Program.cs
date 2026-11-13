@@ -14,6 +14,16 @@ using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Resources;
 using penicillisolver_v2.Services;
 
+// The break-glass recovery command runs before the web host is built: it is a
+// shell tool for the case where every clinical pathologist has lost access, so
+// it must not depend on the application starting normally.
+if (PasswordRecoveryCommand.IsRequested(args))
+{
+    int recoveryExitCode = await PasswordRecoveryCommand.RunAsync(args);
+
+    return recoveryExitCode;
+}
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -130,6 +140,10 @@ app.UseHttpsRedirection();
 // cookie (or the browser header) rather than the host default.
 app.UseRequestLocalization();
 
+// The must-change gate runs after authentication (it reads the claim) and
+// before anything that renders a page.
+app.UseMiddleware<MustChangePasswordMiddleware>();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
@@ -196,7 +210,9 @@ using (IServiceScope startupScope = app.Services.CreateScope())
     await IdentitySeeder.SeedAsync(app.Services, app.Configuration, startupLogger);
 }
 
-app.Run();
+await app.RunAsync();
+
+return 0;
 
 /// <summary>
 /// Exposed so the integration test host (<c>WebApplicationFactory&lt;Program&gt;</c>)

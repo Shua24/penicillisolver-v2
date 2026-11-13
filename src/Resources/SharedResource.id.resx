@@ -357,4 +357,29 @@
   <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>Buku kerja (workbook) '{0}' tidak memuat lembar apa pun.</value></data>
   <data name="Service_CellValueNotANumber" xml:space="preserve"><value>Nilai '{0}' pada {1} bukan angka.</value></data>
   <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>Nilai '{0}' pada {1} berada di luar rentang yang diizinkan, yaitu 0 hingga 100.</value></data>
+  <data name="ChangePassword_Title" xml:space="preserve"><value>Ubah kata sandi</value></data>
+  <data name="ChangePassword_Heading" xml:space="preserve"><value>Ubah kata sandi</value></data>
+  <data name="ChangePassword_SubHeading" xml:space="preserve"><value>Pilih kata sandi baru</value></data>
+  <data name="ChangePassword_ForcedNotice" xml:space="preserve"><value>Kata sandi Anda telah diatur ulang oleh dokter spesialis patologi klinik. Pilih kata sandi baru sebelum Anda dapat menggunakan aplikasi.</value></data>
+  <data name="ChangePassword_CurrentPasswordLabel" xml:space="preserve"><value>Kata sandi saat ini</value></data>
+  <data name="ChangePassword_CurrentPasswordPlaceholder" xml:space="preserve"><value>Kata sandi saat ini</value></data>
+  <data name="ChangePassword_NewPasswordLabel" xml:space="preserve"><value>Kata sandi baru</value></data>
+  <data name="ChangePassword_NewPasswordPlaceholder" xml:space="preserve"><value>Kata sandi baru</value></data>
+  <data name="ChangePassword_ConfirmPasswordLabel" xml:space="preserve"><value>Konfirmasi kata sandi baru</value></data>
+  <data name="ChangePassword_ConfirmPasswordPlaceholder" xml:space="preserve"><value>Konfirmasi kata sandi baru</value></data>
+  <data name="ChangePassword_Submit" xml:space="preserve"><value>Ubah kata sandi</value></data>
+  <data name="ChangePassword_Changed" xml:space="preserve"><value>Kata sandi Anda telah diubah.</value></data>
+  <data name="Settings_ResetPassword" xml:space="preserve"><value>Atur ulang kata sandi</value></data>
+  <data name="Settings_ResetPasswordPrompt" xml:space="preserve"><value>Tetapkan kata sandi sementara untuk {0}. Serahkan secara langsung; pengguna wajib menggantinya saat masuk berikutnya.</value></data>
+  <data name="Settings_ResetPasswordPlaceholder" xml:space="preserve"><value>Kata sandi sementara</value></data>
+  <data name="Settings_ResetPasswordRequired" xml:space="preserve"><value>Isi kata sandi sementara terlebih dahulu.</value></data>
+  <data name="Settings_ConfirmReset" xml:space="preserve"><value>Tetapkan kata sandi</value></data>
+  <data name="Settings_Resetting" xml:space="preserve"><value>Menetapkan…</value></data>
+  <data name="Settings_LastResetBy" xml:space="preserve"><value>Kata sandi diatur ulang oleh {0} pada {1}</value></data>
+  <data name="Settings_LastResetByOperator" xml:space="preserve"><value>Kata sandi diatur ulang dari server pada {0}</value></data>
+  <data name="Service_ResetDisabledAccount" xml:space="preserve"><value>Akun tersebut dinonaktifkan, sehingga kata sandi baru tidak akan membuatnya dapat masuk. Aktifkan akun terlebih dahulu, lalu atur ulang kata sandinya.</value></data>
+  <data name="Service_PasswordReset" xml:space="preserve"><value>Kata sandi {0} telah diatur ulang. Pengguna wajib menggantinya saat masuk berikutnya.</value></data>
+  <data name="Lockout_Title" xml:space="preserve"><value>Akun terkunci</value></data>
+  <data name="Lockout_Heading" xml:space="preserve"><value>Akun terkunci</value></data>
+  <data name="Lockout_Body" xml:space="preserve"><value>Akun ini terkunci sementara karena terlalu banyak percobaan masuk yang gagal. Tunggu beberapa menit lalu coba lagi, atau minta dokter spesialis patologi klinik mengatur ulang kata sandinya.</value></data>
 </root>

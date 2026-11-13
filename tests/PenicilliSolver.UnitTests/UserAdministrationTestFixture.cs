@@ -50,7 +50,14 @@ public abstract class UserAdministrationTestFixture : IAsyncLifetime
                 options.Password.RequiredLength = 1;
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+
+            // The password-reset operation generates a reset token, and the
+            // token provider needs a data-protection provider. The web host
+            // registers both implicitly; a bare ServiceCollection does not.
+            .AddDefaultTokenProviders();
+
+        services.AddDataProtection();
 
         // The service under test now resolves its user facing messages through
         // a localizer, so the container has to provide the localization
