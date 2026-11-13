@@ -1,0 +1,12 @@
+@page "/Account/Lockout"
+
+@* The page Login.razor redirects to when Identity reports a lockout. Without it
+   a locked-out user lands on a 404, which reads as a broken application rather
+   than a temporary block. *@
+
+<PageTitle>@Localizer["Lockout_Title"]</PageTitle>
+
+<header>
+    <h1 class="text-danger">@Localizer["Lockout_Heading"]</h1>
+    <p class="text-danger">@Localizer["Lockout_Body"]</p>
+</header>

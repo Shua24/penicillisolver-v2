@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
@@ -22,11 +24,21 @@ namespace PenicilliSolver.UnitTests;
 public sealed partial class SpreadsheetUploadServiceTests : IDisposable
 {
     private readonly string contentRootPath;
+    private readonly SqliteConnection connection;
     private readonly ApplicationDbContext database;
     private readonly SpreadsheetStorageService storageService;
     private readonly SpreadsheetUploadService uploadService;
 
-    /// <summary>Creates a private content root, database and services for one test.</summary>
+    /// <summary>
+    /// Creates a private content root, database and services for one test.
+    /// </summary>
+    /// <remarks>
+    /// SQLite in memory, not the EF in-memory provider: the upload service wraps
+    /// its metadata write in a transaction, and the in-memory provider refuses
+    /// transactions outright ("Transactions are not supported by the in-memory
+    /// store"). SQLite also enforces constraints, so the tests exercise something
+    /// closer to the deployed database.
+    /// </remarks>
     public SpreadsheetUploadServiceTests()
     {
         contentRootPath = Path.Combine(
@@ -35,12 +47,16 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
 
         Directory.CreateDirectory(contentRootPath);
 
+        connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+
         DbContextOptions<ApplicationDbContext> options =
             new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: $"upload-{Guid.NewGuid():N}")
+                .UseSqlite(connection)
                 .Options;
 
         database = new ApplicationDbContext(options);
+        database.Database.EnsureCreated();
 
         IWebHostEnvironment environment = new StubWebHostEnvironment(contentRootPath);
 
@@ -60,13 +76,15 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
             storageService,
             abbreviationService,
             configuration,
-            localizerFactory);
+            localizerFactory,
+            NullLogger<SpreadsheetUploadService>.Instance);
     }
 
     /// <inheritdoc />
     public void Dispose()
     {
         database.Dispose();
+        connection.Dispose();
 
         if (Directory.Exists(contentRootPath))
         {
@@ -89,9 +107,13 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
 
         Assert.True(result.IsSuccess, result.Message);
 
-        string canonicalPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        SpreadsheetUpload storedUpload = database.SpreadsheetUploads.Single();
 
-        Assert.True(File.Exists(canonicalPath));
+        string storedFilePath = Path.Combine(
+            storageService.StorageDirectoryPath,
+            storedUpload.StoredFilePath);
+
+        Assert.True(File.Exists(storedFilePath));
         Assert.Equal(1, database.SpreadsheetUploads.Count());
     }
 
@@ -127,9 +149,13 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
             Assert.True(firstResult.IsSuccess, firstResult.Message);
         }
 
-        string canonicalPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        SpreadsheetUpload storedUpload = database.SpreadsheetUploads.Single();
 
-        byte[] storedBeforeFailure = await File.ReadAllBytesAsync(canonicalPath);
+        string storedFilePath = Path.Combine(
+            storageService.StorageDirectoryPath,
+            storedUpload.StoredFilePath);
+
+        byte[] storedBeforeFailure = await File.ReadAllBytesAsync(storedFilePath);
 
         // Now attempt an upload whose content cannot be parsed.
         byte[] badBytes = System.Text.Encoding.UTF8.GetBytes(
@@ -148,9 +174,9 @@ public sealed partial class SpreadsheetUploadServiceTests : IDisposable
         Assert.False(failedResult.IsSuccess);
 
         // The previously stored good file must be untouched byte for byte.
-        Assert.True(File.Exists(canonicalPath));
+        Assert.True(File.Exists(storedFilePath));
 
-        byte[] storedAfterFailure = await File.ReadAllBytesAsync(canonicalPath);
+        byte[] storedAfterFailure = await File.ReadAllBytesAsync(storedFilePath);
 
         Assert.Equal(storedBeforeFailure, storedAfterFailure);
 

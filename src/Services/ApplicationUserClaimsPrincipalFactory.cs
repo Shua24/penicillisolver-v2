@@ -29,6 +29,11 @@ public sealed class ApplicationUserClaimsPrincipalFactory(
         identity.AddClaim(
             new Claim(ApplicationClaimTypes.AccountStatus, user.AccountStatus.ToString()));
 
+        if (user.MustChangePassword)
+        {
+            identity.AddClaim(new Claim(ApplicationClaimTypes.MustChangePassword, "true"));
+        }
+
         if (!string.IsNullOrWhiteSpace(user.RequestedRole))
         {
             identity.AddClaim(new Claim(ApplicationClaimTypes.RequestedRole, user.RequestedRole));

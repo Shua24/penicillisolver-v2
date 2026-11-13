@@ -1,0 +1,26 @@
+# Keep the build context small and, more importantly, keep local state out of
+# the image. src/App_Data holds the developer's uploaded spreadsheets and any
+# local database file; baking those into an image would ship one machine's data
+# to every deployment.
+
+.git
+.gitignore
+.hermes
+.vscode
+
+**/bin/
+**/obj/
+
+**/App_Data/
+*.db
+*.db-shm
+*.db-wal
+
+tests/
+excel-samples/
+
+Dockerfile
+docker-compose.yml
+.dockerignore
+.env
+.env.*

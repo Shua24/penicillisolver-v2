@@ -25,7 +25,13 @@ This documentation consists of these sections:
 - **Already registered?** Sign in with your email and password. If your
   account is still pending, you will see the activation notice, not the tools.
 - **Can't sign in?** Your account may be *disabled* by a pathologist. Only
-  they can re-enable it.
+  they can re-enable it. If you have failed five times in a row, the account is
+  locked for five minutes — wait and try again.
+- **Forgot your password?** There is no email in this application, so there is
+  no reset link. Ask a clinical pathologist to reset it for you; they will give
+  you a temporary password, and you will be asked to choose your own the next
+  time you sign in. If you are signed in already, change it yourself at
+  `/Account/ChangePassword`.
 
 ### What each role can do
 
@@ -131,7 +137,7 @@ the quoted figures are real outputs, not guesses.
 ### Prerequisites
 
 - **.NET 10 SDK** — the repo targets `net10.0` and builds with SDK
-  `10.0.402` (confirmed via `dotnet --version`).
+  `10.0.403` (confirmed via `dotnet --version`).
 - **PostgreSQL** (production only). Development uses SQLite and needs
   nothing installed.
 - The EF tooling is a local .NET tool pinned in `dotnet-tools.json`
@@ -144,12 +150,12 @@ the quoted figures are real outputs, not guesses.
 | Task | Command | Verified result |
 |---|---|---|
 | Build the whole solution | `dotnet build` | `Build succeeded.` · `0 Warning(s)` · `0 Error(s)` |
-| Run all tests | `dotnet test` | `147` unit + `42` integration = **189 passed, 0 failed** |
-| Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.402`) |
+| Run all tests | `dotnet test` | `155` unit + `42` integration = **197 passed, 0 failed** |
+| Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.403`) |
 
 The two test projects are xunit and both live under `tests/`:
 
-- `tests/PenicilliSolver.UnitTests` — 147 tests.
+- `tests/PenicilliSolver.UnitTests` — 155 tests.
 - `tests/PenicilliSolver.IntegrationTests` — 42 tests. They bind the real
   host via `WebApplicationFactory` and redirect the spreadsheet storage
   directory to a temp folder, so a test run writes nothing into
@@ -199,24 +205,39 @@ On every start the host runs EF Core migrations and then the identity seeder
   the host still refuses to start until seed credentials are set (next
   section).
 
-- **Seeding**: creates the three roles, one seed account per role (credentials
-  from `SeedAccounts:<Role>:Email` / `:Password` — empty by default, so each is
-  skipped with a logged error), and the team-permission row (update and delete
-  both denied by default). No account is ever generated: **you supply the
-  credentials.** A seeded account is created `Active` and given its role
-  immediately, so it can sign in without waiting for activation.
+- **Seeding and the startup refusal**: the seeder creates the three roles, one
+  seed account per role, and the team-permission row, then the host **throws**
+  unless at least one *active clinical pathologist* exists. Both are covered in
+  the next section, because they are the whole account-bootstrap story.
 
-- **The startup refusal**: after seeding, the host requires at least one
-  *active clinical pathologist* and **throws** when there is none. This is not
-  a warning you can ignore — activation by a clinical pathologist is the only
-  way an account ever gains a role, so an empty pool is a permanent lockout.
-  A fresh clone with no seed credentials therefore refuses to start until you
-  set them.
+### Bootstrapping the first accounts
 
-### Setting the seed credentials
+The app never generates an account on its own, and it will not run without one.
+On every start the host prepares the schema and then runs the identity seeder
+(`Program.cs` → `MigrateAsync` or `EnsureCreatedAsync` → `IdentitySeeder.SeedAsync`),
+which creates the three roles, creates one seed account per role from
+configuration, creates the team-permission row, and then **throws** unless at
+least one *active clinical pathologist* exists.
 
-Credentials come from configuration, never from source. In development, user
-secrets are the intended store (they live outside the repo, in
+The schema step differs by provider: PostgreSQL applies the migrations, SQLite
+builds from the model with `EnsureCreatedAsync`. The migration files are
+PostgreSQL's, because PostgreSQL is what gets deployed and migrations are
+provider specific. See `DEPLOYMENT.md` §5.
+
+That last check is the reason this section exists. Activation by a clinical
+pathologist is the only way an account ever gains a role, so an empty
+pathologist pool is a permanent lockout: nobody can approve a registration and
+nobody can grant a role. A fresh clone with no seed credentials therefore
+refuses to start, with this exact output:
+
+```
+fail: Startup[0]
+      Skipping the ClinicalPathologist seed account because the configuration key 'SeedAccounts:ClinicalPathologist:Email' is missing or blank. ...
+Unhandled exception. System.InvalidOperationException: No active clinical pathologist exists, so no account can be activated or managed. ...
+```
+
+Set the credentials before the first start. In development, user secrets are
+the intended store (they live outside the repo, in
 `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json`):
 
 ```bash
@@ -225,16 +246,118 @@ dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Email" "you@example.te
 dotnet user-secrets set "SeedAccounts:ClinicalPathologist:Password" "<a password>" --project src/penicillisolver-v2.csproj
 ```
 
-The password must satisfy Identity's default complexity rule — at least one
-lowercase letter, one uppercase letter, one digit, and **one non-alphanumeric
-character** — or seeding fails with `PasswordRequiresNonAlphanumeric` and the
-host then refuses to start. Setting the other two roles is optional; only the
-clinical pathologist is required.
+The other two roles are optional — only the clinical pathologist is required to
+start:
 
-In production, supply the same keys as environment variables
-(`SeedAccounts__ClinicalPathologist__Email` and
-`SeedAccounts__ClinicalPathologist__Password`). User secrets are read in the
-Development environment only.
+```bash
+dotnet user-secrets set "SeedAccounts:OtherDoctor:Email" "doctor@example.test" --project src/penicillisolver-v2.csproj
+dotnet user-secrets set "SeedAccounts:OtherDoctor:Password" "<a password>" --project src/penicillisolver-v2.csproj
+dotnet user-secrets set "SeedAccounts:InfectiousDiseaseControlTeam:Email" "team@example.test" --project src/penicillisolver-v2.csproj
+dotnet user-secrets set "SeedAccounts:InfectiousDiseaseControlTeam:Password" "<a password>" --project src/penicillisolver-v2.csproj
+```
+
+User secrets are read in the Development environment only; outside it the same
+keys come from environment variables (`SeedAccounts__ClinicalPathologist__Email`,
+`SeedAccounts__ClinicalPathologist__Password`, and so on).
+
+A seeded account is created `Active`, with its role already assigned and its
+email marked confirmed, so it can sign in immediately — no activation step.
+
+**Password rules.** Identity's defaults apply: at least 6 characters, one
+uppercase letter, one lowercase letter, one digit, and one non-alphanumeric
+character. A password that misses any of them is rejected at seeding time and
+the host then refuses to start. The real output for `weakpass`:
+
+```
+Could not create the ClinicalPathologist seed account for weak-test@example.test: PasswordRequiresNonAlphanumeric: Passwords must have at least one non alphanumeric character.; PasswordRequiresDigit: Passwords must have at least one digit ('0'-'9').; PasswordRequiresUpper: Passwords must have at least one uppercase ('A'-'Z').
+```
+
+**Restarts are safe.** Seeding is idempotent: an account whose email is already
+taken is left alone apart from having the role assigned if it is missing, and
+the log says so (`The ClinicalPathologist seed account ... already exists.`).
+The configured password is used only when the account is first created —
+changing it later does not change the existing account's password (verified:
+after changing the configured password and restarting, the old password still
+signed in). The app has no password-change or password-reset page, so choose
+the seed password carefully; changing it means deleting the account and letting
+the next start recreate it.
+
+**Deleting a seed account does not retire it.** If the configuration still
+names that email, the next start recreates the account (verified: deleting the
+doctor seed account from the settings page and restarting logged
+`Created the OtherDoctor seed account for doctor-test@example.test.`). Remove
+the configuration keys as well if the account is meant to stay gone.
+
+### Registering the rest of the lab
+
+There is no administrator "create user" command and no CLI. An account appears
+in exactly two ways: the seeder above, or the public registration form.
+
+1. The person opens `/Account/Register` and enters a display name, email, the
+   role they are asking for, and a password (same complexity rules as above).
+   The account is created **Pending**, and the page says so: "Akun Anda telah
+   dibuat dan menunggu aktivasi oleh dokter spesialis patologi klinik."
+2. They can sign in, but see only the awaiting-activation notice — no
+   spreadsheet, no tools. (Verified: a pending account signs in and lands on
+   the notice.)
+3. A clinical pathologist signs in, opens `/settings/user-roles`, picks the
+   account's role from the dropdown, and clicks **Activate**. Both actions are
+   needed: registration records the *requested* role but does not grant it, so
+   a fresh registration shows `—` in the role column until the pathologist
+   chooses one. (Verified: a registered account went from `Pending` / `—` to
+   `Active` / `OtherDoctor`.)
+
+Registration is open to anyone who can reach the app. That is deliberate: a
+pending account can do nothing, so the gate is the pathologist's activation,
+not the form. No email is sent anywhere — the app registers a no-op email
+sender and does not require a confirmed address — so no SMTP server is needed.
+The settings page also refuses to disable or demote the last active clinical
+pathologist, and refuses to put an account back into the pending state.
+
+### Recovering a password (no email involved)
+
+There is no email in this application, so there is no "forgot password" link.
+Recovery is deliberately manual, and there are exactly three paths:
+
+**1. A signed-in user changes their own password** at `/Account/ChangePassword`.
+The current password is required. The change rotates the security stamp, so
+every other session for that account is signed out immediately.
+
+**2. A clinical pathologist resets someone else's password** from
+`/settings/user-roles`. The **Reset password** button opens a field for a
+temporary password; the pathologist reads it off the screen and hands it over in
+person. The account is then forced to choose a new password at its next
+sign-in — it cannot reach any other page until it does. The reset is recorded on
+the account and shown in the settings table ("Password reset by … on …").
+
+Two refusals are built in:
+
+- a **disabled** account cannot be reset, because a new password would not let
+  it sign in. Activate it first, then reset.
+- a non-pathologist cannot reset anyone, including themselves through this
+  route — they use path 1.
+
+**3. An operator breaks a total lockout from the server.** Every in-application
+recovery action needs an active clinical pathologist, so when there is none the
+app cannot recover itself. The break-glass command is the way back:
+
+```bash
+# Run from the publish directory, with the same configuration the app uses.
+echo 'New-Password-1!' | dotnet penicillisolver-v2.dll \
+    --reset-pathologist-password --email pathologist@example.test
+```
+
+It reads the password from **stdin**, never from the command line, so it does
+not land in shell history or in `ps`. It only touches clinical pathologist
+accounts, and it forces a change at the next sign-in. The settings page shows
+that reset as "Password reset from the server", because there is no signed-in
+actor to name.
+
+**The seeded pathologist is forced to change its password at first sign-in.**
+A seed password is written down in deployment notes, and re-running the seeder
+does not change an existing account's password, so without this the bootstrap
+credential would be permanent. The flag is set only when the account is created,
+never on an existing one, so a restart does not re-arm it.
 
 ### Code layout, at a glance
 
@@ -243,13 +366,15 @@ src/
   Program.cs                 host wiring: Blazor, Identity, DbContext, seeder
   Components/                Razor UI: Pages (Upload, SpreadsheetViewer,
                              AntibioticMapping, UserRoleSettings, Home, …)
-                             plus Account (Login, Register, Logout)
+                             plus Account (Login, Register, Logout,
+                             ChangePassword) and the must-change gate
   Data/                      EF Core: ApplicationDbContext, migrations, provider selector
   Domain/                    entities, value objects, role constants, ranking services
   Services/                  application services: upload, storage, query,
-                             abbreviation mapping, user administration
+                             abbreviation mapping, user administration,
+                             password recovery (in-app and break-glass)
 tests/
-  PenicilliSolver.UnitTests/         147 xunit tests
+  PenicilliSolver.UnitTests/         155 xunit tests
   PenicilliSolver.IntegrationTests/  42 xunit tests (real host, temp storage dir)
 excel-samples/                   amr.csv + amr.xlsx reference uploads
 ```
@@ -265,9 +390,10 @@ These are hard rules for anyone modifying the code — read them before a PR:
 - **Standard libraries first**, third-party packages later.
 - **Use LINQ** for SQL queries and for spreadsheet operations.
 - **Every source file stays under 300 lines.** (Currently the longest is
-  `AntibioticMapping.razor.cs` at 295 lines — the cap holds. When you add to
+  `SpreadsheetUploadService.cs` at 277 lines — the cap holds. When you add to
   a file that is near the cap, split it into a `partial` file; the codebase
-  already does this, e.g. `IdentitySeeder.cs` / `IdentitySeeder.Bootstrap.cs`.)
+  already does this, e.g. `IdentitySeeder.cs` / `IdentitySeeder.Accounts.cs`
+  and `UserRoleSettings.razor` / `UserRoleSettings.razor.cs`.)
 - **C# naming conventions**: PascalCase for types and members, camelCase for
   locals and parameters, and **full words — no abbreviations** in
   identifiers.
@@ -281,10 +407,11 @@ These are hard rules for anyone modifying the code — read them before a PR:
 ### Running the build/tests the way this repo does
 
 ```bash
-cd /home/aulus/Sources/penicillisolver-v2
+# Assuming you're close to the directory
+cd ./penicillisolver-v2
 dotnet tool restore          # once: restores dotnet-ef 10.0.12
 dotnet build                 # whole solution
-dotnet test                  # unit + integration, expect 189 passed
+dotnet test                  # unit + integration, expect 197 passed
 ```
 
 > On a fresh clone the first `dotnet build` / `dotnet test` will restore
