@@ -343,11 +343,11 @@
 
   <!-- Service layer: spreadsheet upload and readers -->
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' is not a supported spreadsheet. Upload a .csv or .xlsx file.</value></data>
-  <data name="Service_FileCouldNotBeSaved" xml:space="preserve"><value>The file '{0}' could not be saved: {1}</value></data>
   <data name="Service_UploadSucceeded" xml:space="preserve"><value>Uploaded '{0}' ({1} organisms, {2} antibiotics). It is now the current spreadsheet.</value></data>
   <data name="Service_FileTooLarge" xml:space="preserve"><value>The file is {0} MB, which exceeds the maximum upload size of {1} MB.</value></data>
   <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>The file '{0}' could not be read: {1}</value></data>
   <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>The file '{0}' could not be opened: {1}</value></data>
+  <data name="Service_UploadStorageFailure" xml:space="preserve"><value>The spreadsheet could not be saved. The spreadsheet already in use has not been changed. Please try again. If this keeps happening, ask your system administrator to check that the server has free disk space and that the spreadsheet folder is writable.</value></data>
   <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>The file '{0}' does not contain an organism header row and data rows.</value></data>
   <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>The file '{0}' does not name any organism in its header row.</value></data>
   <data name="Service_XlsxWorksheetEmpty" xml:space="preserve"><value>The worksheet '{0}' in '{1}' is empty.</value></data>

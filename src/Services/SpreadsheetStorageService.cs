@@ -68,12 +68,6 @@ public sealed partial class SpreadsheetStorageService
         storageDirectoryPath = Path.GetFullPath(combinedPath);
     }
 
-    /// <summary>The canonical file name used for a csv spreadsheet.</summary>
-    public const string CanonicalCsvFileName = "current-spreadsheet.csv";
-
-    /// <summary>The canonical file name used for an xlsx workbook.</summary>
-    public const string CanonicalXlsxFileName = "current-spreadsheet.xlsx";
-
     /// <summary>The configuration key holding the storage directory.</summary>
     public const string StorageDirectoryConfigurationKey = "SpreadsheetStorage:Directory";
 
@@ -84,7 +78,8 @@ public sealed partial class SpreadsheetStorageService
     public string StorageDirectoryPath => storageDirectoryPath;
 
     /// <summary>
-    /// Writes an uploaded stream to a staging file beside the canonical name.
+    /// Writes an uploaded stream to a uniquely named staging file inside the
+    /// storage directory.
     /// </summary>
     /// <remarks>
     /// Nothing canonical is touched here. The caller promotes the staging file
@@ -92,6 +87,11 @@ public sealed partial class SpreadsheetStorageService
     /// discards it with <see cref="DeleteStagedFile"/> when it has not. The
     /// staging file is deliberately a sibling of the canonical file so the
     /// later move is a same-volume rename rather than a copy.
+    /// <para>
+    /// The staging name is unique per call. It must never be shared: two uploads
+    /// in flight at once would otherwise write to the same path, and the second
+    /// would overwrite the first's bytes before either had been read.
+    /// </para>
     /// </remarks>
     /// <param name="content">The uploaded file content.</param>
     /// <param name="fileFormat">The format the content will be stored under.</param>
@@ -104,17 +104,19 @@ public sealed partial class SpreadsheetStorageService
 
         Directory.CreateDirectory(storageDirectoryPath);
 
-        string canonicalFileName = ResolveCanonicalFileName(fileFormat);
-
-        string canonicalFilePath = Path.Combine(storageDirectoryPath, canonicalFileName);
-
-        string stagingFileName = canonicalFileName + StagingFileNameSuffix;
+        string stagingFileName = $"{Guid.NewGuid():N}{StagingFileNameSuffix}";
 
         string stagingFilePath = Path.Combine(storageDirectoryPath, stagingFileName);
 
         long writtenByteCount = await WriteStreamToFileAsync(content, stagingFilePath);
 
         string contentHash = await ComputeContentHashAsync(stagingFilePath);
+
+        // The canonical name is derived from the content, so identical content
+        // always resolves to the same file and different content never collides.
+        // A fixed name would make every upload share one path, and a second
+        // upload would destroy the file an earlier row still points at.
+        string canonicalFileName = $"{contentHash}{ResolveExtension(fileFormat)}";
 
         SpreadsheetStorageResult stagingResult = new(
             StoredFilePath: stagingFilePath,
@@ -127,20 +129,39 @@ public sealed partial class SpreadsheetStorageService
     }
 
     /// <summary>
-    /// Moves a staging file onto its canonical name and removes any file of the
-    /// other format.
+    /// Moves a staging file onto its content-addressed canonical name.
     /// </summary>
+    /// <remarks>
+    /// The move is idempotent. Because the name is derived from the content, an
+    /// existing target holds identical bytes, so the staged copy is redundant and
+    /// is discarded. The move deliberately does not overwrite: an existing target
+    /// is the same content by construction, and overwriting would destroy a file
+    /// that an earlier upload row still points at.
+    /// </remarks>
     /// <param name="stagedFilePath">The staging file returned by <see cref="SaveIncomingFileAsync"/>.</param>
-    /// <param name="fileFormat">The format the staged file holds.</param>
-    public void PromoteStagedFile(string stagedFilePath, SpreadsheetFileFormat fileFormat)
+    /// <param name="canonicalRelativeFileName">
+    /// The content-addressed name, relative to the storage directory, carried by
+    /// the same <see cref="SpreadsheetStorageResult"/>.
+    /// </param>
+    public void PromoteStagedFile(
+        string stagedFilePath,
+        string canonicalRelativeFileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(stagedFilePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(canonicalRelativeFileName);
 
-        string canonicalFilePath = ResolveCanonicalFilePath(fileFormat);
+        string canonicalFilePath = Path.Combine(
+            storageDirectoryPath,
+            canonicalRelativeFileName);
 
-        DeleteOppositeFormat(fileFormat);
+        if (File.Exists(canonicalFilePath))
+        {
+            DeleteStagedFile(stagedFilePath);
 
-        File.Move(stagedFilePath, canonicalFilePath, overwrite: true);
+            return;
+        }
+
+        File.Move(stagedFilePath, canonicalFilePath);
     }
 
     /// <summary>
@@ -181,9 +202,13 @@ public sealed partial class SpreadsheetStorageService
 
         SpreadsheetStorageResult stagingResult = await SaveIncomingFileAsync(content, fileFormat);
 
-        PromoteStagedFile(stagingResult.StoredFilePath, fileFormat);
+        PromoteStagedFile(
+            stagingResult.StoredFilePath,
+            stagingResult.RelativeStoredFilePath);
 
-        string canonicalFilePath = ResolveCanonicalFilePath(fileFormat);
+        string canonicalFilePath = Path.Combine(
+            storageDirectoryPath,
+            stagingResult.RelativeStoredFilePath);
 
         SpreadsheetStorageResult canonicalResult = stagingResult with
         {
@@ -216,54 +241,18 @@ public sealed partial class SpreadsheetStorageService
     }
 
     /// <summary>
-    /// Reports the absolute path the canonical file for a format would occupy,
-    /// whether or not it exists yet.
+    /// Resolves the file extension a stored spreadsheet of the supplied format
+    /// carries.
     /// </summary>
-    /// <param name="fileFormat">The format to resolve the canonical name for.</param>
-    /// <returns>The absolute canonical path for the format.</returns>
-    public string ResolveCanonicalFilePath(SpreadsheetFileFormat fileFormat)
-    {
-        string canonicalFileName = ResolveCanonicalFileName(fileFormat);
-
-        string canonicalFilePath = Path.Combine(storageDirectoryPath, canonicalFileName);
-
-        return canonicalFilePath;
-    }
-
-    /// <summary>
-    /// Resolves the canonical file name for a format.
-    /// </summary>
-    private static string ResolveCanonicalFileName(SpreadsheetFileFormat fileFormat)
+    /// <param name="fileFormat">The format to resolve the extension for.</param>
+    /// <returns>The extension, including its leading dot.</returns>
+    private static string ResolveExtension(SpreadsheetFileFormat fileFormat)
     {
         if (fileFormat == SpreadsheetFileFormat.Xlsx)
         {
-            return CanonicalXlsxFileName;
+            return ".xlsx";
         }
 
-        return CanonicalCsvFileName;
-    }
-
-    /// <summary>
-    /// Deletes the canonical file that carries the other format's extension.
-    /// </summary>
-    private void DeleteOppositeFormat(SpreadsheetFileFormat fileFormat)
-    {
-        SpreadsheetFileFormat oppositeFormat;
-
-        if (fileFormat == SpreadsheetFileFormat.Csv)
-        {
-            oppositeFormat = SpreadsheetFileFormat.Xlsx;
-        }
-        else
-        {
-            oppositeFormat = SpreadsheetFileFormat.Csv;
-        }
-
-        string oppositeFilePath = ResolveCanonicalFilePath(oppositeFormat);
-
-        if (File.Exists(oppositeFilePath))
-        {
-            File.Delete(oppositeFilePath);
-        }
+        return ".csv";
     }
 }

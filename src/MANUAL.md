@@ -73,14 +73,18 @@ docker compose exec app ls -la /app/App_Data
 
 ### A reference Compose file
 
-This is the shape the commands in this manual were verified against. Compare it
-with yours; the important parts are the three volumes and `HOME`.
+**This is the repository's own `docker-compose.yml`**, reproduced here so you can
+compare it with yours. The important parts are the `db` service, the healthcheck,
+the three volumes and `HOME`.
 
 ```yaml
 services:
   app:
     image: penicillisolver:latest
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -89,32 +93,52 @@ services:
       # Keeps the data-protection key ring on the mounted volume instead of
       # /root/.aspnet, which is not persisted.
       HOME: /app
-      Database__Provider: Sqlite
-      ConnectionStrings__DefaultConnection: "Data Source=/data/penicillisolver.db"
+      Database__Provider: Postgres
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver;Password=change-me"
       SeedAccounts__ClinicalPathologist__Email: pathologist@hospital.example
       SeedAccounts__ClinicalPathologist__Password: "change-me-before-first-start"
     volumes:
-      - data:/data
       - appdata:/app/App_Data
       - keys:/app/.aspnet/DataProtection-Keys
 
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: penicillisolver
+      POSTGRES_USER: penicillisolver
+      POSTGRES_PASSWORD: change-me
+    volumes:
+      # postgres:18 moved its data directory. Mounting
+      # /var/lib/postgresql/data is the pre-18 recipe and makes this container
+      # crash-loop with "there appears to be PostgreSQL data in ... (unused
+      # mount/volume)". Mount the parent instead.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      # The app migrates on startup and exits if PostgreSQL is not ready yet,
+      # so the app waits for this instead of crash-looping.
+      test: ["CMD-SHELL", "pg_isready -U penicillisolver -d penicillisolver"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
-  data:
+  pgdata:
   appdata:
   keys:
 ```
 
-**If your deployment uses PostgreSQL instead of SQLite**, change two lines:
+**The healthcheck is not optional.** Without it the app starts before PostgreSQL
+accepts connections and exits with a connection refusal; `restart: unless-stopped`
+then loops it, which looks like a broken application rather than a race.
 
-```yaml
-      Database__Provider: Postgres
-      ConnectionStrings__DefaultConnection: "Host=db;Database=penicillisolver;Username=penicillisolver;Password=..."
-```
+**Keep `POSTGRES_PASSWORD` and the password inside
+`ConnectionStrings__DefaultConnection` identical.** If they differ, the app fails
+to connect with an authentication error while `db` looks perfectly healthy.
 
-and add a `db` service with a volume of its own. **That variant has not been
-verified** — the application's database migrations are currently SQLite-shaped
-and it will refuse to start against PostgreSQL. Do not switch to PostgreSQL
-until that is fixed; see `DEPLOYMENT.md` §5.
+**Do not set the password only in the compose file and commit it.** Use a `.env`
+file next to the compose file (Compose reads it automatically) and keep it out of
+version control.
 
 ---
 
@@ -195,6 +219,54 @@ the account is locked.
 with the correct password.
 
 If they have genuinely forgotten the password, that is §4, not this.
+
+---
+
+## 5a. "The spreadsheet could not be saved"
+
+A pathologist tries to upload a spreadsheet and the page says it could not be
+saved. Nothing they did is wrong, and **nothing is lost**: the spreadsheet that
+was already in use is still in use. The laboratory can keep working on the old
+file while you fix this.
+
+What the pathologist sees is deliberately one short sentence that makes no guess
+about the cause. **The cause is in the log**, and it is one of three things.
+Read it first:
+
+```bash
+docker compose logs --since 30m app | grep -A5 "failed while storing it"
+```
+
+The logged message states the category in plain English:
+
+**"...there is no free disk space left..."** — the disk holding
+`/app/App_Data/spreadsheets` is full. Check from the host:
+
+```bash
+df -h /var/lib/docker      # or wherever your docker volumes live
+docker compose exec app df -h /app/App_Data/spreadsheets
+```
+
+Free space (old uploads accumulate — see §8), then ask them to upload again.
+
+**"...the account the application runs as does not have permission..."** — the
+folder exists but the container cannot write into it. Check:
+
+```bash
+docker compose exec app ls -ld /app/App_Data/spreadsheets
+docker compose exec app touch /app/App_Data/spreadsheets/.probe && echo writable
+docker compose exec app rm -f /app/App_Data/spreadsheets/.probe
+```
+
+If `touch` fails, fix ownership or mode on the volume and restart the service.
+
+**"...another upload of the same spreadsheet is saved at the same moment."** —
+two people uploaded at once. This should no longer be possible: each upload now
+writes its own uniquely named file. If you see this in the log, ask them to try
+again; if it repeats without two people uploading, report it as a bug.
+
+Keep that log output if you have to raise a bug. It names the exact file and the
+underlying operating-system error.
 
 ---
 
@@ -293,11 +365,47 @@ see anything", that is why — it is not a fault.
 Back up **three** things. Miss the third and everyone gets signed out on every
 restart.
 
-| What | Where | Why |
+| What | Where | How |
 |---|---|---|
-| The database | the `data` volume | all accounts and settings |
-| The spreadsheet | `/app/App_Data/spreadsheets` in the container | the uploaded antibiogram |
-| The encryption keys | `/app/.aspnet/DataProtection-Keys` | keeps sessions valid across restarts |
+| The database | the `db` service | `pg_dump` (below) |
+| The spreadsheet folder | `/app/App_Data/spreadsheets` in the app container | a tar, or the volume |
+| The encryption keys | `/app/.aspnet/DataProtection-Keys` | a tar, or the volume |
+
+**The database is not a file you can copy.** It lives inside PostgreSQL, so a
+`docker cp` or a copy of the volume folder while the server is running is not a
+backup and may not restore. Use `pg_dump`:
+
+```bash
+docker compose exec -T db pg_dump \
+    -U penicillisolver -Fc penicillisolver \
+    > /backup/penicillisolver-$(date +%F).dump
+```
+
+That produces one compressed file. Check it is not empty, every time:
+
+```bash
+docker compose cp /backup/penicillisolver-$(date +%F).dump db:/tmp/check.dump
+docker compose exec -T db pg_restore --list /tmp/check.dump | head
+```
+
+You should see a list of tables. **An empty file means the dump failed and you
+have no backup**, so run this check before you consider the job done.
+
+The copy is needed because `pg_restore` must seek in the file to read its index,
+so it cannot read the archive from a pipe, and `/backup` on your host is not the
+same directory as `/backup` inside the container. Verified: piping the archive in
+fails with `did not find magic string in file header`, while the copy-and-list
+above prints the table list.
+
+If `/backup` is not writable by the container, the dump fails with
+`Permission denied`. Write to a directory the container can write, or
+`chmod 777 /backup`.
+
+**The spreadsheet folder now holds one file per upload**, each named after a hash
+of its own contents (`<long-hex-string>.csv` or `.xlsx`). There is no longer a
+single `current-spreadsheet.csv`. Back up **the whole folder, not a named file**;
+an older upload's file is what its saved abbreviation mappings describe, so
+deleting one silently breaks that history.
 
 **The key ring is the one people miss.** By default the application writes it to
 `/root/.aspnet/DataProtection-Keys`, which is *not* on a volume and disappears
@@ -306,52 +414,61 @@ when the container is recreated — every restart then signs everyone out. Set
 `/app/.aspnet/DataProtection-Keys`; verified: with `HOME=/app` the keys land on
 the volume, without it they land in `/root` and are lost.
 
-A nightly copy is enough at this scale. Stop the service first so the database
-file is consistent:
+The files are ordinary files, so a tar covers them:
 
 ```bash
-docker compose stop app
-
 docker run --rm \
-  -v "$(basename "$PWD")_data:/data:ro" \
+  -v "$(basename "$PWD")_appdata:/app/App_Data:ro" \
+  -v "$(basename "$PWD")_keys:/keys:ro" \
   -v /backup:/backup \
-  alpine tar czf /backup/penicillisolver-$(date +%F).tar.gz -C /data .
-
-docker compose start app
+  alpine tar czf /backup/penicillisolver-files-$(date +%F).tar.gz -C / App_Data keys
 ```
 
-Adjust the volume name to yours (§2). **The container writes as root**, so
-`/backup` must be writable by root — a directory owned by your own user with
-mode `755` will fail with `Permission denied`. Either `chmod 777` the backup
-directory, or add `--user "$(id -u):$(id -g)"` to the `docker run` and make sure
-the volume's files are readable by that user.
+Adjust the volume names to yours (§2). A nightly run is enough at this scale.
 
-Verify the archive is not empty:
-
-```bash
-tar tzf /backup/penicillisolver-$(date +%F).tar.gz | head
-```
-
-You should see `penicillisolver.db` and its `-wal` / `-shm` companions listed.
-An empty listing means you backed up the wrong volume.
+**A database snapshot from your platform is an acceptable second option**, and
+it restores faster. Take it through the platform's volume snapshot mechanism, not
+by copying files, and restore-test it once before you trust it. `pg_dump` is the
+portable answer and the one to keep for off-site copies.
 
 ---
 
 ## 9. Restoring
 
+**First the database.** The application must not be running, or it will write to a
+database you are replacing.
+
 ```bash
 docker compose stop app
 
-docker run --rm \
-  -v "$(basename "$PWD")_data:/data" \
-  -v /backup:/backup \
-  alpine sh -c 'rm -rf /data/* && tar xzf /backup/penicillisolver-YYYY-MM-DD.tar.gz -C /data'
+docker compose exec -T db pg_restore \
+    -U penicillisolver -d penicillisolver --clean --if-exists \
+    < /backup/penicillisolver-YYYY-MM-DD.dump
+```
 
+`--clean --if-exists` drops the existing tables first, so the restore replaces the
+database instead of merging into it. Verified against a real restore: the
+spreadsheet row and the accounts came back.
+
+**Then the files**, if you also restored the tar:
+
+```bash
+docker run --rm \
+  -v "$(basename "$PWD")_appdata:/app/App_Data" \
+  -v "$(basename "$PWD")_keys:/keys" \
+  -v /backup:/backup \
+  alpine sh -c 'rm -rf /app/App_Data/* /keys/* && tar xzf /backup/penicillisolver-files-YYYY-MM-DD.tar.gz -C /'
+```
+
+Then start it and check §3:
+
+```bash
 docker compose start app
 ```
 
-Then check §3. The application applies any pending database changes on start, so
-there is no separate migration step.
+The application applies any pending database changes on start, so there is no
+separate migration step. Its start-up migration is also why **only one app
+container may run**: two would both try to migrate the restore at once.
 
 ---
 

@@ -178,7 +178,13 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
 
         // Delete the file on disk. A cache hit must still return the document,
         // proving the second call did not re-read the file.
-        string storedFilePath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        string storedFileName = database.SpreadsheetUploads
+            .Select(upload => upload.StoredFilePath)
+            .Single();
+
+        string storedFilePath = Path.Combine(
+            storageService.StorageDirectoryPath,
+            storedFileName);
 
         File.Delete(storedFilePath);
 

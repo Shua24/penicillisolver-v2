@@ -201,7 +201,21 @@ using (IServiceScope startupScope = app.Services.CreateScope())
     ApplicationDbContext database = startupScope.ServiceProvider
         .GetRequiredService<ApplicationDbContext>();
 
-    await database.Database.MigrateAsync();
+    // The migration files are generated for PostgreSQL, the deployed
+    // provider. SQLite — development and the integration test host — is
+    // built from the same model instead, because migrations are provider
+    // specific: applying PostgreSQL column types to SQLite throws
+    // PendingModelChangesWarning before the host can serve anything.
+    bool isSqliteProvider = database.Database.IsSqlite();
+
+    if (isSqliteProvider)
+    {
+        await database.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        await database.Database.MigrateAsync();
+    }
 
     ILogger startupLogger = startupScope.ServiceProvider
         .GetRequiredService<ILoggerFactory>()

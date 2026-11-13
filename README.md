@@ -213,11 +213,16 @@ On every start the host runs EF Core migrations and then the identity seeder
 ### Bootstrapping the first accounts
 
 The app never generates an account on its own, and it will not run without one.
-On every start the host migrates the database and then runs the identity seeder
-(`Program.cs` → `MigrateAsync` → `IdentitySeeder.SeedAsync`), which creates the
-three roles, creates one seed account per role from configuration, creates the
-team-permission row, and then **throws** unless at least one *active clinical
-pathologist* exists.
+On every start the host prepares the schema and then runs the identity seeder
+(`Program.cs` → `MigrateAsync` or `EnsureCreatedAsync` → `IdentitySeeder.SeedAsync`),
+which creates the three roles, creates one seed account per role from
+configuration, creates the team-permission row, and then **throws** unless at
+least one *active clinical pathologist* exists.
+
+The schema step differs by provider: PostgreSQL applies the migrations, SQLite
+builds from the model with `EnsureCreatedAsync`. The migration files are
+PostgreSQL's, because PostgreSQL is what gets deployed and migrations are
+provider specific. See `DEPLOYMENT.md` §5.
 
 That last check is the reason this section exists. Activation by a clinical
 pathologist is the only way an account ever gains a role, so an empty

@@ -340,11 +340,11 @@
 
   <!-- Lapisan layanan: unggahan tabel dan pembaca berkas -->
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .xlsx.</value></data>
-  <data name="Service_FileCouldNotBeSaved" xml:space="preserve"><value>Berkas '{0}' tidak dapat disimpan: {1}</value></data>
   <data name="Service_UploadSucceeded" xml:space="preserve"><value>Mengunggah '{0}' ({1} organisme, {2} antibiotik). Berkas ini kini menjadi tabel saat ini.</value></data>
   <data name="Service_FileTooLarge" xml:space="preserve"><value>Berkas berukuran {0} MB, melebihi ukuran unggahan maksimum {1} MB.</value></data>
   <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibaca: {1}</value></data>
   <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibuka: {1}</value></data>
+  <data name="Service_UploadStorageFailure" xml:space="preserve"><value>Tabel tidak dapat disimpan. Tabel yang sedang digunakan tidak berubah. Silakan coba lagi. Jika masalah ini terus terjadi, hubungi admin IT untuk memeriksa ruang penyimpanan server dan izin tulis pada folder tabel.</value></data>
   <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris tajuk organisme dan baris data.</value></data>
   <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>Berkas '{0}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
   <data name="Service_XlsxWorksheetEmpty" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' kosong.</value></data>

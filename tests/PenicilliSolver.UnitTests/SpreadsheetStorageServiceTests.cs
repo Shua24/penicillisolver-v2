@@ -10,10 +10,15 @@ namespace PenicilliSolver.UnitTests;
 
 /// <summary>
 /// Exercises <see cref="SpreadsheetStorageService"/> against a real temporary
-/// directory. The canonical file name and the replacement behaviour are the
-/// whole point of the service, so the tests check the actual file system rather
-/// than a mock.
+/// directory. The stored-file naming IS the service's contract, so these tests
+/// check the actual filesystem rather than a mock.
 /// </summary>
+/// <remarks>
+/// The contract these tests defend: a file's name is derived from its own
+/// content, so two uploads can never share a path. That is what lets an earlier
+/// upload row keep the file its mappings describe, and what makes a concurrent
+/// upload harmless instead of destructive.
+/// </remarks>
 public sealed class SpreadsheetStorageServiceTests : IDisposable
 {
     private readonly string contentRootPath;
@@ -41,7 +46,7 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SaveCurrentSpreadsheetAsync_UsesTheStableCsvCanonicalName()
+    public async Task SaveCurrentSpreadsheetAsync_NamesTheFileByItsContentHash()
     {
         byte[] csvBytes = BuildCsvBytes();
 
@@ -51,86 +56,123 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
             content,
             SpreadsheetFileFormat.Csv);
 
-        Assert.Equal(SpreadsheetStorageService.CanonicalCsvFileName, result.RelativeStoredFilePath);
-        Assert.True(File.Exists(result.StoredFilePath));
+        Assert.Equal($"{result.ContentHash}.csv", result.RelativeStoredFilePath);
         Assert.Equal(
-            Path.Combine(storageService.StorageDirectoryPath, "current-spreadsheet.csv"),
+            Path.Combine(storageService.StorageDirectoryPath, $"{result.ContentHash}.csv"),
             result.StoredFilePath);
+        Assert.True(File.Exists(result.StoredFilePath));
         Assert.Equal(csvBytes.Length, result.ByteCount);
     }
 
     [Fact]
-    public async Task SaveCurrentSpreadsheetAsync_UsesTheStableXlsxCanonicalName()
+    public async Task SaveCurrentSpreadsheetAsync_UsesTheFormatExtensionInTheName()
     {
-        byte[] xlsxBytes = [1, 2, 3, 4, 5];
-
-        using MemoryStream content = new(xlsxBytes);
+        using MemoryStream content = new([1, 2, 3, 4, 5]);
 
         SpreadsheetStorageResult result = await storageService.SaveCurrentSpreadsheetAsync(
             content,
             SpreadsheetFileFormat.Xlsx);
 
-        Assert.Equal(SpreadsheetStorageService.CanonicalXlsxFileName, result.RelativeStoredFilePath);
-        Assert.Equal(
-            Path.Combine(storageService.StorageDirectoryPath, "current-spreadsheet.xlsx"),
-            result.StoredFilePath);
+        Assert.Equal($"{result.ContentHash}.xlsx", result.RelativeStoredFilePath);
+        Assert.True(File.Exists(result.StoredFilePath));
     }
 
     [Fact]
-    public async Task SaveCurrentSpreadsheetAsync_ReplacesAPriorFileOfTheOtherExtension()
+    public async Task SaveIncomingFileAsync_GivesEveryUploadItsOwnStagingFile()
     {
-        // First store a csv, then store an xlsx. The csv must not survive the
-        // second save, or a reader looking for the csv would resurrect it.
-        using (MemoryStream csvContent = new(BuildCsvBytes()))
-        {
-            await storageService.SaveCurrentSpreadsheetAsync(
-                csvContent,
-                SpreadsheetFileFormat.Csv);
-        }
+        // The old design derived the staging name from a fixed canonical name, so
+        // two uploads in flight shared one staging path and the second destroyed
+        // the first's bytes. Unique names are the fix.
+        SpreadsheetStorageResult firstResult = await storageService.SaveIncomingFileAsync(
+            new MemoryStream(BuildCsvBytes("first")),
+            SpreadsheetFileFormat.Csv);
 
-        string csvPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        SpreadsheetStorageResult secondResult = await storageService.SaveIncomingFileAsync(
+            new MemoryStream(BuildCsvBytes("second")),
+            SpreadsheetFileFormat.Csv);
 
-        Assert.True(File.Exists(csvPath));
-
-        using (MemoryStream xlsxContent = new([9, 9, 9]))
-        {
-            await storageService.SaveCurrentSpreadsheetAsync(
-                xlsxContent,
-                SpreadsheetFileFormat.Xlsx);
-        }
-
-        string xlsxPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Xlsx);
-
-        Assert.True(File.Exists(xlsxPath));
-        Assert.False(File.Exists(csvPath));
+        Assert.NotEqual(firstResult.StoredFilePath, secondResult.StoredFilePath);
+        Assert.True(File.Exists(firstResult.StoredFilePath));
+        Assert.True(File.Exists(secondResult.StoredFilePath));
     }
 
     [Fact]
-    public async Task SaveCurrentSpreadsheetAsync_OverwritesAPriorFileOfTheSameExtension()
+    public async Task SaveCurrentSpreadsheetAsync_KeepsTheFileOfAnEarlierUpload()
     {
-        using (MemoryStream firstContent = new(BuildCsvBytes("first")))
+        byte[] firstBytes = BuildCsvBytes("first");
+
+        SpreadsheetStorageResult firstResult;
+
+        using (MemoryStream firstContent = new(firstBytes))
         {
-            await storageService.SaveCurrentSpreadsheetAsync(
+            firstResult = await storageService.SaveCurrentSpreadsheetAsync(
                 firstContent,
                 SpreadsheetFileFormat.Csv);
         }
 
-        byte[] secondBytes = BuildCsvBytes("second");
-
-        using (MemoryStream secondContent = new(secondBytes))
+        using (MemoryStream secondContent = new(BuildCsvBytes("second")))
         {
             await storageService.SaveCurrentSpreadsheetAsync(
                 secondContent,
                 SpreadsheetFileFormat.Csv);
         }
 
-        string csvPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        // The earlier upload's file must still hold its own bytes, because the
+        // row written for it still points at it.
+        Assert.True(File.Exists(firstResult.StoredFilePath));
 
-        byte[] storedBytes = await File.ReadAllBytesAsync(csvPath);
+        byte[] survivingBytes = await File.ReadAllBytesAsync(firstResult.StoredFilePath);
 
-        Assert.Equal(secondBytes, storedBytes);
+        Assert.Equal(firstBytes, survivingBytes);
+    }
 
-        // Only the one canonical file should remain; no staging leftovers.
+    [Fact]
+    public async Task SaveCurrentSpreadsheetAsync_KeepsTheFileOfTheOtherExtension()
+    {
+        // A csv and an xlsx are different uploads with different rows. Neither
+        // may delete the other.
+        SpreadsheetStorageResult csvResult;
+
+        using (MemoryStream csvContent = new(BuildCsvBytes()))
+        {
+            csvResult = await storageService.SaveCurrentSpreadsheetAsync(
+                csvContent,
+                SpreadsheetFileFormat.Csv);
+        }
+
+        SpreadsheetStorageResult xlsxResult;
+
+        using (MemoryStream xlsxContent = new([9, 9, 9]))
+        {
+            xlsxResult = await storageService.SaveCurrentSpreadsheetAsync(
+                xlsxContent,
+                SpreadsheetFileFormat.Xlsx);
+        }
+
+        Assert.NotEqual(csvResult.StoredFilePath, xlsxResult.StoredFilePath);
+        Assert.True(File.Exists(csvResult.StoredFilePath));
+        Assert.True(File.Exists(xlsxResult.StoredFilePath));
+    }
+
+    [Fact]
+    public async Task SaveCurrentSpreadsheetAsync_StoringTheSameContentTwiceLeavesOneFile()
+    {
+        byte[] csvBytes = BuildCsvBytes();
+
+        using (MemoryStream firstContent = new(csvBytes))
+        {
+            await storageService.SaveCurrentSpreadsheetAsync(
+                firstContent,
+                SpreadsheetFileFormat.Csv);
+        }
+
+        using (MemoryStream secondContent = new(csvBytes))
+        {
+            await storageService.SaveCurrentSpreadsheetAsync(
+                secondContent,
+                SpreadsheetFileFormat.Csv);
+        }
+
         int fileCount = Directory.GetFiles(storageService.StorageDirectoryPath).Length;
 
         Assert.Equal(1, fileCount);
@@ -150,7 +192,6 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
         Assert.Equal(64, result.ContentHash.Length);
         Assert.Equal(result.ContentHash.ToLowerInvariant(), result.ContentHash);
 
-        // The same bytes hashed a second time must give the same value.
         using MemoryStream repeatedContent = new(csvBytes);
 
         SpreadsheetStorageResult repeatedResult = await storageService.SaveCurrentSpreadsheetAsync(
@@ -161,20 +202,20 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task SaveIncomingFileAsync_ThenDeleteStagedFile_LeavesAnyCanonicalFileIntact()
+    public async Task DeleteStagedFile_LeavesAnEarlierUploadsFileIntact()
     {
-        // This models the parse-failure path: a staged file that did not parse
-        // is discarded, and a previously stored canonical file must be unharmed.
+        // Models the parse-failure path: the staged file is discarded, and a file
+        // an earlier upload row points at must be unharmed.
+        SpreadsheetStorageResult existingResult;
+
         using (MemoryStream existingContent = new(BuildCsvBytes("good")))
         {
-            await storageService.SaveCurrentSpreadsheetAsync(
+            existingResult = await storageService.SaveCurrentSpreadsheetAsync(
                 existingContent,
                 SpreadsheetFileFormat.Csv);
         }
 
-        string csvPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
-
-        byte[] goodBytes = await File.ReadAllBytesAsync(csvPath);
+        byte[] goodBytes = await File.ReadAllBytesAsync(existingResult.StoredFilePath);
 
         SpreadsheetStorageResult stagingResult = await storageService.SaveIncomingFileAsync(
             new MemoryStream(BuildCsvBytes("bad")),
@@ -182,31 +223,65 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
 
         storageService.DeleteStagedFile(stagingResult.StoredFilePath);
 
-        Assert.True(File.Exists(csvPath));
-
-        byte[] survivingBytes = await File.ReadAllBytesAsync(csvPath);
+        byte[] survivingBytes = await File.ReadAllBytesAsync(existingResult.StoredFilePath);
 
         Assert.Equal(goodBytes, survivingBytes);
         Assert.False(File.Exists(stagingResult.StoredFilePath));
     }
 
     [Fact]
-    public async Task PromoteStagedFile_MovesTheStagedFileOntoTheCanonicalName()
+    public async Task PromoteStagedFile_MovesTheStagedFileOntoItsContentAddressedName()
     {
         SpreadsheetStorageResult stagingResult = await storageService.SaveIncomingFileAsync(
             new MemoryStream(BuildCsvBytes()),
             SpreadsheetFileFormat.Csv);
 
-        Assert.NotEqual(
-            storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv),
-            stagingResult.StoredFilePath);
+        string canonicalPath = Path.Combine(
+            storageService.StorageDirectoryPath,
+            stagingResult.RelativeStoredFilePath);
 
-        storageService.PromoteStagedFile(stagingResult.StoredFilePath, SpreadsheetFileFormat.Csv);
+        Assert.NotEqual(canonicalPath, stagingResult.StoredFilePath);
 
-        string csvPath = storageService.ResolveCanonicalFilePath(SpreadsheetFileFormat.Csv);
+        storageService.PromoteStagedFile(
+            stagingResult.StoredFilePath,
+            stagingResult.RelativeStoredFilePath);
 
-        Assert.True(File.Exists(csvPath));
+        Assert.True(File.Exists(canonicalPath));
         Assert.False(File.Exists(stagingResult.StoredFilePath));
+    }
+
+    [Fact]
+    public async Task PromoteStagedFile_IsIdempotentForIdenticalContent()
+    {
+        byte[] csvBytes = BuildCsvBytes();
+
+        using (MemoryStream firstContent = new(csvBytes))
+        {
+            await storageService.SaveCurrentSpreadsheetAsync(
+                firstContent,
+                SpreadsheetFileFormat.Csv);
+        }
+
+        SpreadsheetStorageResult stagingResult = await storageService.SaveIncomingFileAsync(
+            new MemoryStream(csvBytes),
+            SpreadsheetFileFormat.Csv);
+
+        // Promoting content that is already stored must not throw and must not
+        // destroy or duplicate the file already in place.
+        storageService.PromoteStagedFile(
+            stagingResult.StoredFilePath,
+            stagingResult.RelativeStoredFilePath);
+
+        string canonicalPath = Path.Combine(
+            storageService.StorageDirectoryPath,
+            stagingResult.RelativeStoredFilePath);
+
+        Assert.True(File.Exists(canonicalPath));
+        Assert.False(File.Exists(stagingResult.StoredFilePath));
+
+        int fileCount = Directory.GetFiles(storageService.StorageDirectoryPath).Length;
+
+        Assert.Equal(1, fileCount);
     }
 
     private static SpreadsheetStorageService BuildStorageService(string contentRootPath)

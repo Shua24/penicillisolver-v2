@@ -1,0 +1,64 @@
+# PenicilliSolver — PostgreSQL deployment.
+#
+#   cp .env.example .env     # then edit the passwords
+#   docker compose up -d --build
+#   open http://localhost:8080
+#
+# The app migrates the database on startup, so it must not start before
+# PostgreSQL accepts connections. That is what the healthcheck and depends_on
+# below are for: without them the app exits on a connection refusal and
+# restart: unless-stopped loops it, which looks like a broken application.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: penicillisolver:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      # Keeps the data-protection key ring on the mounted volume instead of
+      # /root/.aspnet, which is not persisted. Without this every restart signs
+      # everyone out.
+      HOME: /app
+      Database__Provider: Postgres
+      # The password here and POSTGRES_PASSWORD below are the same variable, so
+      # they cannot drift apart. If they do, db reports healthy while the app
+      # fails to authenticate.
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver;Password=${POSTGRES_PASSWORD:-change-me}"
+      SeedAccounts__ClinicalPathologist__Email: ${SEED_PATHOLOGIST_EMAIL:-pathologist@hospital.example}
+      SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:-Change-Me-1!}
+    volumes:
+      - appdata:/app/App_Data
+      - keys:/app/.aspnet/DataProtection-Keys
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: penicillisolver
+      POSTGRES_USER: penicillisolver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      # postgres:18 moved its data directory. Mounting /var/lib/postgresql/data
+      # is the pre-18 recipe and makes this container crash-loop with
+      # "there appears to be PostgreSQL data in ... (unused mount/volume)".
+      # Mount the parent instead.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U penicillisolver -d penicillisolver"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  appdata:
+  keys:

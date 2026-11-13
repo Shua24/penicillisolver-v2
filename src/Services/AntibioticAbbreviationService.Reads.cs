@@ -55,6 +55,35 @@ public sealed partial class AntibioticAbbreviationService
     }
 
     /// <summary>
+    /// Returns every abbreviation-to-full-name mapping for one upload, keyed by
+    /// the abbreviation, in a single query.
+    /// </summary>
+    /// <remarks>
+    /// A page that renders many abbreviations must call this once instead of
+    /// calling <see cref="ResolveDisplayNameAsync"/> per name. The per-name
+    /// method costs one round trip each, and issuing several of them at once
+    /// against the scoped <c>DbContext</c> throws: EF Core refuses a second
+    /// operation on a context whose first operation has not finished.
+    /// </remarks>
+    /// <param name="spreadsheetUploadId">The upload whose mappings to read.</param>
+    /// <returns>The full names, keyed by abbreviation with an ordinal comparer.</returns>
+    public async Task<IReadOnlyDictionary<string, string>> GetDisplayNameLookupAsync(
+        int spreadsheetUploadId)
+    {
+        IReadOnlyList<AntibioticAbbreviation> mappings =
+            await GetMappingsAsync(spreadsheetUploadId);
+
+        Dictionary<string, string> lookup = new(StringComparer.Ordinal);
+
+        foreach (AntibioticAbbreviation mapping in mappings)
+        {
+            lookup[mapping.Abbreviation] = mapping.FullName;
+        }
+
+        return lookup;
+    }
+
+    /// <summary>
     /// Returns the antibiotic names present in the document that have no
     /// mapping for this upload, in source order and without duplicates.
     /// </summary>
