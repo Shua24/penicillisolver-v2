@@ -78,6 +78,18 @@ public sealed partial class UserAdministrationService
         // security stamp, which terminates every live session for the account.
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(targetUser);
 
+        // The new hash and the forced-change flag are written by ONE SaveChanges:
+        // ResetPasswordAsync persists the whole tracked entity, so setting the
+        // fields first makes them inseparable. A separate UpdateAsync afterwards
+        // could fail and leave a temporary password that never expires.
+        bool previousMustChangePassword = targetUser.MustChangePassword;
+        string? previousResetByUserId = targetUser.LastPasswordResetByUserId;
+        DateTimeOffset? previousResetAtUtc = targetUser.LastPasswordResetAtUtc;
+
+        targetUser.MustChangePassword = true;
+        targetUser.LastPasswordResetByUserId = actingUserId;
+        targetUser.LastPasswordResetAtUtc = DateTimeOffset.UtcNow;
+
         IdentityResult resetResult = await userManager.ResetPasswordAsync(
             targetUser,
             resetToken,
@@ -85,18 +97,13 @@ public sealed partial class UserAdministrationService
 
         if (!resetResult.Succeeded)
         {
+            // Nothing was saved, but the entity is tracked: put the fields back
+            // so a later save in this scope cannot persist them.
+            targetUser.MustChangePassword = previousMustChangePassword;
+            targetUser.LastPasswordResetByUserId = previousResetByUserId;
+            targetUser.LastPasswordResetAtUtc = previousResetAtUtc;
+
             return AdministrationResult.Failure(DescribeIdentityFailures(resetResult));
-        }
-
-        targetUser.MustChangePassword = true;
-        targetUser.LastPasswordResetByUserId = actingUserId;
-        targetUser.LastPasswordResetAtUtc = DateTimeOffset.UtcNow;
-
-        IdentityResult updateResult = await userManager.UpdateAsync(targetUser);
-
-        if (!updateResult.Succeeded)
-        {
-            return AdministrationResult.Failure(DescribeIdentityFailures(updateResult));
         }
 
         string successMessage = Localizer[

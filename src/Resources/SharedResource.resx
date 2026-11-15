@@ -372,6 +372,9 @@
   <data name="ChangePassword_ConfirmPasswordPlaceholder" xml:space="preserve"><value>Confirm new password</value></data>
   <data name="ChangePassword_Submit" xml:space="preserve"><value>Change password</value></data>
   <data name="ChangePassword_Changed" xml:space="preserve"><value>Your password has been changed.</value></data>
+  <data name="ChangePassword_MustDiffer" xml:space="preserve"><value>The new password must be different from the current one.</value></data>
+  <data name="ChangePassword_CurrentPasswordIncorrect" xml:space="preserve"><value>The current password is not correct.</value></data>
+  <data name="ChangePassword_LockedOut" xml:space="preserve"><value>Too many failed attempts. The account is locked for 5 minutes.</value></data>
   <data name="Settings_ResetPassword" xml:space="preserve"><value>Reset password</value></data>
   <data name="Settings_ResetPasswordPrompt" xml:space="preserve"><value>Set a temporary password for {0}. Hand it over in person; they must change it at their next sign-in.</value></data>
   <data name="Settings_ResetPasswordPlaceholder" xml:space="preserve"><value>Temporary password</value></data>

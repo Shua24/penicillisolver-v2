@@ -29,10 +29,14 @@ services:
       # everyone out.
       HOME: /app
       Database__Provider: Postgres
-      # The password here and POSTGRES_PASSWORD below are the same variable, so
-      # they cannot drift apart. If they do, db reports healthy while the app
-      # fails to authenticate.
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver;Password=${POSTGRES_PASSWORD:-change-me}"
+      # The password is NOT in the connection string. Npgsql reads PGPASSWORD
+      # (the libpq-compatible variable) when the connection string omits it, so
+      # the secret stays out of a string that EF Core can print in an error log.
+      # It is the same variable as POSTGRES_PASSWORD below, so the two cannot
+      # drift apart; if they do, db reports healthy while the app fails to
+      # authenticate.
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver"
+      PGPASSWORD: ${POSTGRES_PASSWORD:-change-me}
       SeedAccounts__ClinicalPathologist__Email: ${SEED_PATHOLOGIST_EMAIL:-pathologist@hospital.example}
       SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:-Change-Me-1!}
     volumes:

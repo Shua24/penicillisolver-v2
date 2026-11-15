@@ -78,7 +78,7 @@ public partial class SpreadsheetViewer
             return;
         }
 
-        organismNames = await QueryService.GetOrganismNamesAsync();
+        organismNames = await QueryService.GetOrganismNamesAsync(currentUpload);
 
         // One query for every name the table can show. Resolving per row would
         // issue one query per antibiotic against the shared scoped context, and
@@ -95,7 +95,8 @@ public partial class SpreadsheetViewer
         {
             topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
-                effectiveTopCount);
+                effectiveTopCount,
+                currentUpload);
         }
 
         isLoading = false;
@@ -142,7 +143,7 @@ public partial class SpreadsheetViewer
         topSusceptible = [];
 
         OrganismLookupResult lookupResult =
-            await QueryService.ResolveOrganismAsync(candidateName);
+            await QueryService.ResolveOrganismAsync(candidateName, currentUpload);
 
         if (lookupResult.Outcome == OrganismLookupOutcome.Resolved)
         {
@@ -152,7 +153,8 @@ public partial class SpreadsheetViewer
             isLoading = true;
             topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
-                effectiveTopCount);
+                effectiveTopCount,
+                currentUpload);
             isLoading = false;
             return;
         }

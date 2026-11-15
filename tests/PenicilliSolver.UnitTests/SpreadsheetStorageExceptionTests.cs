@@ -14,7 +14,7 @@ public sealed class SpreadsheetStorageExceptionTests
 {
     /// <summary>A promotion failed because the staged file had already gone.</summary>
     [Fact]
-    public void ForPromotion_WithMissingStagedFile_BlamesAConcurrentUpload()
+    public void ForPromotion_WithMissingStagedFile_ReportsThatTheFileWasRemoved()
     {
         FileNotFoundException cause = new(
             "Could not find file '/app/App_Data/spreadsheets/abc.incoming'.",
@@ -25,9 +25,13 @@ public sealed class SpreadsheetStorageExceptionTests
             "/app/App_Data/spreadsheets");
 
         Assert.Equal(SpreadsheetStorageFailureKind.StagedFileDisappeared, exception.Kind);
-        Assert.Contains("another upload", exception.Message);
+        Assert.Contains("removed from the storage folder", exception.Message);
         Assert.Contains("/app/App_Data/spreadsheets", exception.Message);
         Assert.Same(cause, exception.InnerException);
+
+        // Every upload stages under its own name, so the message must not blame
+        // a concurrent upload of the same file: that cause no longer exists.
+        Assert.DoesNotContain("another upload", exception.Message);
 
         // It must say the old spreadsheet is safe, because that is the question
         // a technician asks first.

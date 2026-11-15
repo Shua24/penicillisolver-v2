@@ -224,6 +224,11 @@ builds from the model with `EnsureCreatedAsync`. The migration files are
 PostgreSQL's, because PostgreSQL is what gets deployed and migrations are
 provider specific. See `DEPLOYMENT.md` §5.
 
+**A SQLite database does not pick up schema changes.** `EnsureCreatedAsync` only
+creates a database that does not exist; it never alters an existing one. After a
+change to the model, delete `src/penicillisolver.db` (or restore it from a
+backup) before running, or the app will fail against the old schema.
+
 That last check is the reason this section exists. Activation by a clinical
 pathologist is the only way an account ever gains a role, so an empty
 pathologist pool is a permanent lockout: nobody can approve a registration and
@@ -278,9 +283,10 @@ the log says so (`The ClinicalPathologist seed account ... already exists.`).
 The configured password is used only when the account is first created —
 changing it later does not change the existing account's password (verified:
 after changing the configured password and restarting, the old password still
-signed in). The app has no password-change or password-reset page, so choose
-the seed password carefully; changing it means deleting the account and letting
-the next start recreate it.
+signed in). The app has a password-change page (`/Account/ChangePassword`) and a
+pathologist-driven reset in **User and team settings**, so the seed password is
+changed there — not by deleting the account. Deleting a seed account to change
+its password loses that account's history.
 
 **Deleting a seed account does not retire it.** If the configuration still
 names that email, the next start recreates the account (verified: deleting the
@@ -343,15 +349,18 @@ app cannot recover itself. The break-glass command is the way back:
 
 ```bash
 # Run from the publish directory, with the same configuration the app uses.
-echo 'New-Password-1!' | dotnet penicillisolver-v2.dll \
+# The password is read without echoing it, so it stays out of shell history.
+read -rsp 'New password: ' NEW_PASSWORD; echo
+printf '%s\n' "$NEW_PASSWORD" | dotnet penicillisolver-v2.dll \
     --reset-pathologist-password --email pathologist@example.test
+unset NEW_PASSWORD
 ```
 
 It reads the password from **stdin**, never from the command line, so it does
-not land in shell history or in `ps`. It only touches clinical pathologist
-accounts, and it forces a change at the next sign-in. The settings page shows
-that reset as "Password reset from the server", because there is no signed-in
-actor to name.
+not appear in `ps`; the `read -s` form above keeps it out of shell history too.
+It only touches clinical pathologist accounts, and it forces a change at the
+next sign-in. The settings page shows that reset as "Password reset from the
+server", because there is no signed-in actor to name.
 
 **The seeded pathologist is forced to change its password at first sign-in.**
 A seed password is written down in deployment notes, and re-running the seeder

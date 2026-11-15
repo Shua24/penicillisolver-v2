@@ -94,9 +94,13 @@ services:
       # /root/.aspnet, which is not persisted.
       HOME: /app
       Database__Provider: Postgres
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver;Password=change-me"
-      SeedAccounts__ClinicalPathologist__Email: pathologist@hospital.example
-      SeedAccounts__ClinicalPathologist__Password: "change-me-before-first-start"
+      # The password is not in the connection string: Npgsql reads PGPASSWORD
+      # when the string omits it, so the secret stays out of a string EF Core
+      # can print in an error log. Same variable as POSTGRES_PASSWORD below.
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver"
+      PGPASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      SeedAccounts__ClinicalPathologist__Email: ${SEED_PATHOLOGIST_EMAIL:-pathologist@hospital.example}
+      SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:-Change-Me-1!}
     volumes:
       - appdata:/app/App_Data
       - keys:/app/.aspnet/DataProtection-Keys
@@ -132,9 +136,10 @@ volumes:
 accepts connections and exits with a connection refusal; `restart: unless-stopped`
 then loops it, which looks like a broken application rather than a race.
 
-**Keep `POSTGRES_PASSWORD` and the password inside
-`ConnectionStrings__DefaultConnection` identical.** If they differ, the app fails
-to connect with an authentication error while `db` looks perfectly healthy.
+**`PGPASSWORD` and `POSTGRES_PASSWORD` are the same variable.** The app reads
+its database password from `PGPASSWORD` (Npgsql supports it), so the connection
+string carries no secret. If the two values differ, the app fails to connect
+with an authentication error while `db` looks perfectly healthy.
 
 **Do not set the password only in the compose file and commit it.** Use a `.env`
 file next to the compose file (Compose reads it automatically) and keep it out of
@@ -265,10 +270,11 @@ docker compose exec app rm -f /app/App_Data/spreadsheets/.probe
 
 If `touch` fails, fix ownership or mode on the volume and restart the service.
 
-**"...another upload of the same spreadsheet is saved at the same moment."** —
-two people uploaded at once. This should no longer be possible: each upload now
-writes its own uniquely named file. If you see this in the log, ask them to try
-again; if it repeats without two people uploading, report it as a bug.
+**"...the uploaded file was removed from the storage folder before it could be
+moved into place..."** — something deleted the staged file while the upload was
+running. Most often the stored spreadsheets were deleted at that moment, or an
+external cleanup removed files from the folder. Ask them to try again; if it
+repeats, check what else touches that folder and report it as a bug.
 
 Keep that log output if you have to raise a bug. It names the exact file and the
 underlying operating-system error.
@@ -284,7 +290,13 @@ itself. You fix it from the server with a built-in command.
 ### 6a. First, check whether it is really a lockout
 
 If the account is merely locked for 5 minutes (§5), wait. Only use this section
-when the password is genuinely lost, or the account was disabled.
+when the password is genuinely lost.
+
+**A disabled account is a different problem.** The recovery command resets a
+password; it does not activate an account. A disabled pathologist stays disabled
+and still cannot sign in. Activation is done in the application, by an active
+clinical pathologist (§7). If there is no active pathologist left to activate
+it, the design has no way back: escalate (§6d), and do not edit the database.
 
 ### 6b. Run the recovery command
 
@@ -292,6 +304,20 @@ when the password is genuinely lost, or the account was disabled.
 docker compose exec -T app dotnet penicillisolver-v2.dll \
     --reset-pathologist-password --email pathologist@hospital.example
 ```
+
+If the application container is not running — for example it is crash-looping
+because it found no active pathologist — `exec` has nothing to attach to. Run
+the same command as a one-off container instead:
+
+```bash
+docker compose run --rm --entrypoint dotnet app penicillisolver-v2.dll \
+    --reset-pathologist-password --email pathologist@hospital.example
+```
+
+`run` starts a separate container from the same image, with the same
+configuration and the same database, so the reset lands in the real database.
+`--entrypoint dotnet` is required: the image's entrypoint already names the
+application, and without the override the arguments would be appended to it.
 
 It will ask for a new password. Type it and press Enter:
 
@@ -303,14 +329,22 @@ Password reset for pathologist@hospital.example. The account must change it at n
 Notes, in order of how likely you are to need them:
 
 - **Two ways to give it the password, and they are not interchangeable.**
-  - **Piped** (recommended, works everywhere, including scripts):
-    `echo 'New-Password-1!' | docker compose exec -T app dotnet penicillisolver-v2.dll --reset-pathologist-password --email ...`
-  - **Typed at the prompt**: drop the `-T` and run it from a real terminal.
-    With `-T` there is no terminal attached, so the prompt reads nothing and the
-    command exits with `No password was supplied.` That is not a fault; it is
-    the wrong form for an interactive shell.
-- **The password is never typed on the command line.** It is read from the
-  prompt or from a pipe, so it does not end up in shell history or in `ps`.
+  - **Typed at the prompt** (recommended): drop the `-T` and run it from a real
+    terminal. With `-T` there is no terminal attached, so the prompt reads
+    nothing and the command exits with `No password was supplied.` That is not a
+    fault; it is the wrong form for an interactive shell.
+  - **Piped** (for scripts): read the password without echoing it, then pipe it
+    in. Do not use an `echo` with the password in it — that lands in shell
+    history.
+
+    ```bash
+    read -rsp 'New password: ' NEW_PASSWORD; echo
+    printf '%s\n' "$NEW_PASSWORD" | docker compose exec -T app dotnet penicillisolver-v2.dll --reset-pathologist-password --email ...
+    unset NEW_PASSWORD
+    ```
+- **The password is never an argument.** It is read from the prompt or from a
+  pipe, so it does not appear in `ps`; the prompt and the `read -s` form above
+  keep it out of shell history too.
 - **It works on any clinical pathologist account, not only the seed account.**
   The `--email` value is the account's own sign-in address. Once the seed
   account has been retired, this is the command that recovers whoever is left.
@@ -414,8 +448,12 @@ fails with `did not find magic string in file header`, while the copy-and-list
 above prints the table list.
 
 If `/backup` is not writable by the container, the dump fails with
-`Permission denied`. Write to a directory the container can write, or
-`chmod 777 /backup`.
+`Permission denied`. The containers run as root, so give the directory to root
+and keep it private:
+
+```bash
+sudo install -d -o root -g root -m 700 /backup
+```
 
 **The spreadsheet folder now holds one file per upload**, each named after a hash
 of its own contents (`<long-hex-string>.csv` or `.xlsx`). There is no longer a
@@ -437,7 +475,7 @@ docker run --rm \
   -v "$(basename "$PWD")_appdata:/app/App_Data:ro" \
   -v "$(basename "$PWD")_keys:/keys:ro" \
   -v /backup:/backup \
-  alpine tar czf /backup/penicillisolver-files-$(date +%F).tar.gz -C / App_Data keys
+  alpine tar czf /backup/penicillisolver-files-$(date +%F).tar.gz -C / app/App_Data keys
 ```
 
 Adjust the volume names to yours (§2). A nightly run is enough at this scale.

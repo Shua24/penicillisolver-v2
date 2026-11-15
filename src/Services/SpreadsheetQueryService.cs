@@ -70,26 +70,45 @@ public sealed class SpreadsheetQueryService(
     {
         SpreadsheetUpload? currentUpload = await GetCurrentUploadAsync();
 
-        if (currentUpload is null)
+        SpreadsheetDocument? document = await GetDocumentAsync(currentUpload);
+
+        return document;
+    }
+
+    /// <summary>
+    /// Returns the parsed document for one specific upload, or null when that
+    /// upload's file can no longer be read.
+    /// </summary>
+    /// <remarks>
+    /// A page that has already read the current upload must pass it here rather
+    /// than letting each call re-read the newest row: a replacement landing
+    /// between two calls would otherwise mix one upload's organism names with
+    /// another upload's ranking.
+    /// </remarks>
+    /// <param name="upload">The upload to read, or null when nothing is stored.</param>
+    /// <returns>The parsed document, or null.</returns>
+    public async Task<SpreadsheetDocument?> GetDocumentAsync(SpreadsheetUpload? upload)
+    {
+        if (upload is null)
         {
             return null;
         }
 
-        SpreadsheetDocument? cachedDocument = cache.Get(currentUpload.ContentHash);
+        SpreadsheetDocument? cachedDocument = cache.Get(upload.ContentHash);
 
         if (cachedDocument is not null)
         {
             return cachedDocument;
         }
 
-        string absoluteFilePath = ResolveStoredFilePath(currentUpload);
+        string absoluteFilePath = ResolveStoredFilePath(upload);
 
         if (!File.Exists(absoluteFilePath))
         {
             return null;
         }
 
-        SpreadsheetImportResult importResult = ReadStoredFile(absoluteFilePath, currentUpload.FileFormat);
+        SpreadsheetImportResult importResult = ReadStoredFile(absoluteFilePath, upload.FileFormat);
 
         if (!importResult.IsSuccess || importResult.Document is null)
         {
@@ -98,7 +117,7 @@ public sealed class SpreadsheetQueryService(
 
         SpreadsheetDocument document = importResult.Document;
 
-        cache.Set(currentUpload.ContentHash, document);
+        cache.Set(upload.ContentHash, document);
 
         return document;
     }
@@ -109,12 +128,14 @@ public sealed class SpreadsheetQueryService(
     /// </summary>
     /// <param name="organismName">The organism to rank against.</param>
     /// <param name="requestedCount">How many antibiotics to return.</param>
+    /// <param name="upload">The upload to read, or null for the newest upload.</param>
     /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
     public async Task<IReadOnlyList<AntibioticSusceptibility>> GetTopSusceptibleWithinOrganismAsync(
         string organismName,
-        int requestedCount)
+        int requestedCount,
+        SpreadsheetUpload? upload = null)
     {
-        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+        SpreadsheetDocument? document = await ResolveDocumentAsync(upload);
 
         if (document is null)
         {
@@ -135,11 +156,13 @@ public sealed class SpreadsheetQueryService(
     /// current spreadsheet.
     /// </summary>
     /// <param name="organismName">The organism to rank against.</param>
+    /// <param name="upload">The upload to read, or null for the newest upload.</param>
     /// <returns>The ranking, or an empty list when nothing has been uploaded or the organism is absent.</returns>
     public async Task<IReadOnlyList<AntibioticSusceptibility>> GetFullRankingWithinOrganismAsync(
-        string organismName)
+        string organismName,
+        SpreadsheetUpload? upload = null)
     {
-        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+        SpreadsheetDocument? document = await ResolveDocumentAsync(upload);
 
         if (document is null)
         {
@@ -156,13 +179,16 @@ public sealed class SpreadsheetQueryService(
     /// Resolves a typed organism name against the current spreadsheet.
     /// </summary>
     /// <param name="typedName">What the user typed or selected.</param>
+    /// <param name="upload">The upload to read, or null for the newest upload.</param>
     /// <returns>
     /// The resolution outcome. A not-found result is returned when nothing has
     /// been uploaded, so a page can always render a single not-found path.
     /// </returns>
-    public async Task<OrganismLookupResult> ResolveOrganismAsync(string? typedName)
+    public async Task<OrganismLookupResult> ResolveOrganismAsync(
+        string? typedName,
+        SpreadsheetUpload? upload = null)
     {
-        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+        SpreadsheetDocument? document = await ResolveDocumentAsync(upload);
 
         if (document is null)
         {
@@ -179,10 +205,11 @@ public sealed class SpreadsheetQueryService(
     /// <summary>
     /// Returns every organism in the current spreadsheet, for a picker.
     /// </summary>
+    /// <param name="upload">The upload to read, or null for the newest upload.</param>
     /// <returns>The organism names, or an empty list when nothing has been uploaded.</returns>
-    public async Task<IReadOnlyList<string>> GetOrganismNamesAsync()
+    public async Task<IReadOnlyList<string>> GetOrganismNamesAsync(SpreadsheetUpload? upload = null)
     {
-        SpreadsheetDocument? document = await GetCurrentDocumentAsync();
+        SpreadsheetDocument? document = await ResolveDocumentAsync(upload);
 
         if (document is null)
         {
@@ -190,6 +217,22 @@ public sealed class SpreadsheetQueryService(
         }
 
         return document.OrganismNames;
+    }
+
+    /// <summary>
+    /// Resolves the document for a specific upload, or the newest upload when
+    /// none was supplied.
+    /// </summary>
+    /// <param name="upload">The upload to read, or null for the newest upload.</param>
+    /// <returns>The parsed document, or null.</returns>
+    private async Task<SpreadsheetDocument?> ResolveDocumentAsync(SpreadsheetUpload? upload)
+    {
+        if (upload is not null)
+        {
+            return await GetDocumentAsync(upload);
+        }
+
+        return await GetCurrentDocumentAsync();
     }
 
     /// <summary>

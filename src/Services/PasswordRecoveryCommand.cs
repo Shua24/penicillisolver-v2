@@ -128,7 +128,14 @@ public static class PasswordRecoveryCommand
         ApplicationDbContext database =
             scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        await database.Database.MigrateAsync();
+        // SQLite is the development provider and has no migration history: the
+        // host builds it with EnsureCreatedAsync. Applying the PostgreSQL
+        // migration set to it aborts with PendingModelChangesWarning, so the
+        // schema step is skipped there and the existing database is used as is.
+        if (!database.Database.IsSqlite())
+        {
+            await database.Database.MigrateAsync();
+        }
 
         ApplicationUser? user = await userManager.FindByEmailAsync(email);
 
@@ -152,6 +159,20 @@ public static class PasswordRecoveryCommand
 
         string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
 
+        // The new hash and the forced-change flag are written by ONE SaveChanges:
+        // ResetPasswordAsync persists the whole tracked entity, so setting the
+        // fields first makes them inseparable. A separate UpdateAsync afterwards
+        // could fail and leave a temporary password that never expires.
+        bool previousMustChangePassword = user.MustChangePassword;
+        string? previousResetByUserId = user.LastPasswordResetByUserId;
+        DateTimeOffset? previousResetAtUtc = user.LastPasswordResetAtUtc;
+
+        // There is no signed-in actor, so the "reset by" column stays null and
+        // the settings page says the reset came from the server.
+        user.MustChangePassword = true;
+        user.LastPasswordResetByUserId = null;
+        user.LastPasswordResetAtUtc = DateTimeOffset.UtcNow;
+
         IdentityResult resetResult = await userManager.ResetPasswordAsync(
             user,
             resetToken,
@@ -159,25 +180,13 @@ public static class PasswordRecoveryCommand
 
         if (!resetResult.Succeeded)
         {
+            // Nothing was saved, but the entity is tracked: put the fields back
+            // so a later save in this scope cannot persist them.
+            user.MustChangePassword = previousMustChangePassword;
+            user.LastPasswordResetByUserId = previousResetByUserId;
+            user.LastPasswordResetAtUtc = previousResetAtUtc;
+
             Console.Error.WriteLine("Could not reset the password: " + DescribeErrors(resetResult));
-            return FailureExitCode;
-        }
-
-        // The operator set a password the pathologist did not choose, so the
-        // account is forced to replace it at the next sign-in. There is no
-        // signed-in actor, so the "reset by" column stays null and the settings
-        // page says the reset came from the server.
-        user.MustChangePassword = true;
-        user.LastPasswordResetByUserId = null;
-        user.LastPasswordResetAtUtc = DateTimeOffset.UtcNow;
-
-        IdentityResult updateResult = await userManager.UpdateAsync(user);
-
-        if (!updateResult.Succeeded)
-        {
-            Console.Error.WriteLine(
-                "The password was reset but the account could not be marked for a forced " +
-                "change: " + DescribeErrors(updateResult));
             return FailureExitCode;
         }
 

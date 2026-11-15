@@ -19,7 +19,7 @@ namespace PenicilliSolver.UnitTests;
 /// upload row keep the file its mappings describe, and what makes a concurrent
 /// upload harmless instead of destructive.
 /// </remarks>
-public sealed class SpreadsheetStorageServiceTests : IDisposable
+public sealed partial class SpreadsheetStorageServiceTests : IDisposable
 {
     private readonly string contentRootPath;
     private readonly SpreadsheetStorageService storageService;
@@ -227,61 +227,6 @@ public sealed class SpreadsheetStorageServiceTests : IDisposable
 
         Assert.Equal(goodBytes, survivingBytes);
         Assert.False(File.Exists(stagingResult.StoredFilePath));
-    }
-
-    [Fact]
-    public async Task PromoteStagedFile_MovesTheStagedFileOntoItsContentAddressedName()
-    {
-        SpreadsheetStorageResult stagingResult = await storageService.SaveIncomingFileAsync(
-            new MemoryStream(BuildCsvBytes()),
-            SpreadsheetFileFormat.Csv);
-
-        string canonicalPath = Path.Combine(
-            storageService.StorageDirectoryPath,
-            stagingResult.RelativeStoredFilePath);
-
-        Assert.NotEqual(canonicalPath, stagingResult.StoredFilePath);
-
-        storageService.PromoteStagedFile(
-            stagingResult.StoredFilePath,
-            stagingResult.RelativeStoredFilePath);
-
-        Assert.True(File.Exists(canonicalPath));
-        Assert.False(File.Exists(stagingResult.StoredFilePath));
-    }
-
-    [Fact]
-    public async Task PromoteStagedFile_IsIdempotentForIdenticalContent()
-    {
-        byte[] csvBytes = BuildCsvBytes();
-
-        using (MemoryStream firstContent = new(csvBytes))
-        {
-            await storageService.SaveCurrentSpreadsheetAsync(
-                firstContent,
-                SpreadsheetFileFormat.Csv);
-        }
-
-        SpreadsheetStorageResult stagingResult = await storageService.SaveIncomingFileAsync(
-            new MemoryStream(csvBytes),
-            SpreadsheetFileFormat.Csv);
-
-        // Promoting content that is already stored must not throw and must not
-        // destroy or duplicate the file already in place.
-        storageService.PromoteStagedFile(
-            stagingResult.StoredFilePath,
-            stagingResult.RelativeStoredFilePath);
-
-        string canonicalPath = Path.Combine(
-            storageService.StorageDirectoryPath,
-            stagingResult.RelativeStoredFilePath);
-
-        Assert.True(File.Exists(canonicalPath));
-        Assert.False(File.Exists(stagingResult.StoredFilePath));
-
-        int fileCount = Directory.GetFiles(storageService.StorageDirectoryPath).Length;
-
-        Assert.Equal(1, fileCount);
     }
 
     private static SpreadsheetStorageService BuildStorageService(string contentRootPath)

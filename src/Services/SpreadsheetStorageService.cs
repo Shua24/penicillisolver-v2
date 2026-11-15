@@ -108,9 +108,26 @@ public sealed partial class SpreadsheetStorageService
 
         string stagingFilePath = Path.Combine(storageDirectoryPath, stagingFileName);
 
-        long writtenByteCount = await WriteStreamToFileAsync(content, stagingFilePath);
+        long writtenByteCount;
+        string contentHash;
 
-        string contentHash = await ComputeContentHashAsync(stagingFilePath);
+        try
+        {
+            writtenByteCount = await WriteStreamToFileAsync(content, stagingFilePath);
+
+            contentHash = await ComputeContentHashAsync(stagingFilePath);
+        }
+        catch (Exception)
+        {
+            // A half-written or unreadable staging file must not be left behind:
+            // nothing points at it, and it would accumulate in the storage
+            // folder. The write and hash helpers dispose their handles before
+            // returning, so the delete is safe here, and the original exception
+            // is the one the caller needs.
+            TryDeleteStagedFile(stagingFilePath);
+
+            throw;
+        }
 
         // The canonical name is derived from the content, so identical content
         // always resolves to the same file and different content never collides.
@@ -154,14 +171,30 @@ public sealed partial class SpreadsheetStorageService
             storageDirectoryPath,
             canonicalRelativeFileName);
 
-        if (File.Exists(canonicalFilePath))
+        try
         {
-            DeleteStagedFile(stagedFilePath);
-
-            return;
+            File.Move(stagedFilePath, canonicalFilePath);
         }
+        catch (IOException) when (File.Exists(canonicalFilePath))
+        {
+            // The destination already exists: this content was stored by an
+            // earlier upload, or another upload of the same content won the race
+            // between staging and promotion. The canonical name is the content
+            // hash, so the file should hold the same bytes — verify it rather
+            // than trusting the name, and only then treat the collision as
+            // success. A different file at that name is a real failure and
+            // propagates.
+            string expectedHash = Path.GetFileNameWithoutExtension(canonicalRelativeFileName);
 
-        File.Move(stagedFilePath, canonicalFilePath);
+            string actualHash = ComputeContentHash(canonicalFilePath);
+
+            if (!string.Equals(expectedHash, actualHash, StringComparison.Ordinal))
+            {
+                throw;
+            }
+
+            DeleteStagedFile(stagedFilePath);
+        }
     }
 
     /// <summary>

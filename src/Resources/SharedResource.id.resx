@@ -369,6 +369,9 @@
   <data name="ChangePassword_ConfirmPasswordPlaceholder" xml:space="preserve"><value>Konfirmasi kata sandi baru</value></data>
   <data name="ChangePassword_Submit" xml:space="preserve"><value>Ubah kata sandi</value></data>
   <data name="ChangePassword_Changed" xml:space="preserve"><value>Kata sandi Anda telah diubah.</value></data>
+  <data name="ChangePassword_MustDiffer" xml:space="preserve"><value>Kata sandi baru harus berbeda dari kata sandi saat ini.</value></data>
+  <data name="ChangePassword_CurrentPasswordIncorrect" xml:space="preserve"><value>Kata sandi saat ini tidak benar.</value></data>
+  <data name="ChangePassword_LockedOut" xml:space="preserve"><value>Terlalu banyak percobaan gagal. Akun terkunci selama 5 menit.</value></data>
   <data name="Settings_ResetPassword" xml:space="preserve"><value>Atur ulang kata sandi</value></data>
   <data name="Settings_ResetPasswordPrompt" xml:space="preserve"><value>Tetapkan kata sandi sementara untuk {0}. Serahkan secara langsung; pengguna wajib menggantinya saat masuk berikutnya.</value></data>
   <data name="Settings_ResetPasswordPlaceholder" xml:space="preserve"><value>Kata sandi sementara</value></data>

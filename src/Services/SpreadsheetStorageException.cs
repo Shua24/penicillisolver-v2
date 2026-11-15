@@ -11,9 +11,10 @@ namespace penicillisolver_v2.Services;
 public enum SpreadsheetStorageFailureKind
 {
     /// <summary>
-    /// The staged file was gone when it was time to move it into place. In
-    /// practice this means a second upload of the same file was being processed
-    /// at the same moment, and it consumed the staged file first.
+    /// The staged file was gone when it was time to move it into place. Every
+    /// upload writes its own uniquely named staging file, so this means
+    /// something else removed it: a concurrent deletion of the stored
+    /// spreadsheets, or an external cleanup of the storage folder.
     /// </summary>
     StagedFileDisappeared,
 
@@ -156,13 +157,15 @@ public sealed class SpreadsheetStorageException : IOException
         {
             case SpreadsheetStorageFailureKind.StagedFileDisappeared:
                 whatFailed =
-                    "The uploaded file disappeared before it could be moved into "
-                    + "the storage folder. This happens when another upload of the "
-                    + "same spreadsheet is saved at the same moment.";
+                    "The uploaded file was removed from the storage folder "
+                    + "before it could be moved into place. Something else "
+                    + "deleted it: for example, the stored spreadsheets were "
+                    + "deleted while this upload was still running, or an "
+                    + "external cleanup removed files from the folder.";
                 whatToCheck =
-                    "Ask the person who uploaded to try again. If it keeps "
-                    + "happening, two people are uploading at once and should take "
-                    + "turns.";
+                    "Ask the person who uploaded to try again. If it happens "
+                    + "again, check whether anything else deletes files in the "
+                    + "storage folder.";
                 break;
 
             case SpreadsheetStorageFailureKind.StorageDirectoryNotWritable:

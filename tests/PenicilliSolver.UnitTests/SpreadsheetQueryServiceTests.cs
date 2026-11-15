@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
 using penicillisolver_v2.Data;
+using penicillisolver_v2.Domain.Entities;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
 using penicillisolver_v2.Services;
@@ -17,7 +18,7 @@ namespace PenicilliSolver.UnitTests;
 /// sample: that it ranks the stored file, honours a requested count, and serves
 /// the parsed document from cache on a second call without re-reading the file.
 /// </summary>
-public sealed class SpreadsheetQueryServiceTests : IDisposable
+public sealed partial class SpreadsheetQueryServiceTests : IDisposable
 {
     private readonly string contentRootPath;
     private readonly ApplicationDbContext database;
@@ -193,7 +194,7 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
         Assert.NotNull(secondDocument);
     }
 
-    private async Task StoreRealSampleAsync()
+    private async Task<SpreadsheetUpload> StoreRealSampleAsync()
     {
         string samplePath = SampleDataLocator.CsvSamplePath();
 
@@ -209,7 +210,7 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
 
         SpreadsheetDocument document = importResult.Document!;
 
-        database.SpreadsheetUploads.Add(new penicillisolver_v2.Domain.Entities.SpreadsheetUpload
+        SpreadsheetUpload uploadRow = new()
         {
             OriginalFileName = "amr.csv",
             StoredFilePath = storageResult.RelativeStoredFilePath,
@@ -220,9 +221,13 @@ public sealed class SpreadsheetQueryServiceTests : IDisposable
             Orientation = document.Orientation,
             OrganismCount = document.OrganismNames.Count,
             AntibioticCount = document.AntibioticNames.Count,
-        });
+        };
+
+        database.SpreadsheetUploads.Add(uploadRow);
 
         await database.SaveChangesAsync();
+
+        return uploadRow;
     }
 
     /// <summary>
