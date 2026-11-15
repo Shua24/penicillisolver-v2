@@ -198,6 +198,11 @@ finds the account, clicks **Reset password**, types a temporary password, and
 tells the person what it is. The person is then forced to choose their own
 password the next time they sign in.
 
+**This works for every account, not only the seed account.** The seed account is
+just the first pathologist; every account in that list is reset the same way. A
+disabled account is the one exception: the page refuses, because a new password
+would not let it sign in. Activate it first, then reset.
+
 Do not create a second account for them. Do not edit the database. Both cause
 duplicate accounts and lost history.
 
@@ -306,8 +311,11 @@ Notes, in order of how likely you are to need them:
     the wrong form for an interactive shell.
 - **The password is never typed on the command line.** It is read from the
   prompt or from a pipe, so it does not end up in shell history or in `ps`.
-- **It only works on clinical pathologist accounts.** Point it at a doctor and
-  it refuses, on purpose. Doctors are recovered in the application (§4).
+- **It works on any clinical pathologist account, not only the seed account.**
+  The `--email` value is the account's own sign-in address. Once the seed
+  account has been retired, this is the command that recovers whoever is left.
+  Point it at a doctor and it refuses, on purpose — doctors are recovered in the
+  application (§4).
 - **The account must change the password at next sign-in.** The password you set
   is temporary by design.
 - **The password must be at least 6 characters** and contain an uppercase
@@ -335,6 +343,14 @@ If those are set, restart and the account comes back:
 ```bash
 docker compose restart app
 ```
+
+**Retiring the seed account.** Deleting the seed account is allowed once another
+pathologist is active, and the pathologist who is left is recovered by this same
+command under their own address — the command is not tied to the seed account.
+But the seeder runs on every start. If `SeedAccounts__ClinicalPathologist__*` is
+still set when you restart, the seed account is recreated as an active
+pathologist with the deployment password. When you retire the seed account,
+remove those two variables in the same change.
 
 ### 6d. If you have no shell access at all
 
