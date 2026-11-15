@@ -3,7 +3,9 @@ namespace penicillisolver_v2.Services;
 using System.Globalization;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 
 using penicillisolver_v2.Data;
 using penicillisolver_v2.Domain.Entities;
@@ -33,9 +35,12 @@ using penicillisolver_v2.Resources;
 /// they actually describe.
 /// </para>
 /// <para>
-/// Second, the file on disk is still a single canonical file: replacement
-/// overwrites it, exactly as requirement 5 asks. Only the metadata is
-/// append-only, and "the current spreadsheet" is the newest row.
+/// Second, each stored file is content-addressed: its name is derived from its
+/// own bytes, so a new upload can never land on the file an earlier row points
+/// at. Every row therefore keeps the file its mappings describe, which is what
+/// makes the append-only metadata honest. Superseded files stay on disk as the
+/// record of what was actually imported; "the current spreadsheet" is the newest
+/// row.
 /// </para>
 /// <para>
 /// <b>Failed uploads must not destroy a working spreadsheet.</b> The incoming
@@ -52,7 +57,8 @@ public sealed class SpreadsheetUploadService(
     SpreadsheetStorageService storageService,
     AntibioticAbbreviationService abbreviationService,
     IConfiguration configuration,
-    IStringLocalizerFactory localizerFactory)
+    IStringLocalizerFactory localizerFactory,
+    ILogger<SpreadsheetUploadService> logger)
 {
     /// <summary>The configuration key holding the maximum accepted file size in bytes.</summary>
     public const string MaximumFileSizeConfigurationKey = "SpreadsheetStorage:MaximumFileSizeBytes";
@@ -114,10 +120,23 @@ public sealed class SpreadsheetUploadService(
         {
             stagingResult = await storageService.SaveIncomingFileAsync(content, fileFormat);
         }
-        catch (IOException exception)
+        catch (Exception cause) when (cause is IOException or UnauthorizedAccessException)
         {
+            // A permission denial is NOT an IOException: it derives from
+            // SystemException, so a clause catching only IOException lets the
+            // most likely failure escape as an unhandled circuit exception.
+            SpreadsheetStorageException describedFailure =
+                SpreadsheetStorageException.ForStorageFailure(
+                    cause,
+                    storageService.StorageDirectoryPath);
+
+            logger.LogError(
+                describedFailure,
+                "Upload of '{OriginalFileName}' failed while writing it to storage.",
+                originalFileName);
+
             return SpreadsheetUploadResult.Failure(
-                localizer["Service_FileCouldNotBeSaved", originalFileName, exception.Message]);
+                localizer["Service_UploadStorageFailure"]);
         }
 
         SpreadsheetImportResult importResult = ReadStagedFile(stagingResult.StoredFilePath, fileFormat);
@@ -131,17 +150,49 @@ public sealed class SpreadsheetUploadService(
 
         SpreadsheetDocument document = importResult.Document;
 
-        // The file parsed, so promote the staged file onto its canonical name.
-        // This is the point of no return: from here the previous spreadsheet is
-        // gone and the new one is in its place.
-        storageService.PromoteStagedFile(stagingResult.StoredFilePath, fileFormat);
+        // The file parsed, so promote the staged file onto its content-addressed
+        // name. This is the point of no return for the FILE, but it is safe: the
+        // name is derived from the content, so an existing file at that name is
+        // the same bytes, and no earlier upload's file is destroyed. The row
+        // written below is what makes the upload current.
+        SpreadsheetUpload uploadRow;
 
-        SpreadsheetUpload uploadRow = await CreateCurrentUploadAsync(
-            originalFileName,
-            fileFormat,
-            document,
-            stagingResult,
-            uploadedByUserId);
+        try
+        {
+            storageService.PromoteStagedFile(
+                stagingResult.StoredFilePath,
+                stagingResult.RelativeStoredFilePath);
+
+            uploadRow = await CreateCurrentUploadAsync(
+                originalFileName,
+                fileFormat,
+                document,
+                stagingResult,
+                uploadedByUserId);
+        }
+        catch (Exception cause) when (cause is IOException or UnauthorizedAccessException)
+        {
+            // A permission denial is NOT an IOException: it derives from
+            // SystemException, so both families are caught here on purpose.
+            //
+            // The exception is re-described in administrative terms before it is
+            // logged, because a bare FileNotFoundException in a log tells nobody
+            // what to check. The technician gets the short localized sentence:
+            // the exception message is English and names filesystem paths, which
+            // is not what a laboratory reads.
+            SpreadsheetStorageException describedFailure =
+                SpreadsheetStorageException.ForStorageFailure(
+                    cause,
+                    storageService.StorageDirectoryPath);
+
+            logger.LogError(
+                describedFailure,
+                "Upload of '{OriginalFileName}' failed while storing it.",
+                originalFileName);
+
+            return SpreadsheetUploadResult.Failure(
+                localizer["Service_UploadStorageFailure"]);
+        }
 
         string successMessage = localizer["Service_UploadSucceeded",
             originalFileName,
@@ -205,6 +256,15 @@ public sealed class SpreadsheetUploadService(
         };
 
         database.SpreadsheetUploads.Add(uploadRow);
+
+        // The row and the mappings carried onto it must appear together. A row
+        // persisted without its carried mappings would render every abbreviation
+        // as unmapped, which looks like data loss to a pathologist. Both writes
+        // join this one transaction, including the SaveChanges the copy-forward
+        // performs internally.
+        await using IDbContextTransaction transaction =
+            await database.Database.BeginTransactionAsync();
+
         await database.SaveChangesAsync();
 
         if (previousUpload is not null)
@@ -213,6 +273,8 @@ public sealed class SpreadsheetUploadService(
                 previousUpload.Id,
                 uploadRow.Id);
         }
+
+        await transaction.CommitAsync();
 
         return uploadRow;
     }

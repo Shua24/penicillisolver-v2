@@ -9,6 +9,7 @@
 @rendermode InteractiveServer
 
 @inject SpreadsheetQueryService QueryService
+@inject AntibioticAbbreviationService AbbreviationService
 
 @* /spreadsheet remains a valid route as well as /spreadsheet-viewer, because
    an existing integration test and any bookmark to the older path must keep
@@ -188,8 +189,8 @@ else
                                    beside it, so an unmapped "CRO %S" is visibly
                                    unmapped rather than silently cryptic. *@
                                 <AntibioticNameDisplay
-                                    SpreadsheetUploadId="currentUpload.Id"
-                                    Abbreviation="@row.AntibioticName" />
+                                    Abbreviation="@row.AntibioticName"
+                                    ResolvedFullName="@ResolveDisplayName(row.AntibioticName)" />
                             </td>
                             <td>@row.Value.Format()</td>
                         </tr>

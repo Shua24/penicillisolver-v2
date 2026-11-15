@@ -28,4 +28,20 @@ public class ApplicationUser : IdentityUser
     /// anywhere in the application.
     /// </summary>
     public AccountStatus AccountStatus { get; set; } = AccountStatus.Pending;
+
+    /// <summary>
+    /// True when the account must choose a new password before it may use the
+    /// application. Set by an administrator reset, by the break-glass command
+    /// and by the seeder; cleared by the change-password page.
+    /// </summary>
+    public bool MustChangePassword { get; set; }
+
+    /// <summary>
+    /// The identifier of the account that last reset this password, or null when
+    /// the reset came from the break-glass command, which has no signed-in actor.
+    /// </summary>
+    public string? LastPasswordResetByUserId { get; set; }
+
+    /// <summary>When the password was last reset by an administrator.</summary>
+    public DateTimeOffset? LastPasswordResetAtUtc { get; set; }
 }

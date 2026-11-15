@@ -31,6 +31,14 @@ public partial class SpreadsheetViewer
     private SpreadsheetUpload? currentUpload;
     private IReadOnlyList<string> organismNames = [];
     private IReadOnlyList<AntibioticSusceptibility> topSusceptible = [];
+
+    /// <summary>
+    /// Every mapped full name for the current upload, keyed by abbreviation.
+    /// Loaded once per page so rendering the ranking costs one query, not one
+    /// per row: EF Core throws when two queries overlap on the scoped context.
+    /// </summary>
+    private IReadOnlyDictionary<string, string> displayNames =
+        new Dictionary<string, string>(StringComparer.Ordinal);
     private IReadOnlyList<string> ambiguousCandidates = [];
     private string? typedOrganismName;
     private string? resolvedOrganismName;
@@ -65,11 +73,17 @@ public partial class SpreadsheetViewer
             organismNames = [];
             suggestions = [];
             topSusceptible = [];
+            displayNames = new Dictionary<string, string>(StringComparer.Ordinal);
             isLoading = false;
             return;
         }
 
-        organismNames = await QueryService.GetOrganismNamesAsync();
+        organismNames = await QueryService.GetOrganismNamesAsync(currentUpload);
+
+        // One query for every name the table can show. Resolving per row would
+        // issue one query per antibiotic against the shared scoped context, and
+        // overlapping queries on that context throw.
+        displayNames = await AbbreviationService.GetDisplayNameLookupAsync(currentUpload.Id);
 
         RefreshSuggestions();
 
@@ -81,7 +95,8 @@ public partial class SpreadsheetViewer
         {
             topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
-                effectiveTopCount);
+                effectiveTopCount,
+                currentUpload);
         }
 
         isLoading = false;
@@ -128,7 +143,7 @@ public partial class SpreadsheetViewer
         topSusceptible = [];
 
         OrganismLookupResult lookupResult =
-            await QueryService.ResolveOrganismAsync(candidateName);
+            await QueryService.ResolveOrganismAsync(candidateName, currentUpload);
 
         if (lookupResult.Outcome == OrganismLookupOutcome.Resolved)
         {
@@ -138,7 +153,8 @@ public partial class SpreadsheetViewer
             isLoading = true;
             topSusceptible = await QueryService.GetTopSusceptibleWithinOrganismAsync(
                 resolvedOrganismName!,
-                effectiveTopCount);
+                effectiveTopCount,
+                currentUpload);
             isLoading = false;
             return;
         }
@@ -232,5 +248,20 @@ public partial class SpreadsheetViewer
         }
 
         return requestedCount;
+    }
+
+    /// <summary>
+    /// Returns the mapped full name for an abbreviation, or null when it is
+    /// unmapped. Kept as a method so the markup stays readable.
+    /// </summary>
+    /// <param name="abbreviation">The abbreviation as it appears in the file.</param>
+    /// <returns>The full name, or null when no mapping exists.</returns>
+    private string? ResolveDisplayName(string abbreviation)
+    {
+        bool wasFound = displayNames.TryGetValue(abbreviation, out string? fullName);
+
+        string? resolvedName = wasFound ? fullName : null;
+
+        return resolvedName;
     }
 }

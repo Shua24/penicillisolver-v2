@@ -1,5 +1,4 @@
 @page "/settings/user-roles"
-@using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using penicillisolver_v2.Components.Account.Shared
 @using penicillisolver_v2.Domain.Constants
@@ -44,7 +43,15 @@ else
                 @foreach (UserAccountSummary account in accounts)
                 {
                     <tr>
-                        <td>@account.DisplayName</td>
+                        <td>
+                            @account.DisplayName
+                            @if (account.LastPasswordResetAtUtc is not null)
+                            {
+                                <div class="form-text">
+                                    @DescribeLastReset(account)
+                                </div>
+                            }
+                        </td>
                         <td>@account.Email</td>
                         <td>
                             @(string.IsNullOrEmpty(account.RoleName)
@@ -66,7 +73,7 @@ else
                             </select>
                         </td>
                         <td>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 flex-wrap">
                                 <button type="button"
                                         class="btn btn-sm btn-success"
                                         @onclick="() => ChangeStatusAsync(account, AccountStatus.Active)">
@@ -77,6 +84,42 @@ else
                                         @onclick="() => ChangeStatusAsync(account, AccountStatus.Disabled)">
                                     @Localizer["Settings_Disable"]
                                 </button>
+                                @if (pendingResetUserId == account.UserId)
+                                {
+                                    <div class="w-100 mt-2">
+                                        <p class="mb-1">
+                                            @Localizer["Settings_ResetPasswordPrompt", account.DisplayName]
+                                        </p>
+                                        <input type="password"
+                                               class="form-control form-control-sm mb-2"
+                                               autocomplete="new-password"
+                                               placeholder="@Localizer["Settings_ResetPasswordPlaceholder"]"
+                                               @bind="resetPassword" />
+                                        <button type="button"
+                                                class="btn btn-sm btn-warning"
+                                                disabled="@isResetting"
+                                                @onclick="() => ResetPasswordAsync(account)">
+                                            @(isResetting
+                                                ? Localizer["Settings_Resetting"]
+                                                : Localizer["Settings_ConfirmReset"])
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary"
+                                                disabled="@isResetting"
+                                                @onclick="CancelReset">
+                                            @Localizer["Settings_Cancel"]
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-warning"
+                                            disabled="@isResetting"
+                                            @onclick="() => BeginReset(account)">
+                                        @Localizer["Settings_ResetPassword"]
+                                    </button>
+                                }
                                 @if (pendingDeleteUserId == account.UserId)
                                 {
                                     <span>@Localizer["Settings_DeleteConfirmPrompt", account.DisplayName]</span>
@@ -138,174 +181,4 @@ else
             </label>
         </div>
     </section>
-}
-
-@code {
-    private static readonly string[] AssignableRoleNames =
-    [
-        ApplicationRoleNames.ClinicalPathologist,
-        ApplicationRoleNames.OtherDoctor,
-        ApplicationRoleNames.InfectiousDiseaseControlTeam,
-    ];
-
-    private IReadOnlyList<UserAccountSummary> accounts = [];
-    private TeamPermissionSummary teamPermissions = new(
-        ApplicationRoleNames.InfectiousDiseaseControlTeam,
-        CanUpdateSpreadsheet: false,
-        CanDeleteSpreadsheet: false);
-    private string? statusMessage;
-
-    /// <summary>
-    /// Whether <see cref="statusMessage"/> describes a failure. Set alongside
-    /// the message so the banner's severity is explicit rather than inferred
-    /// from an "Error" prefix, which cannot survive translation.
-    /// </summary>
-    private bool statusFailed;
-    private string? actingUserId;
-    private bool isLoading = true;
-
-    /// <summary>Which team permission a toggle controls.</summary>
-    private enum PermissionToggle
-    {
-        /// <summary>The team may replace the current spreadsheet.</summary>
-        Update,
-
-        /// <summary>The team may remove the current spreadsheet.</summary>
-        Delete,
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        actingUserId = await ResolveCurrentUserIdAsync();
-
-        await ReloadAsync();
-
-        isLoading = false;
-    }
-
-    private async Task ReloadAsync()
-    {
-        accounts = await AdministrationService.GetAccountsAsync();
-        teamPermissions = await AdministrationService.GetTeamPermissionsAsync();
-    }
-
-    /// <summary>
-    /// The localized label for a role token. The token itself stays as the
-    /// option value because it is what the database stores, but what the reader
-    /// sees is translated here at the point of display. The service layer keeps
-    /// its own English mapping; this page is the user facing side.
-    /// </summary>
-    private string DescribeRole(string roleName)
-    {
-        string resourceKey = roleName switch
-        {
-            ApplicationRoleNames.ClinicalPathologist => "Role_ClinicalPathologist",
-            ApplicationRoleNames.OtherDoctor => "Role_OtherDoctor",
-            ApplicationRoleNames.InfectiousDiseaseControlTeam => "Role_InfectiousDiseaseControlTeam",
-            _ => string.Empty,
-        };
-
-        if (resourceKey.Length == 0)
-        {
-            return ApplicationRoleDisplayNames.DisplayNameOf(roleName);
-        }
-
-        return Localizer[resourceKey];
-    }
-
-    private async Task ChangeRoleAsync(UserAccountSummary account, ChangeEventArgs eventArgs)
-    {
-        if (actingUserId is null)
-        {
-            statusFailed = true;
-            statusMessage = Localizer["Status_SessionExpired"];
-            return;
-        }
-
-        string? newRoleName = eventArgs.Value?.ToString();
-
-        if (string.IsNullOrWhiteSpace(newRoleName))
-        {
-            return;
-        }
-
-        AdministrationResult result = await AdministrationService.SetRoleAsync(
-            actingUserId,
-            account.UserId,
-            newRoleName);
-
-        await ApplyResultAsync(result);
-    }
-
-    private async Task ChangeStatusAsync(UserAccountSummary account, AccountStatus newState)
-    {
-        if (actingUserId is null)
-        {
-            statusFailed = true;
-            statusMessage = Localizer["Status_SessionExpired"];
-            return;
-        }
-
-        AdministrationResult result = await AdministrationService.SetAccountStatusAsync(
-            actingUserId,
-            account.UserId,
-            newState);
-
-        await ApplyResultAsync(result);
-    }
-
-    private async Task ToggleTeamPermissionAsync(ChangeEventArgs eventArgs, PermissionToggle toggle)
-    {
-        if (actingUserId is null)
-        {
-            statusFailed = true;
-            statusMessage = Localizer["Status_SessionExpired"];
-            return;
-        }
-
-        bool isChecked = eventArgs.Value is true;
-
-        bool canUpdate = teamPermissions.CanUpdateSpreadsheet;
-        bool canDelete = teamPermissions.CanDeleteSpreadsheet;
-
-        if (toggle == PermissionToggle.Update)
-        {
-            canUpdate = isChecked;
-        }
-        else
-        {
-            canDelete = isChecked;
-        }
-
-        AdministrationResult result = await AdministrationService.SetTeamPermissionsAsync(
-            actingUserId,
-            canUpdate,
-            canDelete);
-
-        await ApplyResultAsync(result);
-    }
-
-    private async Task ApplyResultAsync(AdministrationResult result)
-    {
-        statusFailed = !result.IsSuccess;
-
-        statusMessage = result.IsSuccess
-            ? result.Message
-            : Localizer["Status_ErrorPrefix"] + result.Message;
-
-        await ReloadAsync();
-    }
-
-    private async Task<string?> ResolveCurrentUserIdAsync()
-    {
-        AuthenticationState authenticationState =
-            await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        Claim? nameIdentifierClaim =
-            authenticationState.User.FindFirst(ClaimTypes.NameIdentifier);
-
-        string? userId = nameIdentifierClaim?.Value;
-
-        return userId;
-    }
 }

@@ -18,4 +18,11 @@ public static class ApplicationClaimTypes
     /// is never consulted by an authorization policy.
     /// </summary>
     public const string RequestedRole = "penicillisolver:requested_role";
+
+    /// <summary>
+    /// Carries "true" when the account must choose a new password before it may
+    /// use the application. Set by an administrator reset, by the break-glass
+    /// command and by the seeder; cleared by the change-password page.
+    /// </summary>
+    public const string MustChangePassword = "penicillisolver:must_change_password";
 }

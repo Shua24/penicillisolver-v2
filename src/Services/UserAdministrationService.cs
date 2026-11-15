@@ -18,12 +18,16 @@ using penicillisolver_v2.Resources;
 /// <param name="Email">The sign-in email address.</param>
 /// <param name="RoleName">The account's current application role, or the empty string when it holds none yet.</param>
 /// <param name="AccountStatus">The account's current activation state.</param>
+/// <param name="LastPasswordResetAtUtc">When a pathologist last reset this password, or null when never.</param>
+/// <param name="LastPasswordResetByDisplayName">The display name of the pathologist who last reset it, or null when the reset came from the break-glass command.</param>
 public sealed record UserAccountSummary(
     string UserId,
     string DisplayName,
     string Email,
     string RoleName,
-    AccountStatus AccountStatus);
+    AccountStatus AccountStatus,
+    DateTimeOffset? LastPasswordResetAtUtc,
+    string? LastPasswordResetByDisplayName);
 
 /// <summary>
 /// The single team's spreadsheet permissions as the settings page needs them.
@@ -101,18 +105,40 @@ public sealed partial class UserAdministrationService(
             .ThenBy(user => user.Email)
             .ToListAsync();
 
+        // The resetter's display name is resolved in one query rather than one
+        // per account, so the settings page does not issue a query per row.
+        List<string> resetterIds = accounts
+            .Where(account => !string.IsNullOrWhiteSpace(account.LastPasswordResetByUserId))
+            .Select(account => account.LastPasswordResetByUserId!)
+            .Distinct()
+            .ToList();
+
+        Dictionary<string, string> resetterNames = await database.Users
+            .AsNoTracking()
+            .Where(user => resetterIds.Contains(user.Id))
+            .ToDictionaryAsync(user => user.Id, user => user.DisplayName);
+
         List<UserAccountSummary> summaries = new List<UserAccountSummary>();
 
         foreach (ApplicationUser account in accounts)
         {
             string roleName = await ResolveSingleRoleAsync(account);
 
+            string? resetterDisplayName = null;
+
+            if (!string.IsNullOrWhiteSpace(account.LastPasswordResetByUserId))
+            {
+                resetterNames.TryGetValue(account.LastPasswordResetByUserId, out resetterDisplayName);
+            }
+
             UserAccountSummary summary = new(
                 UserId: account.Id,
                 DisplayName: account.DisplayName,
                 Email: account.Email ?? string.Empty,
                 RoleName: roleName,
-                AccountStatus: account.AccountStatus);
+                AccountStatus: account.AccountStatus,
+                LastPasswordResetAtUtc: account.LastPasswordResetAtUtc,
+                LastPasswordResetByDisplayName: resetterDisplayName);
 
             summaries.Add(summary);
         }

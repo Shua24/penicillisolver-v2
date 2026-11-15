@@ -1,17 +1,16 @@
-@using penicillisolver_v2.Domain.ValueObjects
-@using penicillisolver_v2.Services
-@inject AntibioticAbbreviationService AbbreviationService
-
 @*
     Renders one antibiotic name together with the full name the pathologists
     mapped it to, for a SPECIFIC upload.
 
     Usage:
-        <AntibioticNameDisplay SpreadsheetUploadId="upload.Id" Abbreviation="@antibiotic" />
+        <AntibioticNameDisplay Abbreviation="@antibiotic" ResolvedFullName="@resolved" />
 
-    The component is self-contained: it injects only the abbreviation service and
-    takes the upload identity as a parameter, so it can be dropped into the
-    viewer and upload pages without either page knowing how mappings are stored.
+    The component is presentational: it does not query. The caller resolves every
+    name on the page once, with
+    AntibioticAbbreviationService.GetDisplayNameLookupAsync, and passes the result
+    down. A component that queried per instance would issue one query per rendered
+    name against the scoped DbContext, and EF Core throws when a second operation
+    starts on a context whose first operation has not finished.
 
     THREE outcomes are possible, and the third is the one that matters:
 
@@ -31,7 +30,7 @@
         <span class="antibiotic-name__abbreviation">@Abbreviation</span>
     </span>
 }
-else if (resolvedFullName is null)
+else if (ResolvedFullName is null)
 {
     <span class="antibiotic-name antibiotic-name--unmapped">
         <span class="antibiotic-name__abbreviation">@Abbreviation</span>
@@ -44,40 +43,26 @@ else
 {
     <span class="antibiotic-name">
         <span class="antibiotic-name__abbreviation">@Abbreviation</span>
-        <span class="antibiotic-name__full-name">(@resolvedFullName)</span>
+        <span class="antibiotic-name__full-name">(@ResolvedFullName)</span>
     </span>
 }
 
 @code {
-    /// <summary>The upload the abbreviation belongs to. Required: a mapping is upload-scoped.</summary>
-    [Parameter, EditorRequired]
-    public int SpreadsheetUploadId { get; set; }
-
     /// <summary>The abbreviation string exactly as it appears in the spreadsheet header.</summary>
     [Parameter, EditorRequired]
     public string Abbreviation { get; set; } = string.Empty;
 
-    private string? resolvedFullName;
+    /// <summary>
+    /// The full name this abbreviation maps to, or null when it is unmapped.
+    /// Resolved by the caller, so rendering many names costs one query rather
+    /// than one per component.
+    /// </summary>
+    [Parameter]
+    public string? ResolvedFullName { get; set; }
 
     /// <summary>
     /// True when the name is a complete antibiotic name rather than an
     /// abbreviation, so no mapping applies to it.
     /// </summary>
     private bool IsCompleteName => !AntibioticNameClassifier.IsAbbreviation(Abbreviation);
-
-    /// <inheritdoc />
-    protected override async Task OnParametersSetAsync()
-    {
-        // A complete name is never looked up: there is nothing to resolve, and
-        // querying would make an already-answered name look like a missing one.
-        if (IsCompleteName)
-        {
-            resolvedFullName = null;
-            return;
-        }
-
-        resolvedFullName = await AbbreviationService.ResolveDisplayNameAsync(
-            SpreadsheetUploadId,
-            Abbreviation);
-    }
 }
