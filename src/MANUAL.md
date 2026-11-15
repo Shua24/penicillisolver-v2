@@ -100,7 +100,7 @@ services:
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver"
       PGPASSWORD: ${POSTGRES_PASSWORD:-change-me}
       SeedAccounts__ClinicalPathologist__Email: ${SEED_PATHOLOGIST_EMAIL:-pathologist@hospital.example}
-      SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:-Change-Me-1!}
+      SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:?set SEED_PATHOLOGIST_PASSWORD in .env}
     volumes:
       - appdata:/app/App_Data
       - keys:/app/.aspnet/DataProtection-Keys
@@ -144,6 +144,10 @@ with an authentication error while `db` looks perfectly healthy.
 **Do not set the password only in the compose file and commit it.** Use a `.env`
 file next to the compose file (Compose reads it automatically) and keep it out of
 version control.
+
+**`SEED_PATHOLOGIST_PASSWORD` has no default.** Compose refuses to start when it
+is unset, so a deployment cannot come up with the example password. The seed
+email keeps its example default; only the password is mandatory.
 
 ---
 
@@ -447,13 +451,18 @@ same directory as `/backup` inside the container. Verified: piping the archive i
 fails with `did not find magic string in file header`, while the copy-and-list
 above prints the table list.
 
-If `/backup` is not writable by the container, the dump fails with
-`Permission denied`. The containers run as root, so give the directory to root
+If `/backup` is not writable by **you**, the dump fails with `Permission
+denied`: the `>` in the command above is your shell creating the file, not the
+container. Make the directory belong to the account that runs `docker compose`
 and keep it private:
 
 ```bash
-sudo install -d -o root -g root -m 700 /backup
+sudo install -d -o "$(id -un)" -g "$(id -gn)" -m 700 /backup
 ```
+
+The containers run as root, and root is not stopped by the mode bits, so this
+same directory also accepts the file archive written by the `docker run`
+command below.
 
 **The spreadsheet folder now holds one file per upload**, each named after a hash
 of its own contents (`<long-hex-string>.csv` or `.xlsx`). There is no longer a
