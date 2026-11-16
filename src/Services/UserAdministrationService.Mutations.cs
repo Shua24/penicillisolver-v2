@@ -59,10 +59,12 @@ public sealed partial class UserAdministrationService
 
         if (!roleIsChanging)
         {
-            string roleDisplayName = ApplicationRoleDisplayNames.DisplayNameOf(newRoleName);
+            string roleDisplayName = Localizer[ApplicationRoleDisplayNames.ResourceKeyOf(newRoleName)];
 
-            string unchangedMessage =
-                $"{DisplayNameOf(targetUser)} already holds the {roleDisplayName} role.";
+            string unchangedMessage = Localizer[
+                "Service_RoleAlreadyHeld",
+                DisplayNameOf(targetUser),
+                roleDisplayName];
 
             return AdministrationResult.Success(unchangedMessage);
         }
@@ -98,10 +100,12 @@ public sealed partial class UserAdministrationService
             return AdministrationResult.Failure(DescribeIdentityFailures(addRoleResult));
         }
 
-        string newRoleDisplayName = ApplicationRoleDisplayNames.DisplayNameOf(newRoleName);
+        string newRoleDisplayName = Localizer[ApplicationRoleDisplayNames.ResourceKeyOf(newRoleName)];
 
-        string successMessage =
-            $"{DisplayNameOf(targetUser)}'s role is now {newRoleDisplayName}.";
+        string successMessage = Localizer[
+            "Service_RoleChanged",
+            DisplayNameOf(targetUser),
+            newRoleDisplayName];
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 
@@ -145,8 +149,10 @@ public sealed partial class UserAdministrationService
 
         if (targetUser.AccountStatus == newState)
         {
-            string unchangedMessage =
-                $"{DisplayNameOf(targetUser)} is already {DescribeState(newState)}.";
+            string unchangedMessage = Localizer[
+                "Service_StateAlreadySet",
+                DisplayNameOf(targetUser),
+                DescribeState(newState)];
 
             return AdministrationResult.Success(unchangedMessage);
         }
@@ -177,8 +183,9 @@ public sealed partial class UserAdministrationService
         }
 
         string successMessage =
-            $"{DisplayNameOf(targetUser)} is now {DescribeState(newState)}. " +
-            Localizer["Service_ChangeAppliesOnNextSignIn"];
+            Localizer["Service_StateChanged", DisplayNameOf(targetUser), DescribeState(newState)]
+            + " "
+            + Localizer["Service_ChangeAppliesOnNextSignIn"];
 
         AdministrationResult successResult = AdministrationResult.Success(successMessage);
 

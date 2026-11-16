@@ -73,11 +73,12 @@ public sealed record TeamPermissionSummary(
 /// session to refresh.
 /// </para>
 /// <para>
-/// <b>Localisation boundary.</b> Messages that name a role stay in English on
-/// purpose: role names are display values owned by the UI, and a service layer
-/// that invented its own translated role labels would drift from the pages. All
-/// other user facing messages are localised here, because a message produced by
-/// a refusal must read in the reader's language even though no page authored it.
+/// <b>Localisation.</b> Every message this service produces is localised,
+/// including the ones that name a role. A role name inside an Indonesian
+/// sentence has to be Indonesian too, so those sentences resolve their role
+/// label through <see cref="ApplicationRoleDisplayNames.ResourceKeyOf"/> and the
+/// same shared resources the pages read. That is what keeps this layer from
+/// drifting from what a page shows: there is one token-to-key mapping, not two.
 /// </para>
 /// </remarks>
 public sealed partial class UserAdministrationService(

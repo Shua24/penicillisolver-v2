@@ -77,18 +77,13 @@ public partial class UserRoleSettings
     /// <summary>
     /// The localized label for a role token. The token itself stays as the
     /// option value because it is what the database stores, but what the reader
-    /// sees is translated here at the point of display. The service layer keeps
-    /// its own English mapping; this page is the user facing side.
+    /// sees is translated here at the point of display. The token-to-key mapping
+    /// lives in <see cref="ApplicationRoleDisplayNames"/> so this page, the
+    /// registration page and the administration service cannot disagree about it.
     /// </summary>
     private string DescribeRole(string roleName)
     {
-        string resourceKey = roleName switch
-        {
-            ApplicationRoleNames.ClinicalPathologist => "Role_ClinicalPathologist",
-            ApplicationRoleNames.OtherDoctor => "Role_OtherDoctor",
-            ApplicationRoleNames.InfectiousDiseaseControlTeam => "Role_InfectiousDiseaseControlTeam",
-            _ => string.Empty,
-        };
+        string resourceKey = ApplicationRoleDisplayNames.ResourceKeyOf(roleName);
 
         if (resourceKey.Length == 0)
         {

@@ -7,14 +7,20 @@ namespace penicillisolver_v2.Domain.Constants;
 /// configuration keys; only what a person reads in the UI is mapped here.
 /// </summary>
 /// <remarks>
-/// <b>This mapping is deliberately English and is NOT localised.</b> It lives in
-/// the service layer, where the messages that name a role are also kept in
-/// English on purpose (see the localisation boundary note on
-/// <c>UserAdministrationService</c>): role names are a display concern owned by
-/// the pages, and a service layer that translated them itself would drift from
-/// what the Razor components show. The user facing translations live in the
-/// <c>Role_*</c> resource keys and are resolved at the point of display, in the
-/// components that actually render a role to a reader.
+/// <para>
+/// <see cref="DisplayNameOf"/> is the English label, used where no localizer is
+/// available: the seeder's log lines and the startup diagnostics. Everything a
+/// reader sees goes through <see cref="ResourceKeyOf"/> and the shared
+/// resources, because a role name inside an Indonesian sentence has to be
+/// Indonesian too.
+/// </para>
+/// <para>
+/// The token-to-key mapping lives here, and only here, so the registration
+/// page, the settings page and the administration service cannot disagree about
+/// which resource key a role uses. Each of them resolves the key with its own
+/// localizer, which is the part that differs between an HTTP request and an
+/// interactive circuit.
+/// </para>
 /// </remarks>
 public static class ApplicationRoleDisplayNames
 {
@@ -22,6 +28,8 @@ public static class ApplicationRoleDisplayNames
     /// Returns the display name for a role token. An unknown token is returned
     /// unchanged so that a new role never renders as an empty label.
     /// </summary>
+    /// <param name="roleToken">The stable role token.</param>
+    /// <returns>The English label, or the token itself when it is not recognised.</returns>
     public static string DisplayNameOf(string roleToken)
     {
         ArgumentNullException.ThrowIfNull(roleToken);
@@ -35,5 +43,25 @@ public static class ApplicationRoleDisplayNames
         };
 
         return displayName;
+    }
+
+    /// <summary>
+    /// Returns the shared resource key holding a role's translated display name.
+    /// </summary>
+    /// <param name="roleToken">The stable role token.</param>
+    /// <returns>The resource key, or the empty string when the token is not a recognised role.</returns>
+    public static string ResourceKeyOf(string roleToken)
+    {
+        ArgumentNullException.ThrowIfNull(roleToken);
+
+        string resourceKey = roleToken switch
+        {
+            ApplicationRoleNames.ClinicalPathologist => "Role_ClinicalPathologist",
+            ApplicationRoleNames.OtherDoctor => "Role_OtherDoctor",
+            ApplicationRoleNames.InfectiousDiseaseControlTeam => "Role_InfectiousDiseaseControlTeam",
+            _ => string.Empty,
+        };
+
+        return resourceKey;
     }
 }

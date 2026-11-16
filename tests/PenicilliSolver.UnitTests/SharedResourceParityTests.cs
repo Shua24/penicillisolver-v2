@@ -48,7 +48,7 @@ public sealed class SharedResourceParityTests
     /// <summary>Loads the named resource file's nonempty keys using ordinal comparison.</summary>
     private static HashSet<string> ReadKeys(string fileName)
     {
-        XDocument document = XDocument.Load(ResolveResourcePath(fileName));
+        XDocument document = XDocument.Load(TestResourceFiles.ResolvePath(fileName));
 
         IEnumerable<string> names = document.Root!
             .Elements("data")
@@ -62,7 +62,7 @@ public sealed class SharedResourceParityTests
     /// <summary>Fails with the affected keys when a resource value is missing, empty, or whitespace.</summary>
     private static void AssertNoEmptyValues(string fileName)
     {
-        XDocument document = XDocument.Load(ResolveResourcePath(fileName));
+        XDocument document = XDocument.Load(TestResourceFiles.ResolvePath(fileName));
 
         List<string> emptyKeys = document.Root!
             .Elements("data")
@@ -74,34 +74,5 @@ public sealed class SharedResourceParityTests
         Assert.True(
             emptyKeys.Count == 0,
             $"Empty values in {fileName}: " + string.Join(", ", emptyKeys));
-    }
-
-    /// <summary>
-    /// Locates a resource file by walking up from the test assembly to the
-    /// repository root, so the test does not depend on the copy-to-output
-    /// setting of the web project.
-    /// </summary>
-    private static string ResolveResourcePath(string fileName)
-    {
-        DirectoryInfo? directory = new(AppContext.BaseDirectory);
-
-        while (directory is not null)
-        {
-            string candidate = Path.Combine(
-                directory.FullName,
-                "src",
-                "Resources",
-                fileName);
-
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            directory = directory.Parent;
-        }
-
-        throw new FileNotFoundException(
-            $"Could not locate 'src/Resources/{fileName}' above the test directory.");
     }
 }
