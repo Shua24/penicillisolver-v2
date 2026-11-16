@@ -2,7 +2,7 @@ namespace penicillisolver_v2.Services;
 
 using System.Globalization;
 using Microsoft.Extensions.Localization;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
 
@@ -22,7 +22,7 @@ public static partial class XlsxSpreadsheetReader
     /// Parses the antibiotics-as-rows layout of a worksheet.
     /// </summary>
     private static SpreadsheetImportResult ParseRowOriented(
-        ExcelWorksheet worksheet,
+        IXLWorksheet worksheet,
         string originalFileName,
         SpreadsheetOrientation orientation,
         int rowCount,
@@ -100,7 +100,7 @@ public static partial class XlsxSpreadsheetReader
     /// that cannot be accepted.
     /// </summary>
     private static SpreadsheetImportResult? CollectRowOrientedMeasurements(
-        ExcelWorksheet worksheet,
+        IXLWorksheet worksheet,
         int rowIndex,
         string antibioticName,
         List<int> organismColumnIndexes,
@@ -216,7 +216,7 @@ public static partial class XlsxSpreadsheetReader
     /// </summary>
     private static string BuildCellReference(int rowIndex, int columnIndex)
     {
-        string columnName = ExcelCellAddress.GetColumnLetter(columnIndex);
+        string columnName = XLHelper.GetColumnLetterFromNumber(columnIndex);
 
         string cellReference = $"{columnName}{rowIndex}";
 

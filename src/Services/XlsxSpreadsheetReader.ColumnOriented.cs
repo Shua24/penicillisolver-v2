@@ -1,7 +1,7 @@
 namespace penicillisolver_v2.Services;
 
 using Microsoft.Extensions.Localization;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.ValueObjects;
 
@@ -28,7 +28,7 @@ public static partial class XlsxSpreadsheetReader
     /// Parses the antibiotics-as-columns layout of a worksheet.
     /// </summary>
     private static SpreadsheetImportResult ParseColumnOriented(
-        ExcelWorksheet worksheet,
+        IXLWorksheet worksheet,
         string originalFileName,
         SpreadsheetOrientation orientation,
         int rowCount,
@@ -109,7 +109,7 @@ public static partial class XlsxSpreadsheetReader
     /// cannot be accepted.
     /// </summary>
     private static SpreadsheetImportResult? CollectColumnOrientedMeasurements(
-        ExcelWorksheet worksheet,
+        IXLWorksheet worksheet,
         int rowIndex,
         string organismName,
         List<int> antibioticColumnIndexes,

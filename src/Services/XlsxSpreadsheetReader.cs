@@ -1,15 +1,15 @@
 namespace penicillisolver_v2.Services;
 
 using System.Globalization;
+using ClosedXML.Excel;
 using Microsoft.Extensions.Localization;
-using OfficeOpenXml;
 using penicillisolver_v2.Domain.Enums;
 using penicillisolver_v2.Domain.Services;
 using penicillisolver_v2.Domain.ValueObjects;
 
 /// <summary>
 /// Reads an xlsx workbook into a <see cref="SpreadsheetDocument"/>, using the
-/// first worksheet only. EPPlus exposes cells as typed values, so a numeric
+/// first worksheet only. ClosedXML exposes cells as typed values, so a numeric
 /// susceptibility cell arrives as a number while the antibiotic header arrives
 /// as text; both are read through their text form so one parsing rule covers
 /// every cell.
@@ -22,11 +22,6 @@ using penicillisolver_v2.Domain.ValueObjects;
 public static partial class XlsxSpreadsheetReader
 {
     /// <summary>
-    /// The licence attribution EPPlus records when a workbook is opened.
-    /// </summary>
-    private const string LicenseAttribution = "PenicilliSolver";
-
-    /// <summary>
     /// Reads an xlsx file from disk and parses it into a document.
     /// </summary>
     /// <param name="originalFileName">The file name exactly as the uploader supplied it.</param>
@@ -35,15 +30,11 @@ public static partial class XlsxSpreadsheetReader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(originalFileName);
 
-        ExcelPackage.License.SetNonCommercialPersonal(LicenseAttribution);
-
         try
         {
-            FileInfo packageFile = new FileInfo(originalFileName);
+            using XLWorkbook workbook = new XLWorkbook(originalFileName);
 
-            using ExcelPackage package = new ExcelPackage(packageFile);
-
-            return ReadFirstWorksheet(package, originalFileName, localizer);
+            return ReadFirstWorksheet(workbook, originalFileName, localizer);
         }
         catch (IOException exception)
         {
@@ -60,32 +51,39 @@ public static partial class XlsxSpreadsheetReader
             return SpreadsheetImportResult.Failure(
                 localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
         }
+        catch (FileFormatException exception)
+        {
+            return SpreadsheetImportResult.Failure(
+                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
+        }
     }
 
     /// <summary>
     /// Reads the first worksheet of an opened workbook into a document.
     /// </summary>
     private static SpreadsheetImportResult ReadFirstWorksheet(
-        ExcelPackage package,
+        XLWorkbook workbook,
         string originalFileName,
         IStringLocalizer localizer)
     {
-        if (package.Workbook.Worksheets.Count == 0)
+        if (workbook.Worksheets.Count == 0)
         {
             return SpreadsheetImportResult.Failure(
                 localizer["Service_WorkbookContainsNoWorksheet", originalFileName]);
         }
 
-        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
+        IXLWorksheet worksheet = workbook.Worksheet(1);
 
-        if (worksheet.Dimension is null)
+        IXLRange? usedRange = worksheet.RangeUsed();
+
+        if (usedRange is null)
         {
             return SpreadsheetImportResult.Failure(
                 localizer["Service_XlsxWorksheetEmpty", worksheet.Name, originalFileName]);
         }
 
-        int rowCount = worksheet.Dimension.End.Row;
-        int columnCount = worksheet.Dimension.End.Column;
+        int rowCount = usedRange.LastRow().RowNumber();
+        int columnCount = usedRange.LastColumn().ColumnNumber();
 
         List<string> headerCells = ReadHeaderCells(worksheet, columnCount);
 
@@ -116,7 +114,7 @@ public static partial class XlsxSpreadsheetReader
     /// <summary>
     /// Reads the first row into a list of trimmed cell texts.
     /// </summary>
-    private static List<string> ReadHeaderCells(ExcelWorksheet worksheet, int columnCount)
+    private static List<string> ReadHeaderCells(IXLWorksheet worksheet, int columnCount)
     {
         List<string> headerCells = new List<string>();
 
@@ -134,21 +132,21 @@ public static partial class XlsxSpreadsheetReader
     /// Reads one cell as trimmed display text, never null.
     /// </summary>
     private static string ReadCellText(
-        ExcelWorksheet worksheet,
+        IXLWorksheet worksheet,
         int rowIndex,
         int columnIndex)
     {
-        ExcelRange cell = worksheet.Cells[rowIndex, columnIndex];
+        IXLCell cell = worksheet.Cell(rowIndex, columnIndex);
 
         string cellText;
 
-        if (cell.Value is null)
+        if (cell.Value.IsBlank)
         {
             cellText = string.Empty;
         }
         else
         {
-            cellText = cell.Text;
+            cellText = cell.GetFormattedString();
         }
 
         string trimmedText = cellText.Trim();
