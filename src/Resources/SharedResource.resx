@@ -89,6 +89,35 @@
   <data name="Status_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
   <data name="Status_SessionExpired" xml:space="preserve"><value>Error: your session has expired. Sign in again and retry.</value></data>
 
+  <!--
+    Identity framework error messages. Every one of these is produced by
+    LocalizedIdentityErrorDescriber, which replaces the framework's English-only
+    IdentityErrorDescriber. The keys are named after the IdentityError.Code the
+    framework sets, so a code and its sentence are always found together.
+  -->
+  <data name="Identity_DefaultError" xml:space="preserve"><value>An unknown failure has occurred.</value></data>
+  <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>This record was changed by another process. Reload the page and try again.</value></data>
+  <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Incorrect password.</value></data>
+  <data name="Identity_InvalidToken" xml:space="preserve"><value>Invalid token.</value></data>
+  <data name="Identity_LoginAlreadyAssociated" xml:space="preserve"><value>An account with this sign-in already exists.</value></data>
+  <data name="Identity_InvalidUserName" xml:space="preserve"><value>The user name '{0}' is invalid; it may only contain letters or digits.</value></data>
+  <data name="Identity_InvalidEmail" xml:space="preserve"><value>The email '{0}' is invalid.</value></data>
+  <data name="Identity_DuplicateUserName" xml:space="preserve"><value>The user name '{0}' is already taken.</value></data>
+  <data name="Identity_DuplicateEmail" xml:space="preserve"><value>The email '{0}' is already registered.</value></data>
+  <data name="Identity_InvalidRoleName" xml:space="preserve"><value>The role name '{0}' is invalid.</value></data>
+  <data name="Identity_DuplicateRoleName" xml:space="preserve"><value>The role name '{0}' is already taken.</value></data>
+  <data name="Identity_UserAlreadyHasPassword" xml:space="preserve"><value>This account already has a password.</value></data>
+  <data name="Identity_UserLockoutNotEnabled" xml:space="preserve"><value>Lockout is not enabled for this account.</value></data>
+  <data name="Identity_UserAlreadyInRole" xml:space="preserve"><value>This account already holds the '{0}' role.</value></data>
+  <data name="Identity_UserNotInRole" xml:space="preserve"><value>This account does not hold the '{0}' role.</value></data>
+  <data name="Identity_PasswordTooShort" xml:space="preserve"><value>The password must be at least {0} characters long.</value></data>
+  <data name="Identity_PasswordRequiresNonAlphanumeric" xml:space="preserve"><value>The password must contain at least one non-alphanumeric character.</value></data>
+  <data name="Identity_PasswordRequiresDigit" xml:space="preserve"><value>The password must contain at least one digit ('0'-'9').</value></data>
+  <data name="Identity_PasswordRequiresLower" xml:space="preserve"><value>The password must contain at least one lowercase letter ('a'-'z').</value></data>
+  <data name="Identity_PasswordRequiresUpper" xml:space="preserve"><value>The password must contain at least one uppercase letter ('A'-'Z').</value></data>
+  <data name="Identity_PasswordRequiresUniqueChars" xml:space="preserve"><value>The password must use at least {0} different characters.</value></data>
+  <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>The recovery code could not be used.</value></data>
+
   <!-- Home page -->
   <data name="Home_Intro" xml:space="preserve"><value>Antimicrobial resistance data for the laboratory, shared from one reference spreadsheet. Every reader sees the same file.</value></data>
   <data name="Home_SignInHeading" xml:space="preserve"><value>Sign in to continue</value></data>
@@ -280,6 +309,8 @@
   <data name="Mappings_RemoveDialogBodyCurrent" xml:space="preserve"><value>Remove the meaning of {0} (currently {1}) — the abbreviation will show as unmapped.</value></data>
   <data name="Mappings_RemoveDialogConfirm" xml:space="preserve"><value>Yes, remove it</value></data>
   <data name="Mappings_RemoveDialogCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Mappings_SavedCount" xml:space="preserve"><value>Mappings saved: {0}</value></data>
+  <data name="Mappings_SavedWithFailures" xml:space="preserve"><value>{0} saved, {1} could not be saved. {2}</value></data>
 
   <!-- User and team settings page -->
   <data name="Settings_Title" xml:space="preserve"><value>User and team settings</value></data>
@@ -311,6 +342,16 @@
   <data name="Role_OtherDoctor" xml:space="preserve"><value>Doctor</value></data>
   <data name="Role_InfectiousDiseaseControlTeam" xml:space="preserve"><value>Infectious Disease Control Team</value></data>
 
+  <!--
+    Account state words. These are substituted into a sentence template rather
+    than written out as whole sentences, so the sentence structure lives in one
+    place and a language that orders the clause differently only rewrites the
+    template, not every combination of account and state.
+  -->
+  <data name="State_Active" xml:space="preserve"><value>active</value></data>
+  <data name="State_Disabled" xml:space="preserve"><value>disabled</value></data>
+  <data name="State_Pending" xml:space="preserve"><value>pending</value></data>
+
   <!-- Service layer: antibiotic abbreviation mappings -->
   <data name="Service_MappingEnterAbbreviation" xml:space="preserve"><value>Enter the abbreviation to map.</value></data>
   <data name="Service_MappingEnterFullName" xml:space="preserve"><value>Enter the full name the abbreviation stands for.</value></data>
@@ -324,8 +365,10 @@
   <data name="Service_MappingRemoved" xml:space="preserve"><value>Removed the mapping for '{0}'.</value></data>
   <data name="Service_MappingNothingChanged" xml:space="preserve"><value>Nothing has changed since the last save.</value></data>
   <data name="Service_MappingNothingToRemove" xml:space="preserve"><value>That abbreviation has no meaning to remove.</value></data>
+  <data name="Service_Allowed" xml:space="preserve"><value>Allowed.</value></data>
+  <data name="Service_OnlyPathologistMayMap" xml:space="preserve"><value>Only a clinical pathologist may create, edit, or delete antibiotic mappings.</value></data>
 
-  <!-- Service layer: user administration (translatable, role-free sentences) -->
+  <!-- Service layer: user administration -->
   <data name="Service_AccountNoLongerExists" xml:space="preserve"><value>That account no longer exists.</value></data>
   <data name="Service_RoleNotRecognised" xml:space="preserve"><value>'{0}' is not a recognised role.</value></data>
   <data name="Service_CannotReturnToPending" xml:space="preserve"><value>An account cannot be returned to the pending state.</value></data>
@@ -340,6 +383,16 @@
   <data name="Service_RoleRemoved" xml:space="preserve"><value>Role removed.</value></data>
   <data name="Service_IdentityFailuresPrefix" xml:space="preserve"><value>The change could not be saved: {0}.</value></data>
   <data name="Service_UnableToLoadUser" xml:space="preserve"><value>Error: Unable to load user with ID '{0}'.</value></data>
+  <data name="Service_ThatAccount" xml:space="preserve"><value>That account</value></data>
+  <data name="Service_GuardNotPathologist" xml:space="preserve"><value>The change does not affect the last pathologist.</value></data>
+  <data name="Service_GuardAnotherRemains" xml:space="preserve"><value>Another active pathologist remains.</value></data>
+  <data name="Service_LastPathologistRoleChange" xml:space="preserve"><value>This is the last active clinical pathologist. Disabling this account or changing its role would leave nobody able to manage users or the spreadsheet.</value></data>
+  <data name="Service_LastPathologistDelete" xml:space="preserve"><value>This is the last active clinical pathologist. Deleting this account would leave nobody able to manage users or the spreadsheet.</value></data>
+  <data name="Service_OnlyPathologistMayAdminister" xml:space="preserve"><value>Only a clinical pathologist may change roles, account states or team permissions.</value></data>
+  <data name="Service_RoleAlreadyHeld" xml:space="preserve"><value>{0} already holds the {1} role.</value></data>
+  <data name="Service_RoleChanged" xml:space="preserve"><value>{0}'s role is now {1}.</value></data>
+  <data name="Service_StateAlreadySet" xml:space="preserve"><value>{0} is already {1}.</value></data>
+  <data name="Service_StateChanged" xml:space="preserve"><value>{0} is now {1}.</value></data>
 
   <!-- Service layer: spreadsheet upload and readers -->
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' is not a supported spreadsheet. Upload a .csv or .xlsx file.</value></data>

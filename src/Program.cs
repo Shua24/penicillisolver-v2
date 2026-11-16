@@ -92,7 +92,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    // Every message an IdentityResult carries is authored by IdentityErrorDescriber,
+    // so replacing the describer translates the registration page, the
+    // change-password page and the user administration service at once. Without
+    // this, a weak password renders the framework's English sentence in an
+    // otherwise Indonesian interface.
+    .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
 // Adds the account status claim to every issued principal. This is what makes
 // the pending gate work: a pending account carries a status claim that no

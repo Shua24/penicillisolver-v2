@@ -237,7 +237,7 @@ public partial class AntibioticMapping
         if (failedCount == 0)
         {
             statusSucceeded = true;
-            statusMessage = $"{succeededCount} meaning{(succeededCount == 1 ? "" : "s")} saved.";
+            statusMessage = Localizer["Mappings_SavedCount", succeededCount];
             return;
         }
 
@@ -246,7 +246,11 @@ public partial class AntibioticMapping
             .Where(result => !result.Succeeded)
             .Select(result => result.Message));
 
-        statusMessage = $"{succeededCount} saved, {failedCount} could not be saved. {failureDetail}";
+        statusMessage = Localizer[
+            "Mappings_SavedWithFailures",
+            succeededCount,
+            failedCount,
+            failureDetail];
     }
 
     /// <summary>

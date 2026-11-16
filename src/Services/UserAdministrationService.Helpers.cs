@@ -33,12 +33,8 @@ public sealed partial class UserAdministrationService
         {
             // The account is not an active pathologist, so its removal from
             // that pool cannot change the count.
-            //
-            // This message and the two below are deliberately NOT localised:
-            // each one names a role, and role names are a UI display concern.
-            // See the localisation boundary note on UserAdministrationService.
             AdministrationResult permittedResult =
-                AdministrationResult.Success("The change does not affect the last pathologist.");
+                AdministrationResult.Success(Localizer["Service_GuardNotPathologist"]);
 
             return permittedResult;
         }
@@ -50,16 +46,12 @@ public sealed partial class UserAdministrationService
 
         if (survivingPathologistCount == 0)
         {
-            // Deliberately English: this sentence names a role. See the
-            // localisation boundary note on UserAdministrationService.
             return AdministrationResult.Failure(
-                "This is the last active clinical pathologist. Disabling or changing this " +
-                "account's role would leave nobody able to manage users or the spreadsheet.");
+                Localizer["Service_LastPathologistRoleChange"]);
         }
 
-        // Deliberately English: names a role.
         AdministrationResult allowedResult =
-            AdministrationResult.Success("Another active pathologist remains.");
+            AdministrationResult.Success(Localizer["Service_GuardAnotherRemains"]);
 
         return allowedResult;
     }
@@ -130,9 +122,8 @@ public sealed partial class UserAdministrationService
 
         if (!holdsPathologistRole)
         {
-            // Deliberately English: names a role.
             return AdministrationResult.Failure(
-                "Only a clinical pathologist may change roles, account states or team permissions.");
+                Localizer["Service_OnlyPathologistMayAdminister"]);
         }
 
         AdministrationResult authorizedResult =
@@ -201,7 +192,7 @@ public sealed partial class UserAdministrationService
     /// <summary>
     /// Produces the display label for an account.
     /// </summary>
-    private static string DisplayNameOf(ApplicationUser user)
+    private string DisplayNameOf(ApplicationUser user)
     {
         if (!string.IsNullOrWhiteSpace(user.DisplayName))
         {
@@ -213,31 +204,32 @@ public sealed partial class UserAdministrationService
             return user.Email;
         }
 
-        return "That account";
+        return Localizer["Service_ThatAccount"];
     }
 
     /// <summary>
     /// Produces the lower case human wording for an account state.
     /// </summary>
-    private static string DescribeState(AccountStatus accountStatus)
+    private string DescribeState(AccountStatus accountStatus)
     {
         if (accountStatus == AccountStatus.Active)
         {
-            return "active";
+            return Localizer["State_Active"];
         }
 
         if (accountStatus == AccountStatus.Disabled)
         {
-            return "disabled";
+            return Localizer["State_Disabled"];
         }
 
-        return "pending";
+        return Localizer["State_Pending"];
     }
 
     /// <summary>
-    /// Flattens identity failures into one user facing sentence. The prefix is
-    /// localised; the identity error descriptions themselves come from the
-    /// framework and are not localisable here.
+    /// Flattens identity failures into one user facing sentence. Both halves are
+    /// localised: the descriptions come from
+    /// <see cref="LocalizedIdentityErrorDescriber"/>, which replaced the
+    /// framework's English-only describer, and the prefix is a resource key.
     /// </summary>
     private string DescribeIdentityFailures(IdentityResult identityResult)
     {

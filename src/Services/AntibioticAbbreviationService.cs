@@ -231,12 +231,9 @@ public sealed partial class AntibioticAbbreviationService
 
         if (authorizationResult.Succeeded)
         {
-            return WriteResult.Success("Allowed.");
+            return WriteResult.Success(localizer["Service_Allowed"]);
         }
 
-        // Deliberately English: names a role. Role names are a UI display
-        // concern, localised at the Razor call site, not here.
-        return WriteResult.Failure(
-            "Only a clinical pathologist may create, edit, or delete antibiotic mappings.");
+        return WriteResult.Failure(localizer["Service_OnlyPathologistMayMap"]);
     }
 }

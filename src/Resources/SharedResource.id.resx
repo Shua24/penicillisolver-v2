@@ -86,6 +86,36 @@
   <data name="Status_ErrorPrefix" xml:space="preserve"><value>Error: </value></data>
   <data name="Status_SessionExpired" xml:space="preserve"><value>Error: sesi Anda telah berakhir. Masuk kembali lalu coba lagi.</value></data>
 
+  <!--
+    Pesan error dari kerangka Identity. Semuanya dihasilkan oleh
+    LocalizedIdentityErrorDescriber, yang menggantikan IdentityErrorDescriber
+    bawaan kerangka yang hanya berbahasa Inggris. Nama kunci mengikuti
+    IdentityError.Code yang ditetapkan kerangka, sehingga kode dan kalimatnya
+    selalu ditemukan bersama.
+  -->
+  <data name="Identity_DefaultError" xml:space="preserve"><value>Terjadi kesalahan yang tidak diketahui.</value></data>
+  <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>Data ini telah diubah oleh proses lain. Muat ulang halaman lalu coba lagi.</value></data>
+  <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Kata sandi salah.</value></data>
+  <data name="Identity_InvalidToken" xml:space="preserve"><value>Token tidak valid.</value></data>
+  <data name="Identity_LoginAlreadyAssociated" xml:space="preserve"><value>Akun dengan kredensial masuk ini sudah ada.</value></data>
+  <data name="Identity_InvalidUserName" xml:space="preserve"><value>Nama pengguna '{0}' tidak valid; hanya boleh berisi huruf atau angka.</value></data>
+  <data name="Identity_InvalidEmail" xml:space="preserve"><value>Surel '{0}' tidak valid.</value></data>
+  <data name="Identity_DuplicateUserName" xml:space="preserve"><value>Nama pengguna '{0}' sudah dipakai.</value></data>
+  <data name="Identity_DuplicateEmail" xml:space="preserve"><value>Surel '{0}' sudah terdaftar.</value></data>
+  <data name="Identity_InvalidRoleName" xml:space="preserve"><value>Nama peran '{0}' tidak valid.</value></data>
+  <data name="Identity_DuplicateRoleName" xml:space="preserve"><value>Nama peran '{0}' sudah dipakai.</value></data>
+  <data name="Identity_UserAlreadyHasPassword" xml:space="preserve"><value>Akun ini sudah memiliki kata sandi.</value></data>
+  <data name="Identity_UserLockoutNotEnabled" xml:space="preserve"><value>Penguncian tidak diaktifkan untuk akun ini.</value></data>
+  <data name="Identity_UserAlreadyInRole" xml:space="preserve"><value>Akun ini sudah memiliki peran '{0}'.</value></data>
+  <data name="Identity_UserNotInRole" xml:space="preserve"><value>Akun ini tidak memiliki peran '{0}'.</value></data>
+  <data name="Identity_PasswordTooShort" xml:space="preserve"><value>Kata sandi harus minimal {0} karakter.</value></data>
+  <data name="Identity_PasswordRequiresNonAlphanumeric" xml:space="preserve"><value>Kata sandi harus memuat minimal satu karakter non-alfanumerik atau simbol.</value></data>
+  <data name="Identity_PasswordRequiresDigit" xml:space="preserve"><value>Kata sandi harus memuat minimal satu angka ('0'-'9').</value></data>
+  <data name="Identity_PasswordRequiresLower" xml:space="preserve"><value>Kata sandi harus memuat minimal satu huruf kecil ('a'-'z').</value></data>
+  <data name="Identity_PasswordRequiresUpper" xml:space="preserve"><value>Kata sandi harus memuat minimal satu huruf besar ('A'-'Z').</value></data>
+  <data name="Identity_PasswordRequiresUniqueChars" xml:space="preserve"><value>Kata sandi harus memakai minimal {0} karakter berbeda.</value></data>
+  <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>Kode pemulihan tidak dapat digunakan.</value></data>
+
   <!-- Halaman beranda -->
   <data name="Home_Intro" xml:space="preserve"><value>Data antibiogram untuk laboratorium, dibagikan dari satu tabel acuan. Setiap pembaca melihat berkas yang sama.</value></data>
   <data name="Home_SignInHeading" xml:space="preserve"><value>Masuk untuk melanjutkan</value></data>
@@ -277,6 +307,8 @@
   <data name="Mappings_RemoveDialogBodyCurrent" xml:space="preserve"><value>Hapus nama antibiotik dari {0} (saat ini {1}) — singkatan akan ditampilkan sebagai belum dipetakan.</value></data>
   <data name="Mappings_RemoveDialogConfirm" xml:space="preserve"><value>Ya, hapus</value></data>
   <data name="Mappings_RemoveDialogCancel" xml:space="preserve"><value>Batal</value></data>
+  <data name="Mappings_SavedCount" xml:space="preserve"><value>Pemetaan tersimpan: {0}</value></data>
+  <data name="Mappings_SavedWithFailures" xml:space="preserve"><value>{0} tersimpan, {1} gagal disimpan. {2}</value></data>
 
   <!-- Halaman pengaturan tim -->
   <data name="Settings_Title" xml:space="preserve"><value>Pengaturan tim</value></data>
@@ -308,6 +340,16 @@
   <data name="Role_OtherDoctor" xml:space="preserve"><value>Dokter</value></data>
   <data name="Role_InfectiousDiseaseControlTeam" xml:space="preserve"><value>Tim Pengendalian Penyakit Infeksi</value></data>
 
+  <!--
+    Kata status akun. Kata-kata ini disubstitusikan ke dalam templat kalimat,
+    bukan ditulis sebagai kalimat utuh, sehingga struktur kalimat hanya ada di
+    satu tempat dan bahasa yang urutan klausanya berbeda cukup menulis ulang
+    templatnya, bukan setiap kombinasi akun dan status.
+  -->
+  <data name="State_Active" xml:space="preserve"><value>aktif</value></data>
+  <data name="State_Disabled" xml:space="preserve"><value>nonaktif</value></data>
+  <data name="State_Pending" xml:space="preserve"><value>menunggu</value></data>
+
   <!-- Lapisan layanan: pemetaan singkatan antibiotik -->
   <data name="Service_MappingEnterAbbreviation" xml:space="preserve"><value>Masukkan singkatan yang akan dipetakan.</value></data>
   <data name="Service_MappingEnterFullName" xml:space="preserve"><value>Masukkan nama lengkap yang diwakili singkatan tersebut.</value></data>
@@ -321,8 +363,10 @@
   <data name="Service_MappingRemoved" xml:space="preserve"><value>Menghapus pemetaan untuk '{0}'.</value></data>
   <data name="Service_MappingNothingChanged" xml:space="preserve"><value>Tidak ada yang berubah sejak penyimpanan terakhir.</value></data>
   <data name="Service_MappingNothingToRemove" xml:space="preserve"><value>Singkatan tersebut tidak memiliki nama antibiotik untuk dihapus.</value></data>
+  <data name="Service_Allowed" xml:space="preserve"><value>Diizinkan.</value></data>
+  <data name="Service_OnlyPathologistMayMap" xml:space="preserve"><value>Hanya dokter spesialis patologi klinik yang boleh menambah, mengubah, atau menghapus pemetaan antibiotik.</value></data>
 
-  <!-- Lapisan layanan: administrasi pengguna (kalimat tanpa peran) -->
+  <!-- Lapisan layanan: administrasi pengguna -->
   <data name="Service_AccountNoLongerExists" xml:space="preserve"><value>Akun tersebut sudah tidak ada.</value></data>
   <data name="Service_RoleNotRecognised" xml:space="preserve"><value>'{0}' bukan peran yang dikenali.</value></data>
   <data name="Service_CannotReturnToPending" xml:space="preserve"><value>Akun tidak dapat dikembalikan ke status menunggu.</value></data>
@@ -337,6 +381,16 @@
   <data name="Service_RoleRemoved" xml:space="preserve"><value>Peran dihapus.</value></data>
   <data name="Service_IdentityFailuresPrefix" xml:space="preserve"><value>Perubahan tidak dapat disimpan: {0}.</value></data>
   <data name="Service_UnableToLoadUser" xml:space="preserve"><value>Error: Tidak dapat memuat pengguna dengan ID '{0}'.</value></data>
+  <data name="Service_ThatAccount" xml:space="preserve"><value>Akun tersebut</value></data>
+  <data name="Service_GuardNotPathologist" xml:space="preserve"><value>Perubahan ini tidak memengaruhi dokter patologi terakhir.</value></data>
+  <data name="Service_GuardAnotherRemains" xml:space="preserve"><value>Masih ada dokter patologi aktif lainnya.</value></data>
+  <data name="Service_LastPathologistRoleChange" xml:space="preserve"><value>Ini adalah dokter spesialis patologi klinik aktif terakhir. Menonaktifkan akun ini atau mengubah perannya akan membuat tidak ada yang dapat mengelola pengguna maupun tabel.</value></data>
+  <data name="Service_LastPathologistDelete" xml:space="preserve"><value>Ini adalah dokter spesialis patologi klinik aktif terakhir. Menghapus akun ini akan membuat tidak ada yang dapat mengelola pengguna maupun tabel.</value></data>
+  <data name="Service_OnlyPathologistMayAdminister" xml:space="preserve"><value>Hanya dokter spesialis patologi klinik yang boleh mengubah peran, status akun, atau izin tim.</value></data>
+  <data name="Service_RoleAlreadyHeld" xml:space="preserve"><value>{0} sudah memiliki peran {1}.</value></data>
+  <data name="Service_RoleChanged" xml:space="preserve"><value>Peran {0} sekarang {1}.</value></data>
+  <data name="Service_StateAlreadySet" xml:space="preserve"><value>{0} sudah {1}.</value></data>
+  <data name="Service_StateChanged" xml:space="preserve"><value>{0} sekarang {1}.</value></data>
 
   <!-- Lapisan layanan: unggahan tabel dan pembaca berkas -->
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .xlsx.</value></data>
