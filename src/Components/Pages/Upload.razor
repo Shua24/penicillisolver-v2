@@ -15,6 +15,7 @@
 @inject SpreadsheetQueryService QueryService
 @inject AntibioticAbbreviationService AbbreviationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<Upload> Logger
 
 @* The accept attribute is a convenience for the file picker only. The server
    re-validates the extension through SpreadsheetFormatResolver, because a
@@ -271,9 +272,14 @@ else
         catch (InvalidOperationException exception)
         {
             // InputFile raises this when the file exceeds the permitted size.
-            // Reflect the configured limit rather than the browser's message.
-            statusMessage =
-                $"{Localizer["Upload_FileTooLargeForPicker"]} ({exception.Message})";
+            // Its message is the browser's English text, which belongs in the
+            // log: the localized sentence already says what happened, and the
+            // banner is the one place a technician reads.
+            Logger.LogWarning(
+                exception,
+                "The picked file could not be opened for reading.");
+
+            statusMessage = Localizer["Upload_FileTooLargeForPicker"];
             statusFailed = true;
         }
         finally

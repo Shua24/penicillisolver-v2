@@ -118,6 +118,37 @@
   <data name="Identity_PasswordRequiresUniqueChars" xml:space="preserve"><value>The password must use at least {0} different characters.</value></data>
   <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>The recovery code could not be used.</value></data>
 
+  <!--
+    Validation messages. These are produced by the attributes under
+    Components/Account/Validation/, which replace the framework's English-only
+    DataAnnotations attributes.
+
+    Every template starts with a word, never with {0}, and every Field_ value is
+    lowercase. That is what lets one template name two fields: "The {0} and {1}
+    fields do not match" needs no case juggling, where "{0} and {1} do not match"
+    would capitalise the field name that happens to land mid-sentence. A
+    capitalised Field_ value would therefore read wrong, not break, so keep them
+    lowercase.
+
+    Field_* keys are looked up by convention: the property name with a Field_
+    prefix. A property with no Field_ key falls back to its own name, so a new
+    field reads as "The Password field is required." instead of breaking, but
+    adding the key is what makes it read as a person would say it.
+  -->
+  <data name="Validation_Required" xml:space="preserve"><value>The {0} field is required.</value></data>
+  <data name="Validation_EmailAddress" xml:space="preserve"><value>The {0} field is not valid.</value></data>
+  <data name="Validation_MaximumLength" xml:space="preserve"><value>The {0} field must be at most {1} characters long.</value></data>
+  <data name="Validation_LengthRange" xml:space="preserve"><value>The {0} field must be between {1} and {2} characters long.</value></data>
+  <data name="Validation_Compare" xml:space="preserve"><value>The {0} and {1} fields do not match.</value></data>
+  <data name="Field_DisplayName" xml:space="preserve"><value>display name</value></data>
+  <data name="Field_Email" xml:space="preserve"><value>email</value></data>
+  <data name="Field_RequestedRole" xml:space="preserve"><value>requested role</value></data>
+  <data name="Field_Password" xml:space="preserve"><value>password</value></data>
+  <data name="Field_ConfirmPassword" xml:space="preserve"><value>confirm password</value></data>
+  <data name="Field_CurrentPassword" xml:space="preserve"><value>current password</value></data>
+  <data name="Field_NewPassword" xml:space="preserve"><value>new password</value></data>
+  <data name="Field_ConfirmationText" xml:space="preserve"><value>confirmation text</value></data>
+
   <!-- Home page -->
   <data name="Home_Intro" xml:space="preserve"><value>Antimicrobial resistance data for the laboratory, shared from one reference spreadsheet. Every reader sees the same file.</value></data>
   <data name="Home_SignInHeading" xml:space="preserve"><value>Sign in to continue</value></data>
@@ -205,9 +236,6 @@
   <data name="Register_ConfirmPasswordLabel" xml:space="preserve"><value>Confirm password</value></data>
   <data name="Register_Submit" xml:space="preserve"><value>Register</value></data>
   <data name="Register_CreatedAwaitingActivation" xml:space="preserve"><value>Your account has been created and is awaiting activation by a clinical pathologist.</value></data>
-  <data name="Register_DisplayNameMaxLength" xml:space="preserve"><value>The {0} must be at most {1} characters long.</value></data>
-  <data name="Register_PasswordLength" xml:space="preserve"><value>The {0} must be at least {2} and at max {1} characters long.</value></data>
-  <data name="Register_PasswordsDoNotMatch" xml:space="preserve"><value>The password and confirmation password do not match.</value></data>
 
   <!-- Delete my account -->
   <data name="DeleteAccount_Title" xml:space="preserve"><value>Delete my account</value></data>
@@ -398,8 +426,8 @@
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' is not a supported spreadsheet. Upload a .csv or .xlsx file.</value></data>
   <data name="Service_UploadSucceeded" xml:space="preserve"><value>Uploaded '{0}' ({1} organisms, {2} antibiotics). It is now the current spreadsheet.</value></data>
   <data name="Service_FileTooLarge" xml:space="preserve"><value>The file is {0} MB, which exceeds the maximum upload size of {1} MB.</value></data>
-  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>The file '{0}' could not be read: {1}</value></data>
-  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>The file '{0}' could not be opened: {1}</value></data>
+  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>The file '{0}' could not be read.</value></data>
+  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>The file '{0}' could not be opened.</value></data>
   <data name="Service_UploadStorageFailure" xml:space="preserve"><value>The spreadsheet could not be saved. The spreadsheet already in use has not been changed. Please try again. If this keeps happening, ask your system administrator to check that the server has free disk space and that the spreadsheet folder is writable.</value></data>
   <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>The file '{0}' does not contain an organism header row and data rows.</value></data>
   <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>The file '{0}' does not name any organism in its header row.</value></data>
@@ -407,9 +435,9 @@
   <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any organism in its header row.</value></data>
   <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>The worksheet '{0}' in '{1}' does not name any antibiotic in its header row.</value></data>
   <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>The worksheet '{0}' in '{1}' could not be interpreted as either a row oriented or a column oriented table.</value></data>
-  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>The file '{0}' contains a malformed line: {1}</value></data>
+  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>The file '{0}' contains a malformed line.</value></data>
   <data name="Service_FileContainsNoRows" xml:space="preserve"><value>The file '{0}' contains no rows.</value></data>
-  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>The file '{0}' is not a valid xlsx workbook: {1}</value></data>
+  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>The file '{0}' is not a valid xlsx workbook.</value></data>
   <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>The workbook '{0}' contains no worksheet.</value></data>
   <data name="Service_CellValueNotANumber" xml:space="preserve"><value>The value '{0}' at {1} is not a number.</value></data>
   <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>The value '{0}' at {1} is outside the permitted range of 0 to 100.</value></data>

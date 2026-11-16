@@ -32,29 +32,40 @@ public static partial class XlsxSpreadsheetReader
 
         try
         {
-            using XLWorkbook workbook = new XLWorkbook(originalFileName);
+            // Opened through a stream on purpose. XLWorkbook(string) infers the
+            // format from the file extension, and the upload pipeline stages
+            // every file as "{guid}.incoming", so the path based constructor
+            // rejected every xlsx upload with "Extension 'incoming' is not
+            // supported" before it read a byte. A stream carries no extension to
+            // guess from, so the staging name stops mattering.
+            using FileStream fileStream = File.OpenRead(originalFileName);
+            using XLWorkbook workbook = new XLWorkbook(fileStream);
 
             return ReadFirstWorksheet(workbook, originalFileName, localizer);
         }
         catch (IOException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeRead", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeRead", originalFileName],
+                exception);
         }
         catch (UnauthorizedAccessException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeOpened", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeOpened", originalFileName],
+                exception);
         }
         catch (InvalidDataException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
         }
         catch (FileFormatException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
         }
     }
 

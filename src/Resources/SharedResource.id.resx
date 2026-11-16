@@ -116,6 +116,37 @@
   <data name="Identity_PasswordRequiresUniqueChars" xml:space="preserve"><value>Kata sandi harus memakai minimal {0} karakter berbeda.</value></data>
   <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>Kode pemulihan tidak dapat digunakan.</value></data>
 
+  <!--
+    Pesan validasi. Dihasilkan oleh atribut di Components/Account/Validation/,
+    yang menggantikan atribut DataAnnotations bawaan kerangka yang hanya
+    berbahasa Inggris.
+
+    Setiap templat dimulai dengan kata, tidak pernah dengan {0}, dan setiap nilai
+    Field_ ditulis huruf kecil. Itulah yang memungkinkan satu templat menyebut
+    dua kolom: "Kolom {0} dan {1} tidak cocok" tidak perlu mengatur huruf besar,
+    sedangkan "{0} dan {1} tidak cocok" akan membuat nama kolom yang jatuh di
+    tengah kalimat ikut berhuruf besar. Jadi nilai Field_ yang berhuruf besar
+    akan terbaca salah, bukan gagal, sehingga harus tetap huruf kecil.
+
+    Kunci Field_ dicari berdasarkan konvensi: nama properti dengan awalan Field_.
+    Properti tanpa kunci Field_ akan memakai namanya sendiri, sehingga kolom baru
+    tetap terbaca dan tidak kosong, tetapi menambahkan kuncinya itulah yang
+    membuat kalimatnya terdengar wajar.
+  -->
+  <data name="Validation_Required" xml:space="preserve"><value>Kolom {0} wajib diisi.</value></data>
+  <data name="Validation_EmailAddress" xml:space="preserve"><value>Kolom {0} tidak valid.</value></data>
+  <data name="Validation_MaximumLength" xml:space="preserve"><value>Kolom {0} paling banyak {1} karakter.</value></data>
+  <data name="Validation_LengthRange" xml:space="preserve"><value>Kolom {0} harus antara {1} hingga {2} karakter.</value></data>
+  <data name="Validation_Compare" xml:space="preserve"><value>Kolom {0} dan {1} tidak cocok.</value></data>
+  <data name="Field_DisplayName" xml:space="preserve"><value>nama tampilan</value></data>
+  <data name="Field_Email" xml:space="preserve"><value>surel</value></data>
+  <data name="Field_RequestedRole" xml:space="preserve"><value>peran yang diminta</value></data>
+  <data name="Field_Password" xml:space="preserve"><value>kata sandi</value></data>
+  <data name="Field_ConfirmPassword" xml:space="preserve"><value>konfirmasi kata sandi</value></data>
+  <data name="Field_CurrentPassword" xml:space="preserve"><value>kata sandi saat ini</value></data>
+  <data name="Field_NewPassword" xml:space="preserve"><value>kata sandi baru</value></data>
+  <data name="Field_ConfirmationText" xml:space="preserve"><value>teks konfirmasi</value></data>
+
   <!-- Halaman beranda -->
   <data name="Home_Intro" xml:space="preserve"><value>Data antibiogram untuk laboratorium, dibagikan dari satu tabel acuan. Setiap pembaca melihat berkas yang sama.</value></data>
   <data name="Home_SignInHeading" xml:space="preserve"><value>Masuk untuk melanjutkan</value></data>
@@ -203,9 +234,6 @@
   <data name="Register_ConfirmPasswordLabel" xml:space="preserve"><value>Konfirmasi kata sandi</value></data>
   <data name="Register_Submit" xml:space="preserve"><value>Daftar</value></data>
   <data name="Register_CreatedAwaitingActivation" xml:space="preserve"><value>Akun Anda telah dibuat dan menunggu aktivasi oleh dokter spesialis patologi klinik.</value></data>
-  <data name="Register_DisplayNameMaxLength" xml:space="preserve"><value>{0} harus paling banyak {1} karakter.</value></data>
-  <data name="Register_PasswordLength" xml:space="preserve"><value>{0} harus antara {2} hingga {1} karakter.</value></data>
-  <data name="Register_PasswordsDoNotMatch" xml:space="preserve"><value>Kata sandi dan konfirmasi kata sandi tidak cocok.</value></data>
 
   <!-- Hapus akun saya -->
   <data name="DeleteAccount_Title" xml:space="preserve"><value>Hapus akun saya</value></data>
@@ -396,8 +424,8 @@
   <data name="Service_UnsupportedSpreadsheet" xml:space="preserve"><value>'{0}' bukan tabel yang didukung. Unggah berkas .csv atau .xlsx.</value></data>
   <data name="Service_UploadSucceeded" xml:space="preserve"><value>Mengunggah '{0}' ({1} organisme, {2} antibiotik). Berkas ini kini menjadi tabel saat ini.</value></data>
   <data name="Service_FileTooLarge" xml:space="preserve"><value>Berkas berukuran {0} MB, melebihi ukuran unggahan maksimum {1} MB.</value></data>
-  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibaca: {1}</value></data>
-  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibuka: {1}</value></data>
+  <data name="Service_FileCouldNotBeRead" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibaca.</value></data>
+  <data name="Service_FileCouldNotBeOpened" xml:space="preserve"><value>Berkas '{0}' tidak dapat dibuka.</value></data>
   <data name="Service_UploadStorageFailure" xml:space="preserve"><value>Tabel tidak dapat disimpan. Tabel yang sedang digunakan tidak berubah. Silakan coba lagi. Jika masalah ini terus terjadi, hubungi admin IT untuk memeriksa ruang penyimpanan server dan izin tulis pada folder tabel.</value></data>
   <data name="Service_CsvMissingHeaderOrRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris tajuk organisme dan baris data.</value></data>
   <data name="Service_CsvNoOrganismInHeader" xml:space="preserve"><value>Berkas '{0}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
@@ -405,9 +433,9 @@
   <data name="Service_XlsxNoOrganismInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai organisme apa pun di baris tajuknya.</value></data>
   <data name="Service_XlsxNoAntibioticInHeader" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak menamai antibiotik apa pun di baris tajuknya.</value></data>
   <data name="Service_WorksheetOrientationNotDetected" xml:space="preserve"><value>Lembar '{0}' dalam '{1}' tidak dapat ditafsirkan sebagai tabel berorientasi baris maupun berorientasi kolom.</value></data>
-  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>Berkas '{0}' memuat baris yang rusak: {1}</value></data>
+  <data name="Service_CsvMalformedLine" xml:space="preserve"><value>Berkas '{0}' memuat baris yang rusak.</value></data>
   <data name="Service_FileContainsNoRows" xml:space="preserve"><value>Berkas '{0}' tidak memuat baris apa pun.</value></data>
-  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>Berkas '{0}' bukan tabel Excel yang valid: {1}</value></data>
+  <data name="Service_NotValidXlsxWorkbook" xml:space="preserve"><value>Berkas '{0}' bukan tabel Excel yang valid.</value></data>
   <data name="Service_WorkbookContainsNoWorksheet" xml:space="preserve"><value>Buku kerja (workbook) '{0}' tidak memuat lembar apa pun.</value></data>
   <data name="Service_CellValueNotANumber" xml:space="preserve"><value>Nilai '{0}' pada {1} bukan angka.</value></data>
   <data name="Service_CellValueOutOfRange" xml:space="preserve"><value>Nilai '{0}' pada {1} berada di luar rentang yang diizinkan, yaitu 0 hingga 100.</value></data>
