@@ -67,6 +67,28 @@ public static partial class XlsxSpreadsheetReader
                 localizer["Service_NotValidXlsxWorkbook", originalFileName],
                 exception);
         }
+        catch (InvalidOperationException exception)
+        {
+            // ClosedXML raises this for an OPC package that declares spreadsheet
+            // content types but has no workbook part. It is malformed input, not
+            // a fault in this reader, and letting it escape takes the Blazor
+            // circuit down instead of showing the reader a sentence.
+            return SpreadsheetImportResult.Failure(
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
+        }
+        catch (NullReferenceException exception)
+        {
+            // ClosedXML raises this for a valid zip archive that is not an OPC
+            // package at all, such as a .zip renamed to .xlsx. Catching a null
+            // reference is normally wrong, but here it is the library's response
+            // to untrusted bytes, and the alternative is an unhandled exception
+            // in the upload circuit. The exception still reaches the log through
+            // FailureCause, so a genuine bug is not hidden.
+            return SpreadsheetImportResult.Failure(
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
+        }
     }
 
     /// <summary>

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.IO.Compression;
+using System.Text;
 
 using penicillisolver_v2.Domain.Constants;
 using penicillisolver_v2.Services;
@@ -78,6 +80,83 @@ public sealed class SpreadsheetReaderFailureMessageTests
         string temporaryPath = WriteTemporaryFile(
             "not-a-workbook.xlsx",
             "this is not a zip archive, let alone a workbook");
+
+        try
+        {
+            SpreadsheetImportResult result = ReadUnderIndonesian(
+                () => XlsxSpreadsheetReader.Read(temporaryPath, TestLocalizerFactory.Localizer));
+
+            AssertFailureComesFrom("Service_NotValidXlsxWorkbook", temporaryPath, result);
+        }
+        finally
+        {
+            DeleteTemporaryFile(temporaryPath);
+        }
+    }
+
+    /// <summary>
+    /// Verifies that a zip archive which is not an OPC package at all is reported
+    /// as an invalid workbook instead of escaping.
+    /// </summary>
+    /// <remarks>
+    /// ClosedXML throws <c>NullReferenceException</c> for this shape. Before the
+    /// catch was added it escaped <c>AcceptUploadAsync</c>, past the upload page's
+    /// <c>catch (InvalidOperationException)</c>, and took the Blazor circuit down,
+    /// so the reader saw a generic error bar instead of a sentence.
+    /// </remarks>
+    [Fact]
+    public void Xlsx_A_zip_that_is_not_a_package_reports_the_resource_sentence_and_keeps_the_cause()
+    {
+        string temporaryPath = WriteTemporaryBytes(
+            "plain-zip.xlsx",
+            CreateZip(("notes.txt", "just a text file in a zip")));
+
+        try
+        {
+            SpreadsheetImportResult result = ReadUnderIndonesian(
+                () => XlsxSpreadsheetReader.Read(temporaryPath, TestLocalizerFactory.Localizer));
+
+            AssertFailureComesFrom("Service_NotValidXlsxWorkbook", temporaryPath, result);
+        }
+        finally
+        {
+            DeleteTemporaryFile(temporaryPath);
+        }
+    }
+
+    /// <summary>
+    /// Verifies that an OPC package declaring spreadsheet content types but
+    /// carrying no workbook part is reported as an invalid workbook instead of
+    /// escaping.
+    /// </summary>
+    /// <remarks>
+    /// ClosedXML throws <c>InvalidOperationException</c> for this shape. It was
+    /// caught by accident further up, by the upload page's size-limit clause, so
+    /// the reader was told the file was too large — a misleading sentence for a
+    /// file that was simply malformed.
+    /// </remarks>
+    [Fact]
+    public void Xlsx_A_package_without_a_workbook_part_reports_the_resource_sentence_and_keeps_the_cause()
+    {
+        string temporaryPath = WriteTemporaryBytes(
+            "workbook-part-missing.xlsx",
+            CreateZip(
+                ("[Content_Types].xml",
+                    """
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                    <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+                      <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+                      <Default Extension="xml" ContentType="application/xml"/>
+                      <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+                    </Types>
+                    """),
+                ("_rels/.rels",
+                    """
+                    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+                    <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+                      <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+                    </Relationships>
+                    """)));
 
         try
         {
@@ -222,6 +301,46 @@ public sealed class SpreadsheetReaderFailureMessageTests
         File.WriteAllText(filePath, content);
 
         return filePath;
+    }
+
+    /// <summary>Writes a temporary file with the supplied bytes.</summary>
+    private static string WriteTemporaryBytes(string fileName, byte[] content)
+    {
+        string directoryPath = Path.Combine(
+            Path.GetTempPath(),
+            $"penicillisolver-reader-{Guid.NewGuid():N}");
+
+        Directory.CreateDirectory(directoryPath);
+
+        string filePath = Path.Combine(directoryPath, fileName);
+
+        File.WriteAllBytes(filePath, content);
+
+        return filePath;
+    }
+
+    /// <summary>
+    /// Builds a zip archive from the supplied entries, so a test can hand the
+    /// reader a package shape that is not a workbook.
+    /// </summary>
+    private static byte[] CreateZip(params (string Name, string Content)[] entries)
+    {
+        using MemoryStream buffer = new();
+
+        using (ZipArchive archive = new(buffer, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach ((string name, string content) in entries)
+            {
+                ZipArchiveEntry entry = archive.CreateEntry(name);
+
+                using Stream entryStream = entry.Open();
+                using StreamWriter writer = new(entryStream, new UTF8Encoding(false));
+
+                writer.Write(content.Trim());
+            }
+        }
+
+        return buffer.ToArray();
     }
 
     /// <summary>Deletes a temporary file and the directory it was written into.</summary>
