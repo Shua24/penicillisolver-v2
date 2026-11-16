@@ -11,6 +11,8 @@ This documentation consists of these sections:
    use the app. No programming knowledge needed.
 2. [**Developer Onboarding**](#2-developer-onboarding) — for engineers who want to build, run,
    and change the code.
+3. [**License**](#3-license) — what you are allowed to do with the code, and why every
+   dependency permits it.
 
 ---
 
@@ -150,12 +152,12 @@ the quoted figures are real outputs, not guesses.
 | Task | Command | Verified result |
 |---|---|---|
 | Build the whole solution | `dotnet build` | `Build succeeded.` · `0 Warning(s)` · `0 Error(s)` |
-| Run all tests | `dotnet test` | `155` unit + `42` integration = **197 passed, 0 failed** |
+| Run all tests | `dotnet test` | `170` unit + `42` integration = **212 passed, 0 failed** |
 | Live dev loop | `dotnet watch run` (or the VS Code "watch" task) | available (SDK `10.0.403`) |
 
 The two test projects are xunit and both live under `tests/`:
 
-- `tests/PenicilliSolver.UnitTests` — 155 tests.
+- `tests/PenicilliSolver.UnitTests` — 170 tests.
 - `tests/PenicilliSolver.IntegrationTests` — 42 tests. They bind the real
   host via `WebApplicationFactory` and redirect the spreadsheet storage
   directory to a temp folder, so a test run writes nothing into
@@ -184,8 +186,8 @@ will otherwise go unnoticed.
 
 The `System.Security.Cryptography.Pkcs` and `System.Security.Cryptography.Xml`
 warnings this repo used to show came from `EPPlus` 8.7.1, which depended on
-version `10.0.10` of both. `EPPlus` 8.7.2 depends on `10.0.13`, where the
-advisories are patched.
+version `10.0.10` of both. `EPPlus` has since been removed entirely (see
+[License](#3-license)), and the current graph reports no vulnerable packages.
 
 ### Database: what happens on first run
 
@@ -420,9 +422,47 @@ These are hard rules for anyone modifying the code — read them before a PR:
 cd ./penicillisolver-v2
 dotnet tool restore          # once: restores dotnet-ef 10.0.12
 dotnet build                 # whole solution
-dotnet test                  # unit + integration, expect 197 passed
+dotnet test                  # unit + integration, expect 212 passed
 ```
 
 > On a fresh clone the first `dotnet build` / `dotnet test` will restore
 > NuGet packages from the network; on this machine the cache is already warm,
 > so the runs above are offline.
+
+---
+
+## 3. License
+
+PenicilliSolver 2 is released under the **BSD 3-Clause License**. The full text
+is in [`LICENSE`](LICENSE).
+
+In short: use it, modify it, deploy it, even sell it — provided you keep the
+copyright notice and the disclaimer, and you do not use the author's name or the
+names of contributors to endorse or promote a derived product without written
+permission. That third clause is the reason this project is not MIT: an
+antibiogram solver is a narrow, specific tool rather than one of many
+interchangeable implementations, so the author keeps the protection against a
+fork being marketed under his name.
+
+Every runtime dependency is permissively licensed, so nothing in the stack
+constrains the project license:
+
+| Package | License |
+|---|---|
+| `Microsoft.EntityFrameworkCore.Sqlite` | MIT |
+| `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | MIT |
+| `Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore` | MIT |
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | PostgreSQL |
+| `ClosedXML` | MIT |
+
+`EPPlus` was removed for exactly this reason. Versions 5 and later are licensed
+under **Polyform Noncommercial 1.0.0**, which restricts use to noncommercial
+purposes — and running this app in a hospital laboratory is commercial use.
+`ClosedXML` reads the same xlsx workbooks under MIT, and
+`XlsxSpreadsheetReaderTests` covers the swap by asserting the same organism,
+antibiotic and measurement counts from the sample workbook.
+
+**Do not reintroduce `EPPlus`, or any package whose `.nuspec` declares
+`<license type="file">`, without reading that license first.** A non-OSI license
+on a single runtime dependency decides the license of the whole distributed
+application, whatever `LICENSE` says.
