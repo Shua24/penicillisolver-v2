@@ -39,17 +39,20 @@ public static partial class CsvSpreadsheetReader
         catch (IOException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeRead", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeRead", originalFileName],
+                exception);
         }
         catch (UnauthorizedAccessException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeOpened", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeOpened", originalFileName],
+                exception);
         }
         catch (MalformedLineException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_CsvMalformedLine", originalFileName, exception.Message]);
+                localizer["Service_CsvMalformedLine", originalFileName],
+                exception);
         }
 
         if (dataRows.Count == 0)

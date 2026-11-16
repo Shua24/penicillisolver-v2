@@ -32,29 +32,62 @@ public static partial class XlsxSpreadsheetReader
 
         try
         {
-            using XLWorkbook workbook = new XLWorkbook(originalFileName);
+            // Opened through a stream on purpose. XLWorkbook(string) infers the
+            // format from the file extension, and the upload pipeline stages
+            // every file as "{guid}.incoming", so the path based constructor
+            // rejected every xlsx upload with "Extension 'incoming' is not
+            // supported" before it read a byte. A stream carries no extension to
+            // guess from, so the staging name stops mattering.
+            using FileStream fileStream = File.OpenRead(originalFileName);
+            using XLWorkbook workbook = new XLWorkbook(fileStream);
 
             return ReadFirstWorksheet(workbook, originalFileName, localizer);
         }
         catch (IOException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeRead", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeRead", originalFileName],
+                exception);
         }
         catch (UnauthorizedAccessException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_FileCouldNotBeOpened", originalFileName, exception.Message]);
+                localizer["Service_FileCouldNotBeOpened", originalFileName],
+                exception);
         }
         catch (InvalidDataException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
         }
         catch (FileFormatException exception)
         {
             return SpreadsheetImportResult.Failure(
-                localizer["Service_NotValidXlsxWorkbook", originalFileName, exception.Message]);
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
+        }
+        catch (InvalidOperationException exception)
+        {
+            // ClosedXML raises this for an OPC package that declares spreadsheet
+            // content types but has no workbook part. It is malformed input, not
+            // a fault in this reader, and letting it escape takes the Blazor
+            // circuit down instead of showing the reader a sentence.
+            return SpreadsheetImportResult.Failure(
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
+        }
+        catch (NullReferenceException exception)
+        {
+            // ClosedXML raises this for a valid zip archive that is not an OPC
+            // package at all, such as a .zip renamed to .xlsx. Catching a null
+            // reference is normally wrong, but here it is the library's response
+            // to untrusted bytes, and the alternative is an unhandled exception
+            // in the upload circuit. The exception still reaches the log through
+            // FailureCause, so a genuine bug is not hidden.
+            return SpreadsheetImportResult.Failure(
+                localizer["Service_NotValidXlsxWorkbook", originalFileName],
+                exception);
         }
     }
 

@@ -139,11 +139,39 @@ public sealed class SpreadsheetUploadService(
                 localizer["Service_UploadStorageFailure"]);
         }
 
-        SpreadsheetImportResult importResult = ReadStagedFile(stagingResult.StoredFilePath, fileFormat);
+        SpreadsheetImportResult importResult;
+
+        try
+        {
+            importResult = ReadStagedFile(stagingResult.StoredFilePath, fileFormat);
+        }
+        catch (Exception)
+        {
+            // A reader that throws instead of returning a failure must not leave
+            // its staging file behind. Nothing points at it and nothing sweeps
+            // the folder, so an orphan would sit there for the life of the
+            // deployment. The exception still propagates: the caller decides
+            // what the reader's failure means.
+            storageService.DeleteStagedFile(stagingResult.StoredFilePath);
+
+            throw;
+        }
 
         if (!importResult.IsSuccess || importResult.Document is null)
         {
             storageService.DeleteStagedFile(stagingResult.StoredFilePath);
+
+            // The reader hands back the exception separately from the reader
+            // facing sentence, so the framework's English text is recorded here
+            // rather than shown in the banner. A rejection is bad input, not a
+            // server fault, so it is a warning.
+            if (importResult.FailureCause is not null)
+            {
+                logger.LogWarning(
+                    importResult.FailureCause,
+                    "The uploaded file '{OriginalFileName}' was rejected while being read.",
+                    originalFileName);
+            }
 
             return SpreadsheetUploadResult.Failure(importResult.ErrorMessage);
         }

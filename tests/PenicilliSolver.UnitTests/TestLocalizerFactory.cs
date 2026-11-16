@@ -38,16 +38,29 @@ internal static class TestLocalizerFactory
     /// <summary>Builds a localizer factory backed by the application resources.</summary>
     public static IStringLocalizerFactory Create()
     {
+        IServiceProvider provider = CreateServiceProvider();
+
+        IStringLocalizerFactory factory =
+            provider.GetRequiredService<IStringLocalizerFactory>();
+
+        return factory;
+    }
+
+    /// <summary>
+    /// Builds a service provider that can supply an
+    /// <see cref="IStringLocalizerFactory"/>, for tests that hand a
+    /// <see cref="System.ComponentModel.DataAnnotations.ValidationContext"/> a
+    /// provider the way Blazor's validator does.
+    /// </summary>
+    public static IServiceProvider CreateServiceProvider()
+    {
         ServiceCollection services = new();
         services.AddLogging();
         services.AddLocalization();
 
         ServiceProvider provider = services.BuildServiceProvider();
 
-        IStringLocalizerFactory factory =
-            provider.GetRequiredService<IStringLocalizerFactory>();
-
-        return factory;
+        return provider;
     }
 
     /// <summary>
