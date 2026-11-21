@@ -36,7 +36,7 @@ services:
       # drift apart; if they do, db reports healthy while the app fails to
       # authenticate.
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=penicillisolver;Username=penicillisolver"
-      PGPASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       SeedAccounts__ClinicalPathologist__Email: ${SEED_PATHOLOGIST_EMAIL:-pathologist@hospital.example}
       SeedAccounts__ClinicalPathologist__Password: ${SEED_PATHOLOGIST_PASSWORD:?set SEED_PATHOLOGIST_PASSWORD in .env}
     volumes:
